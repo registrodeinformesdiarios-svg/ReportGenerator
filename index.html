@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReportCraft Pro - Editor de Informes</title>
+    <title> Creador de informes automatizado</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -41,9 +41,18 @@
         <div class="max-w-full px-6 mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold text-indigo-600 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
-                ReportCraft Pro
+                Creador de informes automatizado
             </h1>
             <div class="flex gap-3">
+                <input type="file" id="importTxtInput" accept=".txt" class="hidden">
+                <button onclick="document.getElementById('importTxtInput').click()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-5 py-2 rounded-xl font-medium transition-all text-sm flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Importar
+                </button>
+                <button onclick="exportTxt()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-5 py-2 rounded-xl font-medium transition-all text-sm flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Exportar
+                </button>
                 <button onclick="updatePreview()" class="bg-slate-800 hover:bg-black text-white px-5 py-2 rounded-xl font-medium transition-all text-sm">
                     Actualizar Vista Previa
                 </button>
@@ -696,6 +705,261 @@
                 return doc.output('bloburl');
             }
         }
+
+        // ─── EXPORTAR TXT ────────────────────────────────────────────────────────
+        function exportTxt() {
+            const lines = [];
+            lines.push('//-------------------------------------------------');
+            lines.push('// Generado por Creador de informes automatizado');
+            lines.push('//-------------------------------------------------');
+            lines.push('');
+
+            // PORTADA
+            lines.push('<portada>');
+            if (companyLogo) lines.push(`logo: "${companyLogo}"`);
+            lines.push(`titulo: "${document.getElementById('reportTitle').value}"`);
+            lines.push(`proyecto: "${document.getElementById('projectName').value}"`);
+            lines.push(`autor: "${document.getElementById('reportAuthor').value}"`);
+            lines.push(`fecha: "${document.getElementById('reportDate').value}"`);
+            coverExtraFields.forEach(f => {
+                lines.push(`${f.label}: "${f.value}"`);
+            });
+            lines.push('</portada>');
+            lines.push('');
+
+            // Recopilar tablas y fotografías con IDs para referencia
+            const allTables = [];
+            const allPhotos = [];
+            const gatherMedia = (list) => {
+                list.forEach(s => {
+                    s.blocks.forEach(b => {
+                        if (b.type === 'table') allTables.push({ id: `t${allTables.length + 1}`, block: b });
+                        if (b.type === 'image') allPhotos.push({ id: `f${allPhotos.length + 1}`, block: b });
+                    });
+                    gatherMedia(s.children);
+                });
+            };
+            gatherMedia(sections);
+
+            // Mapas rápidos id de bloque → id de txt
+            const tableMap = {};
+            allTables.forEach(t => tableMap[t.block.id] = t.id);
+            const photoMap = {};
+            allPhotos.forEach(p => photoMap[p.block.id] = p.id);
+
+            // SECCIONES
+            lines.push('//-------------------------------------------------');
+            lines.push('// Secciones');
+            lines.push('//-------------------------------------------------');
+            const writeSection = (s, depth) => {
+                const prefix = '#'.repeat(depth > 0 ? depth : 0);
+                lines.push(`${prefix}<seccion nombre="${s.title}"${s.forcePageBreak ? ' salto="true"' : ''}>`);
+                s.blocks.forEach(b => {
+                    if (b.type === 'text') {
+                        lines.push(`<t>${b.data.content}</t>`);
+                    } else if (b.type === 'table') {
+                        lines.push(`<id="${tableMap[b.id]}">`);
+                    } else if (b.type === 'image') {
+                        lines.push(`<id="${photoMap[b.id]}">`);
+                    }
+                });
+                s.children.forEach(child => writeSection(child, depth + 1));
+            };
+            sections.forEach(s => writeSection(s, 0));
+            lines.push('');
+
+            // FOTOGRAFÍAS
+            if (allPhotos.length > 0) {
+                lines.push('//-------------------------------------------------');
+                lines.push('// Fotografías');
+                lines.push('//-------------------------------------------------');
+                allPhotos.forEach(p => {
+                    const b = p.block;
+                    lines.push(`<fotografia id="${p.id}" nombre="${b.data.caption || ''}">`);
+                    const srcs = b.data.images.map(img => `"${img.src}"`).join(',');
+                    if (srcs) lines.push(`img: ${srcs}`);
+                    lines.push('</fotografia>');
+                });
+                lines.push('');
+            }
+
+            // TABLAS
+            if (allTables.length > 0) {
+                lines.push('//-------------------------------------------------');
+                lines.push('// Tablas');
+                lines.push('//-------------------------------------------------');
+                allTables.forEach(t => {
+                    const b = t.block;
+                    lines.push(`<tabla id="${t.id}" nombre="${b.data.caption || ''}">`);
+                    lines.push(`  columnas: ${b.data.headers.join(' | ')}`);
+                    lines.push('  ---');
+                    b.data.rows.forEach(row => lines.push(`  ${row.join(' | ')}`));
+                    lines.push('</tabla>');
+                });
+            }
+
+            const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            const fname = (document.getElementById('projectName').value || 'informe').replace(/\s+/g,'_');
+            a.download = `${fname}.txt`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        // ─── IMPORTAR TXT ────────────────────────────────────────────────────────
+        function importTxt(text) {
+            // Quitar comentarios
+            const clean = text.split('\n').filter(l => !l.trim().startsWith('//')).join('\n');
+
+            // Helper: extraer bloques de una etiqueta
+            const getBlock = (tag, src) => {
+                const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'gi');
+                const matches = [];
+                let m;
+                while ((m = re.exec(src)) !== null) matches.push({ full: m[0], inner: m[1], attrs: m[0].split('>')[0] });
+                return matches;
+            };
+            const attr = (str, key) => {
+                const m = str.match(new RegExp(`${key}="([^"]*)"`));
+                return m ? m[1] : '';
+            };
+
+            // ── PORTADA ──
+            const portadaBlock = getBlock('portada', clean);
+            if (portadaBlock.length) {
+                const inner = portadaBlock[0].inner;
+                const getVal = (key) => { const m = inner.match(new RegExp(`^${key}:\\s*"([^"]*)"`, 'm')); return m ? m[1] : null; };
+                const logo = getVal('logo');
+                if (logo) {
+                    companyLogo = logo;
+                    document.getElementById('logoPreview').innerHTML = `<img src="${logo}" class="max-w-full max-h-full object-contain">`;
+                }
+                if (getVal('titulo')) document.getElementById('reportTitle').value = getVal('titulo');
+                if (getVal('proyecto')) document.getElementById('projectName').value = getVal('proyecto');
+                if (getVal('autor')) document.getElementById('reportAuthor').value = getVal('autor');
+                if (getVal('fecha')) document.getElementById('reportDate').value = getVal('fecha');
+
+                // Campos extra: cualquier clave que no sea las reservadas
+                const reserved = ['logo','titulo','proyecto','autor','fecha'];
+                coverExtraFields = [];
+                inner.split('\n').forEach(l => {
+                    const m = l.match(/^(\w[\w\s]*):\s*"([^"]*)"/);
+                    if (m && !reserved.includes(m[1].trim())) {
+                        coverExtraFields.push({ id: Date.now().toString() + Math.random(), label: m[1].trim(), value: m[2] });
+                    }
+                });
+                renderCoverFields();
+            }
+
+            // ── TABLAS (diccionario id→data) ──
+            const tableDict = {};
+            getBlock('tabla', clean).forEach(t => {
+                const id = attr(t.attrs, 'id');
+                const nombre = attr(t.attrs, 'nombre');
+                const lines = t.inner.split('\n').map(l=>l.trim()).filter(Boolean);
+                const colLine = lines.find(l => l.startsWith('columnas:'));
+                const headers = colLine ? colLine.replace('columnas:','').trim().split('|').map(h=>h.trim()) : ['Columna'];
+                const rows = [];
+                let pastSep = false;
+                lines.forEach(l => {
+                    if (l === '---') { pastSep = true; return; }
+                    if (pastSep && l) rows.push(l.split('|').map(c=>c.trim()));
+                });
+                tableDict[id] = { headers, rows, caption: nombre };
+            });
+
+            // ── FOTOGRAFÍAS (diccionario id→data) ──
+            const photoDict = {};
+            getBlock('fotografia', clean).forEach(p => {
+                const id = attr(p.attrs, 'id');
+                const nombre = attr(p.attrs, 'nombre');
+                const imgLine = p.inner.split('\n').find(l => l.trim().startsWith('img:'));
+                const images = [];
+                if (imgLine) {
+                    const urls = imgLine.replace('img:','').trim().split(',').map(s=>s.trim().replace(/^"|"$/g,''));
+                    urls.forEach(url => {
+                        if (url) {
+                            // Para URLs externas almacenamos como objeto compatible
+                            images.push({ src: url, ratio: 4/3, w: 800, h: 600 });
+                        }
+                    });
+                }
+                photoDict[id] = { images, caption: nombre };
+            });
+
+            // ── SECCIONES ──
+            // Parsear líneas de sección del bloque limpio (entre portada y las tablas/fotos)
+            sections = [];
+            const secLines = clean.split('\n');
+            const stack = []; // [{section, depth}]
+
+            // Pre-normalizar imágenes de URLs para tener ratio correcto (async, lo hacemos al final)
+            const photoLoadPromises = [];
+
+            secLines.forEach(rawLine => {
+                const line = rawLine.trim();
+                if (!line) return;
+
+                // Detectar <seccion>
+                const secMatch = line.match(/^(#*)(<seccion\s+nombre="([^"]*)"([^>]*)>)/);
+                if (secMatch) {
+                    const depth = secMatch[1].length; // 0=principal, 1=sub, etc
+                    const title = secMatch[3];
+                    const salto = secMatch[4] && secMatch[4].includes('salto="true"');
+                    const level = depth + 1;
+                    const newSec = { id: Math.random().toString(36).substr(2,9), title, level, blocks: [], children: [], forcePageBreak: salto };
+                    
+                    // Encontrar padre en stack
+                    while (stack.length && stack[stack.length-1].depth >= depth) stack.pop();
+                    if (stack.length === 0) {
+                        sections.push(newSec);
+                    } else {
+                        stack[stack.length-1].section.children.push(newSec);
+                    }
+                    stack.push({ section: newSec, depth });
+                    return;
+                }
+
+                if (!stack.length) return;
+                const currentSec = stack[stack.length-1].section;
+
+                // Texto <t>...</t>
+                const textMatch = line.match(/^<t>([\s\S]*)<\/t>$/);
+                if (textMatch) {
+                    currentSec.blocks.push({ id: Math.random().toString(36).substr(2,9), type: 'text', data: { content: textMatch[1] } });
+                    return;
+                }
+
+                // Referencia <id="...">
+                const idRefMatch = line.match(/^<id="([^"]+)">/);
+                if (idRefMatch) {
+                    const refId = idRefMatch[1];
+                    if (tableDict[refId]) {
+                        currentSec.blocks.push({ id: Math.random().toString(36).substr(2,9), type: 'table', data: JSON.parse(JSON.stringify(tableDict[refId])) });
+                    } else if (photoDict[refId]) {
+                        currentSec.blocks.push({ id: Math.random().toString(36).substr(2,9), type: 'image', data: JSON.parse(JSON.stringify(photoDict[refId])) });
+                    }
+                    return;
+                }
+            });
+
+            render();
+        }
+
+        // Listener para el input de importación
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('importTxtInput').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    importTxt(ev.target.result);
+                    e.target.value = '';
+                };
+                reader.readAsText(file, 'utf-8');
+            });
+        });
 
         async function updatePreview() {
             const pre = document.getElementById('previewPlaceholder');

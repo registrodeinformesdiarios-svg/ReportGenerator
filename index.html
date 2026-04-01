@@ -3,111 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReportCraft Ultimate - Informes Corporativos</title>
+    <title>ReportCraft Pro - Editor de Informes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
-        .drop-shadow-soft { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
         .indent-1 { margin-left: 0; }
         .indent-2 { margin-left: 1.5rem; border-left: 2px solid #f1f5f9; padding-left: 1rem; }
         .indent-3 { margin-left: 3rem; border-left: 2px solid #e2e8f0; padding-left: 1rem; }
+        
         .drag-handle { cursor: grab; }
         .drag-handle:active { cursor: grabbing; }
-        .sortable-ghost { opacity: 0.4; background: #e0e7ff; }
-        .img-container img { object-fit: contain; width: 100%; height: 100%; }
-        .nested-sortable { min-height: 10px; }
+        
+        .nested-sortable { min-height: 20px; }
+        .blocks-sortable { min-height: 10px; }
+
+        #pdfPreviewContainer { height: calc(100vh - 140px); position: sticky; top: 110px; }
+        
+        .img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: #f8fafc;
+        }
+
+        .resizable-textarea {
+            resize: vertical;
+            min-height: 80px;
+            overflow: auto;
+        }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans text-slate-800">
+<body class="bg-slate-50 min-h-screen text-slate-800">
 
     <nav class="bg-white border-b border-slate-200 p-4 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <div class="max-w-full px-6 mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold text-indigo-600 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
-                ReportCraft Ultimate
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                ReportCraft Pro
             </h1>
             <div class="flex gap-3">
-                <button id="addMainSectionNav" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium transition-all text-sm">
-                    + Sección Principal
+                <button onclick="updatePreview()" class="bg-slate-800 hover:bg-black text-white px-5 py-2 rounded-xl font-medium transition-all text-sm">
+                    Actualizar Vista Previa
                 </button>
-                <button id="generatePdf" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-all flex items-center gap-2 shadow-lg shadow-indigo-200">
-                    Generar PDF
+                <button id="generatePdfBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-lg shadow-indigo-100">
+                    Descargar PDF
                 </button>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-5xl mx-auto p-6 md:p-12">
-        <!-- Portada -->
-        <div class="mb-10 bg-white p-8 rounded-2xl border border-slate-200 drop-shadow-soft space-y-6">
-            <div class="flex justify-between items-start border-b border-slate-100 pb-6">
-                <div class="flex-1 space-y-4">
-                    <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Datos de la Portada</h2>
-                    <input type="text" id="projectName" placeholder="NOMBRE DEL PROYECTO" class="text-sm font-bold w-full border-none focus:ring-0 text-indigo-400 outline-none uppercase" value="Proyecto: Modernización de Infraestructura">
-                    <input type="text" id="reportTitle" placeholder="TÍTULO DEL INFORME" class="text-3xl font-black w-full border-none focus:ring-0 placeholder:text-slate-200 outline-none uppercase" value="Reporte de Auditoría Técnica">
-                    <input type="text" id="companyName" placeholder="Nombre de la Empresa" class="text-lg w-full border-none focus:ring-0 text-indigo-500 font-semibold outline-none" value="Global Tech Solutions S.A.">
-                </div>
-                <div class="w-32 h-32 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center relative overflow-hidden bg-slate-50 hover:border-indigo-300 transition-colors">
-                    <input type="file" id="logoInput" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
-                    <div id="logoPreview" class="w-full h-full flex flex-col items-center justify-center p-2 text-center">
-                        <span class="text-[10px] text-slate-400">LOGO EMPRESA</span>
+    <main class="max-w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="space-y-6">
+            <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                <div class="flex justify-between items-start border-b border-slate-50 pb-6">
+                    <div class="flex-1 space-y-4">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Configuración General</label>
+                        <input type="text" id="projectName" placeholder="NOMBRE DEL PROYECTO" class="text-sm font-bold w-full border-none focus:ring-0 text-indigo-400 uppercase" value="Auditoría Infraestructura 2024">
+                        <input type="text" id="reportTitle" placeholder="TÍTULO DEL INFORME" class="text-3xl font-black w-full border-none focus:ring-0 outline-none uppercase" value="Informe de Estado Técnico">
+                    </div>
+                    <div class="w-24 h-24 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center relative bg-slate-50">
+                        <input type="file" id="logoInput" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
+                        <div id="logoPreview" class="w-full h-full flex items-center justify-center p-2 text-center text-[8px] text-slate-400 uppercase font-bold">Logo</div>
                     </div>
                 </div>
+                
+                <div id="coverFieldsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Autor</label><input type="text" id="reportAuthor" class="w-full border-b border-slate-100 py-1 outline-none text-sm" value="Ing. Marcos Solís"></div>
+                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Fecha</label><input type="date" id="reportDate" class="w-full border-b border-slate-100 py-1 outline-none text-sm"></div>
+                </div>
+                <button onclick="addCoverField()" class="text-[10px] font-bold text-indigo-500 hover:underline uppercase">+ Añadir campo personalizado</button>
             </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Autor</label>
-                    <input type="text" id="reportAuthor" class="w-full border-b border-slate-100 focus:border-indigo-500 py-1 outline-none text-sm" value="Ing. Elena Rodríguez">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Ubicación</label>
-                    <input type="text" id="reportLocation" class="w-full border-b border-slate-100 focus:border-indigo-500 py-1 outline-none text-sm" value="Madrid, España">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase">Fecha</label>
-                    <input type="date" id="reportDate" class="w-full border-b border-slate-100 focus:border-indigo-500 py-1 outline-none text-sm">
-                </div>
-            </div>
+
+            <div id="sectionsContainer" class="space-y-4 nested-sortable" data-level="1"></div>
+            <button id="addMainSectionBottom" class="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 font-bold hover:border-indigo-300 hover:text-indigo-500 transition-all uppercase text-sm">+ Nueva Sección Principal</button>
         </div>
 
-        <!-- Contenedor de Secciones -->
-        <div id="sectionsContainer" class="space-y-4 nested-sortable" data-level="1"></div>
-
-        <!-- Botón para agregar sección al final -->
-        <button id="addMainSectionBottom" class="w-full mt-8 py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold hover:border-indigo-300 hover:text-indigo-500 transition-all uppercase text-sm">
-            + Añadir Nueva Sección Principal
-        </button>
+        <div class="hidden lg:block">
+            <div id="pdfPreviewContainer" class="bg-slate-200 rounded-3xl overflow-hidden border border-slate-300 flex items-center justify-center">
+                <div id="previewPlaceholder" class="text-slate-500 flex flex-col items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="opacity-20"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                    <p class="text-sm font-medium">Vista previa no generada</p>
+                </div>
+                <iframe id="pdfIframe" class="w-full h-full hidden"></iframe>
+            </div>
+        </div>
     </main>
 
-    <!-- Modales -->
-    <div id="modal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
-        <div class="bg-white p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl">
-            <h3 class="text-2xl font-bold mb-2">¡PDF Generado!</h3>
-            <p class="text-slate-500 mb-8">El informe está listo para revisión.</p>
-            <button onclick="closeModal('modal')" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors">Cerrar</button>
+    <div id="modal" class="fixed inset-0 bg-slate-900/40 hidden items-center justify-center z-[100] backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-3xl max-w-xs w-full text-center shadow-xl">
+            <h3 class="text-xl font-bold mb-4 text-indigo-600">¡PDF Listo!</h3>
+            <p class="text-sm text-slate-500 mb-6">El documento se ha generado correctamente.</p>
+            <button onclick="closeModal('modal')" class="w-full bg-indigo-600 text-white py-3 rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-colors">Aceptar</button>
         </div>
     </div>
 
-    <div id="tableModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
-        <div class="bg-white p-6 rounded-2xl max-w-4xl w-full shadow-2xl flex flex-col max-h-[90vh]">
-            <h3 class="text-xl font-bold mb-4">Editor de Tabla Técnica</h3>
-            <div class="overflow-auto flex-1 border border-slate-100 rounded-lg mb-4">
-                <table id="editTableElement" class="w-full text-sm">
-                    <thead id="tableHead"></thead>
+    <div id="tableModal" class="fixed inset-0 bg-slate-900/40 hidden items-center justify-center z-[100] backdrop-blur-sm p-4">
+        <div class="bg-white p-6 rounded-3xl max-w-5xl w-full shadow-2xl flex flex-col max-h-[90vh]">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+                Editor de Tabla
+            </h3>
+            <div class="overflow-auto flex-1 border border-slate-100 rounded-2xl mb-4 bg-slate-50 p-2">
+                <table class="w-full text-sm border-collapse">
+                    <thead id="tableHead" class="bg-white"></thead>
                     <tbody id="tableBody"></tbody>
                 </table>
             </div>
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
                 <div class="flex gap-2">
-                    <button onclick="tableEditor.addRow()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold">+ Fila</button>
-                    <button onclick="tableEditor.addCol()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold">+ Columna</button>
+                    <button onclick="tableEditor.addRow()" class="bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">+ Fila</button>
+                    <button onclick="tableEditor.addColumn()" class="bg-white border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">+ Columna</button>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="closeModal('tableModal')" class="px-4 py-2 text-slate-400 hover:text-slate-600 font-bold text-xs uppercase">Cancelar</button>
-                    <button onclick="tableEditor.save()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100">Guardar Cambios</button>
+                    <button onclick="closeModal('tableModal')" class="px-4 py-2 text-slate-400 font-bold text-xs uppercase hover:text-slate-600">Cancelar</button>
+                    <button onclick="tableEditor.save()" class="bg-indigo-600 text-white px-8 py-2 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md">Guardar</button>
                 </div>
             </div>
         </div>
@@ -118,83 +129,102 @@
         let sections = [];
         let companyLogo = null;
         let currentEditingTable = null;
+        let coverExtraFields = [];
 
         window.onload = () => {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('reportDate').value = today;
+            document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
             addSection();
+            document.getElementById('addMainSectionBottom').onclick = () => addSection();
+            document.getElementById('generatePdfBtn').onclick = () => generateDocument('download');
+            
+            document.getElementById('logoInput').onchange = (e) => {
+                const file = e.target.files[0];
+                if(file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        companyLogo = ev.target.result;
+                        document.getElementById('logoPreview').innerHTML = `<img src="${companyLogo}" class="max-w-full max-h-full object-contain">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
         };
 
+        function addCoverField() {
+            coverExtraFields.push({ id: Date.now().toString(), label: 'Nuevo Campo', value: '...' });
+            renderCoverFields();
+        }
+
+        function renderCoverFields() {
+            const container = document.getElementById('coverFieldsContainer');
+            const base = Array.from(container.children).slice(0,2);
+            container.innerHTML = '';
+            base.forEach(b => container.appendChild(b));
+            coverExtraFields.forEach(f => {
+                const d = document.createElement('div');
+                d.className = 'bg-slate-50 p-3 rounded-2xl relative group';
+                d.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <input type="text" value="${f.label}" oninput="updateCF('${f.id}','label',this.value)" class="text-[9px] font-bold text-slate-400 bg-transparent w-full outline-none uppercase tracking-tighter">
+                        <button onclick="removeCF('${f.id}')" class="text-rose-300 opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                    </div>
+                    <input type="text" value="${f.value}" oninput="updateCF('${f.id}','value',this.value)" class="text-sm bg-transparent w-full outline-none border-b border-slate-200 focus:border-indigo-400 py-1 transition-all">
+                `;
+                container.appendChild(d);
+            });
+        }
+        function updateCF(id, k, v) { const f = coverExtraFields.find(x => x.id === id); if(f) f[k] = v; }
+        function removeCF(id) { coverExtraFields = coverExtraFields.filter(f => f.id !== id); renderCoverFields(); }
+
         function initSorting() {
-            const containers = document.querySelectorAll('.nested-sortable');
-            containers.forEach(container => {
-                new Sortable(container, {
-                    group: 'nested',
+            document.querySelectorAll('.nested-sortable').forEach(c => {
+                new Sortable(c, { 
+                    group: 'nested', 
+                    animation: 150, 
+                    handle: '.section-handle', 
+                    ghostClass: 'bg-indigo-50', 
+                    onEnd: rebuildSectionsArray 
+                });
+            });
+
+            document.querySelectorAll('.blocks-sortable').forEach(c => {
+                new Sortable(c, {
+                    group: 'blocks',
                     animation: 150,
-                    handle: '.drag-handle',
-                    ghostClass: 'sortable-ghost',
-                    fallbackOnBody: true,
-                    swapThreshold: 0.65,
-                    onEnd: function (evt) {
-                        rebuildSectionsArray();
-                    }
+                    handle: '.block-handle',
+                    ghostClass: 'bg-indigo-50',
+                    onEnd: rebuildSectionsArray 
                 });
             });
         }
 
         function rebuildSectionsArray() {
-            const buildLevel = (container) => {
-                const newItems = [];
-                Array.from(container.children).forEach(child => {
+            const build = (cont) => {
+                return Array.from(cont.children).map(child => {
                     const sId = child.getAttribute('data-id');
-                    const originalSection = findById(sections, sId);
-                    if (originalSection) {
-                        const level = parseInt(container.getAttribute('data-level')) || 1;
-                        const subContainer = child.querySelector('.nested-sortable');
-                        newItems.push({
-                            ...originalSection,
-                            level: level,
-                            children: subContainer ? buildLevel(subContainer) : []
-                        });
-                    }
+                    const originalS = findById(sections, sId);
+                    const blocksCont = child.querySelector('.blocks-sortable');
+                    const newBlocks = Array.from(blocksCont.children).map(bChild => {
+                        const bId = bChild.getAttribute('data-block-id');
+                        return originalS.blocks.find(b => b.id === bId);
+                    });
+                    const subCont = child.querySelector('.nested-sortable');
+                    return { 
+                        ...originalS, 
+                        blocks: newBlocks,
+                        children: subCont ? build(subCont) : [] 
+                    };
                 });
-                return newItems;
             };
-
-            const mainContainer = document.getElementById('sectionsContainer');
-            sections = buildLevel(mainContainer);
+            sections = build(document.getElementById('sectionsContainer'));
             render();
         }
 
-        document.getElementById('logoInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    companyLogo = ev.target.result;
-                    document.getElementById('logoPreview').innerHTML = `<img src="${companyLogo}" class="max-w-full max-h-full object-contain">`;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
         function addSection(parentId = null, level = 1) {
-            const id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
-            const newSection = {
-                id,
-                title: level === 1 ? 'Nueva Sección' : 'Subsección',
-                level: level,
-                blocks: [],
-                children: [],
-                forcePageBreak: false
-            };
-
-            if (!parentId) {
-                sections.push(newSection);
-            } else {
-                const parent = findById(sections, parentId);
-                if (parent && level <= 3) parent.children.push(newSection);
-            }
+            const id = Math.random().toString(36).substr(2, 9);
+            const s = { id, title: level === 1 ? 'Nueva Sección' : 'Subsección', level, blocks: [], children: [], forcePageBreak: false };
+            if (!parentId) sections.push(s);
+            else { const p = findById(sections, parentId); if (p) p.children.push(s); }
             render();
         }
 
@@ -207,350 +237,479 @@
             return null;
         }
 
-        function togglePageBreak(sId) {
-            const s = findById(sections, sId);
-            s.forcePageBreak = !s.forcePageBreak;
-            render();
-        }
-
         function render() {
             const container = document.getElementById('sectionsContainer');
             container.innerHTML = '';
+            let photoCounter = 1;
+            let tableCounter = 1;
 
-            const renderSectionsList = (list, targetContainer, prefix = '') => {
+            const loop = (list, target, prefix = '') => {
                 list.forEach((s, i) => {
                     const num = prefix + (i + 1);
-                    const div = document.createElement('div');
-                    div.setAttribute('data-id', s.id);
-                    div.className = `bg-white p-6 rounded-2xl border ${s.forcePageBreak ? 'border-indigo-400 border-2' : 'border-slate-200'} shadow-sm indent-${s.level} space-y-4 relative flex gap-4 section-node`;
+                    const d = document.createElement('div');
+                    d.setAttribute('data-id', s.id);
+                    d.className = `bg-white p-5 rounded-3xl border ${s.forcePageBreak ? 'border-indigo-500 ring-2 ring-indigo-50' : 'border-slate-200'} indent-${s.level} flex gap-4 shadow-sm mb-4`;
                     
-                    div.innerHTML = `
-                        <div class="drag-handle flex items-center text-slate-300 hover:text-indigo-400 transition-colors px-1 h-fit pt-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                    const blocksHtml = s.blocks.map(b => {
+                        const html = renderBlock(s.id, b, photoCounter, tableCounter);
+                        if(b.type === 'image') photoCounter++;
+                        if(b.type === 'table') tableCounter++;
+                        return html;
+                    }).join('');
+
+                    d.innerHTML = `
+                        <div class="section-handle text-slate-300 cursor-grab mt-2">
+                           <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><circle cx="2" cy="2" r="1.5"/><circle cx="2" cy="6" r="1.5"/><circle cx="2" cy="10" r="1.5"/><circle cx="6" cy="2" r="1.5"/><circle cx="6" cy="6" r="1.5"/><circle cx="6" cy="10" r="1.5"/></svg>
                         </div>
                         <div class="flex-1 space-y-4">
                             <div class="flex justify-between items-center border-b border-slate-50 pb-2">
                                 <div class="flex items-center gap-3 flex-1">
-                                    <span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-bold">${num}</span>
+                                    <span class="text-xs font-black text-indigo-400 bg-indigo-50 px-2 py-1 rounded-lg">${num}</span>
                                     <input type="text" value="${s.title}" oninput="findById(sections, '${s.id}').title = this.value" class="font-bold text-lg outline-none w-full bg-transparent">
                                 </div>
-                                <div class="flex gap-1 items-center">
-                                    <button onclick="togglePageBreak('${s.id}')" class="p-1.5 rounded transition-colors ${s.forcePageBreak ? 'bg-indigo-600 text-white' : 'hover:bg-slate-100 text-slate-400'}" title="Forzar Salto de Página">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 15l5 5 5-5M7 9l5-5 5 5"/></svg>
-                                    </button>
-                                    <button onclick="addSection('${s.id}', ${s.level+1})" class="p-1.5 hover:bg-slate-100 text-slate-500 rounded" title="Añadir Subsección">+</button>
-                                    <button onclick="removeSection('${s.id}')" class="p-1.5 hover:bg-rose-50 text-rose-500 rounded">×</button>
+                                <div class="flex gap-2">
+                                    <button title="Salto de página antes" onclick="findById(sections,'${s.id}').forcePageBreak=!findById(sections,'${s.id}').forcePageBreak;render()" class="w-8 h-8 rounded-full flex items-center justify-center transition-colors ${s.forcePageBreak ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-300 hover:bg-slate-100'}">P</button>
+                                    <button title="Añadir subsección" onclick="addSection('${s.id}', ${s.level+1})" class="w-8 h-8 rounded-full text-indigo-500 hover:bg-indigo-50 flex items-center justify-center transition-colors">+</button>
+                                    <button title="Eliminar" onclick="removeS('${s.id}')" class="w-8 h-8 rounded-full text-rose-300 hover:bg-rose-50 flex items-center justify-center transition-colors">×</button>
                                 </div>
                             </div>
-                            <div class="space-y-4 py-2">
-                                ${s.blocks.map(b => renderBlock(s.id, b)).join('')}
+                            <div class="blocks-sortable space-y-3">${blocksHtml}</div>
+                            <div class="flex gap-4 pt-3 border-t border-slate-50">
+                                <button onclick="addBlock('${s.id}', 'text')" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-500 transition-colors flex items-center gap-1">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg> Texto
+                                </button>
+                                <button onclick="addBlock('${s.id}', 'table')" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-500 transition-colors flex items-center gap-1">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 3v18"/></svg> Tabla
+                                </button>
+                                <button onclick="addBlock('${s.id}', 'image')" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-500 transition-colors flex items-center gap-1">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> Galería
+                                </button>
                             </div>
-                            <div class="flex gap-4 pt-2 border-t border-slate-50">
-                                <button onclick="addBlock('${s.id}', 'text')" class="text-[10px] font-bold text-slate-400 hover:text-indigo-600 uppercase transition-colors">+ Texto</button>
-                                <button onclick="addBlock('${s.id}', 'table')" class="text-[10px] font-bold text-slate-400 hover:text-indigo-600 uppercase transition-colors">+ Tabla</button>
-                                <button onclick="addBlock('${s.id}', 'figure')" class="text-[10px] font-bold text-slate-400 hover:text-indigo-600 uppercase transition-colors">+ Figura (1-3 Fotos)</button>
-                            </div>
-                            <div class="nested-sortable space-y-4 mt-4" data-level="${s.level + 1}"></div>
-                        </div>
-                    `;
-                    targetContainer.appendChild(div);
-                    if (s.children.length > 0) {
-                        const subContainer = div.querySelector('.nested-sortable');
-                        renderSectionsList(s.children, subContainer, num + '.');
-                    }
+                            <div class="nested-sortable space-y-4 mt-2" data-level="${s.level + 1}"></div>
+                        </div>`;
+                    target.appendChild(d);
+                    if (s.children.length > 0) loop(s.children, d.querySelector('.nested-sortable'), num + '.');
                 });
             };
-            renderSectionsList(sections, container);
+            loop(sections, container);
             initSorting();
         }
 
-        const renderBlock = (sId, b) => {
-            if (b.type === 'text') {
-                return `
-                <div class="group relative bg-slate-50/50 p-3 rounded-lg">
-                    <textarea oninput="findById(sections, '${sId}').blocks.find(bl => bl.id === '${b.id}').data.content = this.value" 
-                        class="w-full bg-transparent border-none focus:ring-0 text-sm text-slate-600 resize-none" placeholder="Escribe contenido..." rows="2">${b.data.content}</textarea>
-                    <button onclick="removeBlock('${sId}', '${b.id}')" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-500">×</button>
+        const renderBlock = (sId, b, photoIndex, tableIndex) => {
+            const handle = `<div class="block-handle absolute -left-2 top-1/2 -translate-y-1/2 text-slate-200 hover:text-indigo-300 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2" cy="2" r="1.5"/><circle cx="2" cy="6" r="1.5"/><circle cx="2" cy="10" r="1.5"/><circle cx="2" cy="14" r="1.5"/><circle cx="8" cy="2" r="1.5"/><circle cx="8" cy="6" r="1.5"/><circle cx="8" cy="10" r="1.5"/><circle cx="8" cy="14" r="1.5"/></svg>
+            </div>`;
+
+            if (b.type === 'text') return `
+                <div data-block-id="${b.id}" class="group relative bg-slate-50 p-4 rounded-2xl border border-transparent hover:border-slate-200 transition-all">
+                    ${handle}
+                    <textarea oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.content=this.value" 
+                        class="w-full bg-transparent text-sm outline-none resizable-textarea" 
+                        placeholder="Escribe aquí el contenido...">${b.data.content}</textarea>
                 </div>`;
-            }
-            if (b.type === 'figure') {
-                return `
-                <div class="group relative bg-slate-50/50 p-3 rounded-lg space-y-3">
-                    <div class="grid grid-cols-3 gap-2">
-                        ${b.data.images.map((img, idx) => `
-                            <div class="aspect-square bg-white border rounded overflow-hidden relative img-container">
-                                <img src="${img}" class="object-contain w-full h-full">
-                                <button onclick="removeImage('${sId}', '${b.id}', ${idx})" class="absolute top-0 right-0 bg-rose-500 text-white px-1 text-[10px]">×</button>
-                            </div>
-                        `).join('')}
-                        ${b.data.images.length < 3 ? `
-                        <div class="aspect-square border-2 border-dashed border-slate-200 rounded flex items-center justify-center relative hover:bg-white cursor-pointer">
-                            <span class="text-xl text-slate-300">+</span>
-                            <input type="file" onchange="handleBlockImage('${sId}', '${b.id}', this.files[0])" class="absolute inset-0 opacity-0 cursor-pointer">
-                        </div>` : ''}
+            
+            if (b.type === 'table') return `
+                <div data-block-id="${b.id}" class="group relative bg-indigo-50/20 p-4 rounded-2xl border border-indigo-100 space-y-3">
+                    ${handle}
+                    <div class="flex gap-2 items-center bg-white p-2 rounded-xl border border-slate-100">
+                        <span class="text-[10px] font-bold text-indigo-500 whitespace-nowrap">Tabla ${tableIndex}.</span>
+                        <input type="text" placeholder="Ingresa titulo..." value="${b.data.caption || ''}" oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.caption=this.value" class="w-full bg-transparent text-[10px] font-bold outline-none border-none p-0">
                     </div>
-                    <input type="text" value="${b.data.caption}" oninput="findById(sections, '${sId}').blocks.find(bl => bl.id === '${b.id}').data.caption = this.value" 
-                        class="w-full bg-transparent border-none italic text-xs text-slate-400 focus:ring-0 text-center" placeholder="Pie de figura...">
-                    <button onclick="removeBlock('${sId}', '${b.id}')" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-slate-300">×</button>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-400 uppercase">Contenido de Tabla</span>
+                        <button onclick="tableEditor.open('${sId}','${b.id}')" class="text-xs font-bold bg-white text-indigo-600 px-4 py-2 rounded-xl border shadow-sm hover:shadow-md transition-shadow">EDITAR CELDAS</button>
+                    </div>
                 </div>`;
-            }
-            if (b.type === 'table') {
+
+            if (b.type === 'image') {
+                const imagesHtml = b.data.images.map((img, idx) => `
+                    <div class="relative w-full aspect-square bg-white rounded-xl overflow-hidden border group/img shadow-sm img-container">
+                        ${img.src ? `<img src="${img.src}">` : `<div class="w-full h-full flex flex-col items-center justify-center text-[8px] text-slate-300">VACÍO</div>`}
+                        <button onclick="removeBlockImage('${sId}', '${b.id}', ${idx})" class="absolute top-1 right-1 bg-rose-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs opacity-0 group-hover/img:opacity-100 transition-opacity shadow-sm z-10">×</button>
+                    </div>
+                `).join('');
+
                 return `
-                <div class="group relative bg-indigo-50/30 p-3 rounded-lg border border-indigo-100/50 flex justify-between items-center">
-                    <div class="text-[10px] uppercase font-bold text-indigo-400">Tabla Técnica (${b.data.rows.length} filas)</div>
-                    <div class="flex gap-2">
-                        <button onclick="tableEditor.open('${sId}', '${b.id}')" class="bg-white text-indigo-600 px-3 py-1 rounded text-[10px] font-bold border border-indigo-100">EDITAR</button>
-                        <button onclick="removeBlock('${sId}', '${b.id}')" class="text-slate-300 hover:text-rose-500">×</button>
+                <div data-block-id="${b.id}" class="group relative bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200 space-y-4">
+                    ${handle}
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Figuras (Máx 3)</span>
+                        <div class="flex gap-2">
+                             <input type="file" id="file_${b.id}" class="hidden" accept="image/*" onchange="handleBlockImage('${sId}', '${b.id}', this)">
+                             <label for="file_${b.id}" class="text-[10px] font-bold bg-indigo-600 text-white px-3 py-1 rounded-lg cursor-pointer hover:bg-indigo-700 transition-colors shadow-sm">+ SUBIR</label>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        ${imagesHtml}
+                    </div>
+                    <div class="flex gap-2 items-center bg-white p-2 rounded-xl border border-slate-100">
+                        <span class="text-[10px] font-bold text-indigo-500 whitespace-nowrap">Fotografía ${photoIndex}.</span>
+                        <input type="text" placeholder="Ingresa titulo..." value="${b.data.caption || ''}" oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.caption=this.value" class="w-full bg-transparent text-[10px] italic outline-none border-none p-0">
                     </div>
                 </div>`;
             }
             return '';
+        };
+
+        async function normalizeImage(dataUrl) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    resolve({
+                        src: canvas.toDataURL('image/jpeg', 0.8),
+                        ratio: img.width / img.height,
+                        w: img.width,
+                        h: img.height
+                    });
+                };
+                img.src = dataUrl;
+            });
         }
 
-        function addBlock(sId, type) {
+        async function handleBlockImage(sId, bId, input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const s = findById(sections, sId);
+                    const b = s.blocks.find(x => x.id === bId);
+                    if (b.data.images.length >= 3) {
+                        alert("Máximo 3 imágenes por figura.");
+                        return;
+                    }
+                    const processedImg = await normalizeImage(e.target.result);
+                    b.data.images.push(processedImg);
+                    render();
+                };
+                reader.readAsDataURL(file);
+            }
+            input.value = '';
+        }
+
+        function removeBlockImage(sId, bId, idx) {
             const s = findById(sections, sId);
-            let data = type === 'text' ? { content: '' } : 
-                       type === 'figure' ? { images: [], caption: 'Descripción de la figura' } : 
-                       { headers: ['Item', 'Descripción', 'Estado'], rows: [['1', 'Ejemplo', 'OK']] };
-            s.blocks.push({ id: Date.now().toString(), type, data });
-            render();
-        }
-
-        function removeBlock(sId, bId) {
-            const s = findById(sections, sId);
-            s.blocks = s.blocks.filter(b => b.id !== bId);
-            render();
-        }
-
-        function removeSection(id) {
-            const remove = (list) => {
-                const idx = list.findIndex(s => s.id === id);
-                if (idx > -1) { list.splice(idx, 1); return true; }
-                for (let s of list) if (remove(s.children)) return true;
-                return false;
-            };
-            remove(sections);
-            render();
-        }
-
-        function handleBlockImage(sId, bId, file) {
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const s = findById(sections, sId);
-                const b = s.blocks.find(bl => bl.id === bId);
-                if (b.data.images.length < 3) b.data.images.push(e.target.result);
-                render();
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function removeImage(sId, bId, idx) {
-            const s = findById(sections, sId);
-            const b = s.blocks.find(bl => bl.id === bId);
+            const b = s.blocks.find(x => x.id === bId);
             b.data.images.splice(idx, 1);
             render();
         }
 
+        function addBlock(sId, type) {
+            const s = findById(sections, sId);
+            let data = {};
+            if (type === 'text') data = { content: '' };
+            if (type === 'table') data = { headers: ['Clave', 'Valor'], rows: [['...', '...']], caption: '' };
+            if (type === 'image') data = { images: [], caption: '' };
+            s.blocks.push({ id: Math.random().toString(36).substr(2,9), type, data });
+            render();
+        }
+
+        function removeS(id) {
+            const del = (list) => {
+                const i = list.findIndex(x => x.id === id);
+                if (i > -1) { list.splice(i, 1); return true; }
+                for (let x of list) if (del(x.children)) return true;
+                return false;
+            };
+            del(sections); render();
+        }
+
         const tableEditor = {
-            tempData: null,
             open(sId, bId) {
                 currentEditingTable = { sId, bId };
-                const s = findById(sections, sId);
-                const b = s.blocks.find(bl => bl.id === bId);
-                this.tempData = JSON.parse(JSON.stringify(b.data));
-                this.renderModal();
+                const b = findById(sections, sId).blocks.find(x => x.id === bId);
+                this.temp = JSON.parse(JSON.stringify(b.data));
+                this.draw();
                 document.getElementById('tableModal').style.display = 'flex';
             },
-            renderModal() {
-                const head = document.getElementById('tableHead');
-                const body = document.getElementById('tableBody');
-                head.innerHTML = ''; body.innerHTML = '';
-                const hRow = document.createElement('tr');
-                this.tempData.headers.forEach((h, i) => {
-                    hRow.innerHTML += `<th class="border p-2 bg-slate-50"><input type="text" value="${h}" oninput="tableEditor.tempData.headers[${i}] = this.value" class="font-bold text-center w-full outline-none"><button onclick="tableEditor.removeCol(${i})" class="text-[8px] text-rose-400">Quitar</button></th>`;
-                });
-                head.appendChild(hRow);
-                this.tempData.rows.forEach((row, ri) => {
-                    const bRow = document.createElement('tr');
-                    row.forEach((cell, ci) => {
-                        bRow.innerHTML += `<td class="border p-1"><input type="text" value="${cell}" oninput="tableEditor.tempData.rows[${ri}][${ci}] = this.value" class="w-full text-center outline-none"></td>`;
-                    });
-                    bRow.innerHTML += `<td class="p-1"><button onclick="tableEditor.removeRow(${ri})" class="text-rose-400">×</button></td>`;
-                    body.appendChild(bRow);
-                });
+            draw() {
+                const h = document.getElementById('tableHead');
+                const b = document.getElementById('tableBody');
+                h.innerHTML = `<tr>${this.temp.headers.map((x,i) => `
+                    <th class="border-b border-slate-200 p-2 relative group">
+                        <input value="${x}" oninput="tableEditor.temp.headers[${i}]=this.value" class="w-full text-center outline-none bg-transparent font-bold text-indigo-600">
+                        <button onclick="tableEditor.removeColumn(${i})" class="absolute -top-1 -right-1 bg-rose-500 text-white w-4 h-4 rounded-full text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                    </th>`).join('')}</tr>`;
+                b.innerHTML = this.temp.rows.map((row, ri) => `
+                    <tr class="hover:bg-indigo-50/30 transition-colors">
+                        ${row.map((cell, ci) => `<td class="border-b border-slate-100 p-2"><input value="${cell}" oninput="tableEditor.temp.rows[${ri}][${ci}]=this.value" class="w-full text-center outline-none bg-transparent"></td>`).join('')}
+                        <td class="w-8 border-b border-slate-100 text-center"><button onclick="tableEditor.removeRow(${ri})" class="text-rose-300 hover:text-rose-500">×</button></td>
+                    </tr>`).join('');
             },
-            addRow() { this.tempData.rows.push(new Array(this.tempData.headers.length).fill('...')); this.renderModal(); },
-            addCol() { this.tempData.headers.push('Nueva'); this.tempData.rows.forEach(r => r.push('...')); this.renderModal(); },
-            removeRow(i) { this.tempData.rows.splice(i, 1); this.renderModal(); },
-            removeCol(i) { this.tempData.headers.splice(i, 1); this.tempData.rows.forEach(r => r.splice(i, 1)); this.renderModal(); },
+            addRow() { this.temp.rows.push(new Array(this.temp.headers.length).fill('...')); this.draw(); },
+            addColumn() { 
+                this.temp.headers.push('Nuevo'); 
+                this.temp.rows.forEach(r => r.push('...'));
+                this.draw(); 
+            },
+            removeRow(ri) { this.temp.rows.splice(ri, 1); this.draw(); },
+            removeColumn(ci) {
+                if(this.temp.headers.length <= 1) return;
+                this.temp.headers.splice(ci, 1);
+                this.temp.rows.forEach(r => r.splice(ci, 1));
+                this.draw();
+            },
             save() {
-                const s = findById(sections, currentEditingTable.sId);
-                const b = s.blocks.find(bl => bl.id === currentEditingTable.bId);
-                b.data = this.tempData;
-                closeModal('tableModal');
-                render();
+                findById(sections, currentEditingTable.sId).blocks.find(x => x.id === currentEditingTable.bId).data = this.temp;
+                closeModal('tableModal'); render();
             }
         };
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        document.getElementById('addMainSectionNav').onclick = () => addSection();
-        document.getElementById('addMainSectionBottom').onclick = () => addSection();
 
-        document.getElementById('generatePdf').onclick = async () => {
-            const doc = new jsPDF();
+        async function generateDocument(mode = 'download') {
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             const margin = 25;
+            const projectHeader = document.getElementById('projectName').value || "REPORTE TÉCNICO";
+            const safeBottomLimit = pageHeight - 25;
             
-            let flatItems = [];
+            let photoCounterGlobal = 1;
+            let tableCounterGlobal = 1;
+
+            const addHeader = (d, pNum) => {
+                d.setFont("helvetica", "normal"); 
+                d.setFontSize(8); 
+                d.setTextColor(160, 160, 160); // Asegurar color sólido
+                d.text(projectHeader.toUpperCase(), margin, 12);
+                d.text(`PÁGINA ${pNum}`, pageWidth - margin, 12, { align: 'right' });
+                d.setDrawColor(245, 245, 245); 
+                d.line(margin, 14, pageWidth - margin, 14);
+                // Resetear estado para evitar que afecte al contenido
+                d.setTextColor(71, 85, 105);
+            };
+
+            // Algoritmo de Justificación Manual para evitar errores visuales
+            const drawJustifiedText = (targetDoc, text, x, y, width) => {
+                const words = text.split(/\s+/);
+                if (words.length <= 1) {
+                    targetDoc.text(text, x, y);
+                    return;
+                }
+                const totalWordsWidth = words.reduce((acc, word) => acc + targetDoc.getTextWidth(word), 0);
+                const totalSpaceWidth = width - totalWordsWidth;
+                const spaceBetween = totalSpaceWidth / (words.length - 1);
+                
+                let currentX = x;
+                words.forEach((word, index) => {
+                    targetDoc.text(word, currentX, y);
+                    currentX += targetDoc.getTextWidth(word) + spaceBetween;
+                });
+            };
+
+            const flat = [];
             const flatten = (list, prefix = '') => {
                 list.forEach((s, i) => {
                     const num = prefix + (i + 1);
-                    flatItems.push({ ...s, number: num });
+                    flat.push({ ...s, number: num, page: 0 });
                     flatten(s.children, num + '.');
                 });
             };
             flatten(sections);
 
-            // Portada
-            if (companyLogo) doc.addImage(companyLogo, 'PNG', margin, 20, 30, 30);
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(11);
-            doc.setTextColor(148, 163, 184);
-            doc.text(document.getElementById('projectName').value.toUpperCase(), margin, 90);
-            
-            doc.setFontSize(26);
-            doc.setTextColor(30, 41, 59);
-            // Calculamos líneas para el título para ajustar el Y de lo siguiente
-            const titleLines = doc.splitTextToSize(document.getElementById('reportTitle').value.toUpperCase(), pageWidth - 50);
-            doc.text(titleLines, margin, 105);
-            
-            const nextY = 105 + (titleLines.length * 12);
-            doc.setFontSize(14);
-            doc.setTextColor(79, 70, 229);
-            doc.text(document.getElementById('companyName').value, margin, nextY);
-            
-            doc.setTextColor(100, 116, 139);
-            doc.setFontSize(10);
-            doc.text(`Autor: ${document.getElementById('reportAuthor').value}`, margin, 230);
-            doc.text(`Ubicación: ${document.getElementById('reportLocation').value}`, margin, 238);
-            doc.text(`Fecha: ${document.getElementById('reportDate').value}`, margin, 246);
+            const renderContent = (targetDoc, isMeasuring = false, pageOffset = 0) => {
+                let currentY = 30;
+                let first = true;
+                if(!isMeasuring) {
+                    photoCounterGlobal = 1;
+                    tableCounterGlobal = 1;
+                }
 
-            // Indice
+                flat.forEach((item, idx) => {
+                    if (!first && (item.level === 1 || item.forcePageBreak)) {
+                        targetDoc.addPage();
+                        if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
+                        currentY = 30;
+                    }
+                    if (first) {
+                        targetDoc.addPage(); 
+                        if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
+                        first = false;
+                    }
+
+                    if (isMeasuring) {
+                        item.page = targetDoc.internal.getNumberOfPages() + pageOffset;
+                    }
+
+                    if (currentY > safeBottomLimit - 10) {
+                        targetDoc.addPage();
+                        if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
+                        currentY = 30;
+                    }
+
+                    targetDoc.setFontSize(item.level === 1 ? 16 : 13);
+                    targetDoc.setFont("helvetica", "bold");
+                    targetDoc.setTextColor(79, 70, 229); // #4f46e5
+                    targetDoc.text(`${item.number} ${item.title}`, margin, currentY);
+                    currentY += 10;
+
+                    item.blocks.forEach(b => {
+                        if (b.type === 'text') {
+                            targetDoc.setFont("helvetica", "normal"); 
+                            targetDoc.setFontSize(10); 
+                            targetDoc.setTextColor(71, 85, 105); // #475569 - Consistente
+                            
+                            const textToRender = b.data.content || "Sin contenido.";
+                            const lines = targetDoc.splitTextToSize(textToRender, pageWidth - (margin * 2));
+                            
+                            lines.forEach((line, lineIdx) => {
+                                if (currentY > safeBottomLimit) {
+                                    targetDoc.addPage();
+                                    if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
+                                    // RE-APLICAR ESTILOS tras cambio de página para evitar "cambio de forma"
+                                    targetDoc.setFont("helvetica", "normal"); 
+                                    targetDoc.setFontSize(10); 
+                                    targetDoc.setTextColor(71, 85, 105);
+                                    currentY = 30;
+                                }
+
+                                // Si es la última línea del párrafo, no se justifica (alineación izquierda natural)
+                                if (lineIdx === lines.length - 1) {
+                                    targetDoc.text(line, margin, currentY);
+                                } else {
+                                    drawJustifiedText(targetDoc, line, margin, currentY, pageWidth - (margin * 2));
+                                }
+                                currentY += 5.5; 
+                            });
+                            currentY += 4;
+                        }
+                        
+                        if (b.type === 'table') {
+                            if (currentY > safeBottomLimit - 20) {
+                                targetDoc.addPage();
+                                if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
+                                currentY = 30;
+                            }
+                            targetDoc.setFontSize(8); 
+                            targetDoc.setFont("helvetica", "bold"); 
+                            targetDoc.setTextColor(100, 100, 100);
+                            const tableTitle = `Tabla ${tableCounterGlobal}. ${b.data.caption || "Ingresa título..."}`;
+                            const titleLines = targetDoc.splitTextToSize(tableTitle, pageWidth - (margin * 2));
+                            targetDoc.text(titleLines, margin, currentY);
+                            currentY += (titleLines.length * 4) + 2;
+
+                            targetDoc.autoTable({
+                                startY: currentY, 
+                                head: [b.data.headers], 
+                                body: b.data.rows,
+                                margin: { left: margin, right: margin, bottom: 25 }, 
+                                styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak' },
+                                headStyles: { fillColor: [79, 70, 229], fontStyle: 'bold' },
+                                didDrawPage: (data) => { if(!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages()); }
+                            });
+                            currentY = targetDoc.lastAutoTable.finalY + 10;
+                            if(!isMeasuring) tableCounterGlobal++;
+                        }
+                        
+                        if (b.type === 'image' && b.data.images.length > 0) {
+                            const count = b.data.images.length;
+                            const totalWidth = pageWidth - (margin * 2);
+                            const gap = 5;
+                            const singleWidth = (totalWidth - (gap * (count - 1))) / count;
+                            const galleryMaxH = 65; 
+                            let effectiveMaxH = 0;
+
+                            const drawImages = b.data.images.map(img => {
+                                let w = singleWidth;
+                                let h = singleWidth / img.ratio;
+                                if (h > galleryMaxH) { h = galleryMaxH; w = h * img.ratio; }
+                                if (h > effectiveMaxH) effectiveMaxH = h;
+                                return { ...img, drawW: w, drawH: h };
+                            });
+
+                            if (currentY + effectiveMaxH > safeBottomLimit - 10) {
+                                targetDoc.addPage();
+                                if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
+                                currentY = 30;
+                            }
+
+                            drawImages.forEach((img, i) => {
+                                const containerCenterX = margin + (i * (singleWidth + gap)) + (singleWidth / 2);
+                                const x = containerCenterX - (img.drawW / 2);
+                                const yOffset = (effectiveMaxH - img.drawH) / 2;
+                                try { targetDoc.addImage(img.src, 'JPEG', x, currentY + yOffset, img.drawW, img.drawH); } catch(err) {}
+                            });
+
+                            currentY += effectiveMaxH + 4;
+                            const fullCaption = `Fotografía ${photoCounterGlobal}. ${b.data.caption || "Ingresa título..."}`;
+                            targetDoc.setFontSize(8); targetDoc.setFont("helvetica", "italic"); targetDoc.setTextColor(150, 150, 150);
+                            const captionLines = targetDoc.splitTextToSize(fullCaption, totalWidth);
+                            targetDoc.text(captionLines, pageWidth / 2, currentY, { align: 'center' });
+                            currentY += (captionLines.length * 4) + 6;
+                            if(!isMeasuring) photoCounterGlobal++;
+                        }
+                    });
+                });
+            };
+
+            const itemsPerIdxPage = 35; 
+            const indexPagesCount = Math.ceil(flat.length / itemsPerIdxPage) || 1;
+            const measureDoc = new jsPDF();
+            renderContent(measureDoc, true, 1 + indexPagesCount - 1); 
+
+            // PORTADA
+            if (companyLogo) try { doc.addImage(companyLogo, 'PNG', margin, 20, 25, 25); } catch(e){}
+            doc.setFontSize(26); doc.setFont("helvetica", "bold"); doc.setTextColor(30, 41, 59);
+            doc.text(document.getElementById('reportTitle').value.toUpperCase(), margin, 100);
+            doc.setFontSize(10); doc.setTextColor(79, 70, 229);
+            doc.text(projectHeader.toUpperCase(), margin, 90);
+            
+            let cy = 230;
+            const df = (l, v) => { 
+                doc.setFont("helvetica", "bold"); doc.setTextColor(148, 163, 184); 
+                doc.text(`${l.toUpperCase()}:`, margin, cy); 
+                doc.setFont("helvetica", "normal"); doc.setTextColor(30, 41, 59); 
+                doc.text(v, margin+35, cy); cy+=7; 
+            };
+            df("Autor", document.getElementById('reportAuthor').value);
+            df("Fecha", document.getElementById('reportDate').value);
+            coverExtraFields.forEach(f => df(f.label, f.value));
+
+            // ÍNDICE
             doc.addPage();
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(20);
-            doc.setTextColor(30, 41, 59);
-            doc.text("ÍNDICE", margin, 30);
-            let idxY = 50;
-            flatItems.forEach((item, idx) => {
-                doc.setFontSize(10);
-                doc.setTextColor(79, 70, 229);
-                const label = `${item.number} ${item.title}`;
-                doc.text(label, margin + (item.level - 1) * 7, idxY);
-                idxY += 7;
-                if(idxY > 270) { doc.addPage(); idxY = 30; }
+            addHeader(doc, 2);
+            doc.setFontSize(18); doc.setTextColor(30, 41, 59); doc.text("ÍNDICE", margin, 30);
+            let iy = 45;
+            flat.forEach((item) => {
+                if (iy > 270) { doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); iy = 30; }
+                const ind = (item.level-1)*6;
+                doc.setFontSize(9); doc.setTextColor(79, 70, 229);
+                doc.text(`${item.number} ${item.title}`, margin + ind, iy);
+                doc.setTextColor(148, 163, 184);
+                doc.text(item.page.toString(), pageWidth - margin, iy, { align: 'right' });
+                doc.link(margin + ind, iy - 4, pageWidth - (margin * 2), 6, { pageNumber: item.page });
+                iy += 7;
             });
 
-            // Contenido
-            let currentY = 30;
-            let firstContentPage = true;
+            // CONTENIDO FINAL
+            renderContent(doc, false);
 
-            for (const item of flatItems) {
-                // Saltamos página si: 
-                // 1. Es una sección principal (y no es el primer item del contenido)
-                // 2. El usuario forzó el salto manualmente
-                if ((item.level === 1 && !firstContentPage) || item.forcePageBreak) {
-                    doc.addPage();
-                    currentY = 30;
-                }
-                
-                if(firstContentPage) {
-                    doc.addPage();
-                    firstContentPage = false;
-                    currentY = 30;
-                }
-
-                // Controlar que el título de sección no quede al final de la página solo
-                if (currentY > pageHeight - 40) {
-                    doc.addPage();
-                    currentY = 30;
-                }
-
-                doc.setFontSize(item.level === 1 ? 18 : 14);
-                doc.setFont("helvetica", "bold");
-                doc.setTextColor(item.level === 1 ? "#4f46e5" : "#1e293b");
-                doc.text(`${item.number} ${item.title}`, margin, currentY);
-                currentY += 12;
-
-                for (const block of item.blocks) {
-                    if (currentY > pageHeight - 30) { doc.addPage(); currentY = 30; }
-
-                    if (block.type === 'text') {
-                        doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(71, 85, 105);
-                        const lines = doc.splitTextToSize(block.data.content || "(Vacío)", pageWidth - (margin * 2));
-                        doc.text(lines, margin, currentY);
-                        currentY += (lines.length * 5) + 8;
-                    }
-
-                    if (block.type === 'table') {
-                        doc.autoTable({
-                            startY: currentY,
-                            head: [block.data.headers],
-                            body: block.data.rows,
-                            margin: { left: margin },
-                            styles: { fontSize: 9 },
-                            headStyles: { fillColor: [79, 70, 229] }
-                        });
-                        currentY = doc.lastAutoTable.finalY + 10;
-                    }
-
-                    if (block.type === 'figure' && block.data.images.length > 0) {
-                        const count = block.data.images.length;
-                        const gap = 5;
-                        const totalWidth = pageWidth - (margin * 2);
-                        const slotWidth = (totalWidth - (gap * (count - 1))) / count;
-                        
-                        let maxHeightInRow = 0;
-                        const imagesToDraw = [];
-
-                        for (let imgData of block.data.images) {
-                            try {
-                                const imgProps = doc.getImageProperties(imgData);
-                                const ratio = imgProps.height / imgProps.width;
-                                const h = slotWidth * ratio;
-                                imagesToDraw.push({ data: imgData, h: h, w: slotWidth });
-                                if (h > maxHeightInRow) maxHeightInRow = h;
-                            } catch(e) { console.error("Error cargando imagen", e); }
-                        }
-
-                        if (maxHeightInRow > 70) {
-                            const scale = 70 / maxHeightInRow;
-                            imagesToDraw.forEach(it => { it.h *= scale; it.w *= scale; });
-                            maxHeightInRow = 70;
-                        }
-
-                        if (currentY + maxHeightInRow > pageHeight - 30) { doc.addPage(); currentY = 30; }
-
-                        imagesToDraw.forEach((imgObj, i) => {
-                            const xPos = margin + (i * (slotWidth + gap));
-                            const yOffset = (maxHeightInRow - imgObj.h) / 2;
-                            doc.addImage(imgObj.data, 'JPEG', xPos, currentY + yOffset, imgObj.w, imgObj.h);
-                        });
-
-                        currentY += maxHeightInRow + 6;
-                        doc.setFontSize(8); doc.setFont("helvetica", "italic"); doc.setTextColor(148, 163, 184);
-                        doc.text(`Figura ${item.number}: ${block.data.caption}`, pageWidth/2, currentY, { align: 'center' });
-                        currentY += 12;
-                    }
-                }
-                currentY += 5; // Pequeño espacio entre secciones
+            if (mode === 'download') { 
+                doc.save(`${projectHeader.replace(/\s+/g, '_')}_Informe.pdf`); 
+                document.getElementById('modal').style.display='flex'; 
+            } else {
+                return doc.output('bloburl');
             }
+        }
 
-            doc.save(`Reporte_${Date.now()}.pdf`);
-            document.getElementById('modal').style.display = 'flex';
-        };
+        async function updatePreview() {
+            const pre = document.getElementById('previewPlaceholder');
+            const ifr = document.getElementById('pdfIframe');
+            pre.innerHTML = `<div class="flex flex-col items-center gap-3"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div><p class="text-xs font-bold text-slate-400">GENERANDO VISTA PREVIA...</p></div>`;
+            try { 
+                const url = await generateDocument('preview'); 
+                ifr.src = url; 
+                ifr.classList.remove('hidden'); 
+                pre.classList.add('hidden'); 
+            } catch(e) { 
+                pre.innerHTML = "Error al generar la vista previa."; 
+            }
+        }
     </script>
 </body>
 </html>

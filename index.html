@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         .indent-1 { margin-left: 0; }
         .indent-2 { margin-left: 1.5rem; border-left: 2px solid #f1f5f9; padding-left: 1rem; }
@@ -33,6 +34,15 @@
             min-height: 80px;
             overflow: auto;
         }
+
+        /* AI styles */
+        .ai-version-nav { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #6366f1; }
+        .ai-version-btn { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #c7d2fe; display: flex; align-items: center; justify-content: center; cursor: pointer; background: white; color: #6366f1; transition: all .15s; }
+        .ai-version-btn:hover { background: #eef2ff; }
+        .ai-version-btn:disabled { opacity: 0.3; cursor: default; }
+        .ai-thinking { animation: pulse 1.4s ease-in-out infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .ai-badge { background: linear-gradient(135deg,#6366f1,#8b5cf6); color:white; border-radius:8px; font-size:9px; font-weight:800; padding:2px 7px; letter-spacing:.05em; text-transform:uppercase; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
@@ -52,6 +62,13 @@
                 <button onclick="exportTxt()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-5 py-2 rounded-xl font-medium transition-all text-sm flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Exportar
+                </button>
+                <button onclick="document.getElementById('cfSettingsModal').style.display='flex'" title="Configurar IA" class="bg-slate-100 hover:bg-slate-200 text-slate-500 w-10 h-10 rounded-xl flex items-center justify-center transition-all" id="cfSettingsNavBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+                </button>
+                <button onclick="openAiGenerateModal()" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90 text-white px-5 py-2 rounded-xl font-bold transition-all text-sm flex items-center gap-2 shadow-lg shadow-indigo-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                    Generar con IA
                 </button>
                 <button onclick="updatePreview()" class="bg-slate-800 hover:bg-black text-white px-5 py-2 rounded-xl font-medium transition-all text-sm">
                     Actualizar Vista Previa
@@ -87,6 +104,34 @@
 
             <div id="sectionsContainer" class="space-y-4 nested-sortable" data-level="1"></div>
             <button id="addMainSectionBottom" class="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 font-bold hover:border-indigo-300 hover:text-indigo-500 transition-all uppercase text-sm">+ Nueva Sección Principal</button>
+
+            <!-- ANEXOS -->
+            <div class="mt-6 space-y-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Anexos Especiales</span>
+                    <div class="flex-1 border-t border-slate-100"></div>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="openAnnexModal('nc')" class="flex-1 flex items-center gap-3 bg-white border border-amber-200 hover:border-amber-400 rounded-2xl p-4 text-left transition-all group shadow-sm">
+                        <div class="w-9 h-9 rounded-xl bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center transition-colors">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-amber-700">No Conformidades</p>
+                            <p id="ncCount" class="text-[10px] text-slate-400">0 registros</p>
+                        </div>
+                    </button>
+                    <button onclick="openAnnexModal('af')" class="flex-1 flex items-center gap-3 bg-white border border-sky-200 hover:border-sky-400 rounded-2xl p-4 text-left transition-all group shadow-sm">
+                        <div class="w-9 h-9 rounded-xl bg-sky-100 group-hover:bg-sky-200 flex items-center justify-center transition-colors">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-sky-700">Anexo Fotográfico</p>
+                            <p id="afCount" class="text-[10px] text-slate-400">0 fotografías</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="hidden lg:block">
@@ -133,12 +178,196 @@
         </div>
     </div>
 
+    <!-- CF Settings Modal -->
+    <div id="cfSettingsModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-[120] backdrop-blur-sm p-4">
+        <div class="bg-white p-8 rounded-3xl max-w-md w-full shadow-2xl flex flex-col gap-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-orange-500 flex items-center justify-center text-white font-black text-sm">CF</div>
+                    <div>
+                        <h3 class="text-lg font-bold">Configuración de IA</h3>
+                        <p class="text-xs text-slate-400">Cloudflare Workers AI</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('cfSettingsModal').style.display='none'" class="text-slate-300 hover:text-slate-600 text-xl font-bold transition-colors">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Account ID</label>
+                    <input type="text" id="cfAccountId" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-400 transition-all font-mono">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">API Token</label>
+                    <input type="password" id="cfApiToken" placeholder="••••••••••••••••••••••••••••••••" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-400 transition-all font-mono">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Modelo</label>
+                    <input type="text" id="cfModel" placeholder="@cf/meta/llama-3.1-8b-instruct" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-400 transition-all font-mono">
+                    <p class="text-[10px] text-slate-400 mt-1">Ej: @cf/meta/llama-3.3-70b-instruct-fp8-fast</p>
+                </div>
+                <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 text-[11px] text-amber-700">
+                    <strong>Requiere proxy CORS.</strong> Activa el proxy en 
+                    <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank" class="underline font-bold">cors-anywhere.herokuapp.com/corsdemo</a> antes de usar la IA.
+                </div>
+            </div>
+            <div id="cfSaveStatus" class="hidden text-xs font-bold text-green-500 text-center">✓ Configuración guardada</div>
+            <div class="flex gap-3 justify-end pt-1">
+                <button onclick="document.getElementById('cfSettingsModal').style.display='none'" class="px-5 py-2.5 text-slate-400 font-bold text-sm rounded-xl hover:bg-slate-50">Cancelar</button>
+                <button onclick="saveCfSettings()" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md shadow-orange-100">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Generate Modal -->
+    <div id="chartModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-[100] backdrop-blur-sm p-4">
+        <div class="bg-white p-6 rounded-3xl max-w-3xl w-full shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold flex items-center gap-2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    Editor de Gráfico
+                </h3>
+                <button onclick="closeModal('chartModal')" class="text-slate-300 hover:text-slate-600 text-xl font-bold">✕</button>
+            </div>
+            <div class="flex gap-4 mb-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Tipo</label>
+                    <select id="chartTypeSelect" class="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400">
+                        <option value="bar">Barras</option>
+                        <option value="line">Líneas</option>
+                        <option value="pie">Pastel</option>
+                        <option value="doughnut">Dona</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Etiquetas (separadas por coma)</label>
+                    <input type="text" id="chartLabels" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400" placeholder="Ene, Feb, Mar, Abr">
+                </div>
+            </div>
+            <div class="mb-3 flex items-center justify-between">
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Series de datos</label>
+                <button onclick="chartEditor.addDataset()" class="text-[10px] font-bold text-purple-500 hover:text-purple-700 uppercase">+ Añadir serie</button>
+            </div>
+            <div id="chartDatasetsContainer" class="space-y-2 overflow-y-auto flex-1 mb-4"></div>
+            <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4">
+                <p class="text-[10px] font-bold text-amber-700 uppercase mb-1">Importar datos desde TXT</p>
+                <p class="text-[10px] text-amber-600 mb-2">Formato: una fila por serie. Primera línea = etiquetas. Ej:<br><code>Mes,Ene,Feb,Mar<br>Producción,10,20,15</code></p>
+                <div class="flex gap-2">
+                    <textarea id="chartTxtImport" rows="3" class="flex-1 border border-amber-200 rounded-xl px-3 py-2 text-xs font-mono outline-none resize-none" placeholder="Pega los datos CSV aquí..."></textarea>
+                    <button onclick="chartEditor.importFromTxt()" class="bg-amber-500 text-white px-4 rounded-xl text-xs font-bold hover:bg-amber-600 transition-colors">Importar</button>
+                </div>
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeModal('chartModal')" class="px-5 py-2.5 text-slate-400 font-bold text-sm rounded-xl hover:bg-slate-50">Cancelar</button>
+                <button onclick="chartEditor.save()" class="bg-purple-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-purple-700 transition-all shadow-md">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Annex Modal (shared for NC and AF) -->
+    <div id="annexModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-[100] backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl max-w-4xl w-full shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="annexModalTitle" class="text-lg font-bold">Anexo</h3>
+                <button onclick="closeModal('annexModal')" class="text-slate-300 hover:text-slate-600 text-xl font-bold">✕</button>
+            </div>
+            <div class="flex flex-1 overflow-hidden">
+                <!-- List -->
+                <div class="w-72 border-r border-slate-100 flex flex-col">
+                    <div class="p-4 border-b border-slate-50">
+                        <button onclick="addAnnexItem()" class="w-full bg-indigo-600 text-white py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors">+ Agregar</button>
+                    </div>
+                    <div id="annexList" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                </div>
+                <!-- Form -->
+                <div id="annexForm" class="flex-1 p-6 overflow-y-auto">
+                    <p class="text-slate-400 text-sm text-center mt-8">Selecciona o crea un item</p>
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('annexModal')" class="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md text-sm">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiGenerateModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-[110] backdrop-blur-sm p-4">
+        <div class="bg-white p-8 rounded-3xl max-w-lg w-full shadow-2xl flex flex-col gap-5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold">Generar Informe con IA</h3>
+                    <p class="text-xs text-slate-400">La IA tomará el TXT cargado y reformulará todos los textos</p>
+                </div>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Instrucciones para la IA</label>
+                <textarea id="aiGeneratePrompt" rows="4" placeholder="Ej: Redacta los textos de forma más técnica y formal, con vocabulario de ingeniería eléctrica..." class="w-full border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-400 text-sm resize-none"></textarea>
+            </div>
+            <div id="aiGenerateStatus" class="hidden text-xs text-indigo-500 font-bold flex items-center gap-2">
+                <svg class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                <span id="aiGenerateStatusText">Procesando...</span>
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button onclick="document.getElementById('aiGenerateModal').style.display='none'" class="px-5 py-2.5 text-slate-400 font-bold text-sm rounded-xl hover:bg-slate-50">Cancelar</button>
+                <button id="aiGenerateBtn" onclick="runAiGenerate()" class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-indigo-100">
+                    Generar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Regenerate Section Modal -->
+    <div id="aiRegenerateModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-[110] backdrop-blur-sm p-4">
+        <div class="bg-white p-8 rounded-3xl max-w-lg w-full shadow-2xl flex flex-col gap-5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold">Regenerar con IA</h3>
+                    <p class="text-xs text-slate-400" id="aiRegenerateSubtitle">Sección seleccionada</p>
+                </div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-4 text-sm text-slate-600 max-h-32 overflow-y-auto border border-slate-100">
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Texto actual</p>
+                <p id="aiRegenerateCurrentText" class="text-sm leading-relaxed"></p>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Instrucciones adicionales (opcional)</label>
+                <textarea id="aiRegeneratePrompt" rows="3" placeholder="Ej: Hazlo más conciso, añade datos técnicos, cambia el tono a formal..." class="w-full border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-400 text-sm resize-none"></textarea>
+            </div>
+            <div id="aiRegenerateStatus" class="hidden text-xs text-indigo-500 font-bold flex items-center gap-2">
+                <svg class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                Generando nueva versión...
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button onclick="document.getElementById('aiRegenerateModal').style.display='none'" class="px-5 py-2.5 text-slate-400 font-bold text-sm rounded-xl hover:bg-slate-50">Cancelar</button>
+                <button id="aiRegenerateBtn" onclick="runAiRegenerate()" class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-indigo-100">
+                    Generar versión
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const { jsPDF } = window.jspdf;
         let sections = [];
         let companyLogo = null;
         let currentEditingTable = null;
         let coverExtraFields = [];
+
+        // ─── AI STATE ────────────────────────────────────────────────────────────
+        // blockVersions: { [blockId]: { versions: string[], current: number } }
+        const blockVersions = {};
+        let aiRegenerateTarget = null; // { sId, bId }
+        let lastImportedTxt = ''; // keep the raw txt for AI context
+
+        // ─── ANNEXES STATE ───────────────────────────────────────────────────────
+        let annexNoConformidades = []; // [{id, foto, fecha, descripcion}]
+        let annexFotografico = [];     // [{id, foto, descripcion, fecha}]
+        let editingAnnexType = null;
+        let editingAnnexId = null;
 
         window.onload = () => {
             document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
@@ -262,7 +491,7 @@
                     const blocksHtml = s.blocks.map(b => {
                         const html = renderBlock(s.id, b, photoCounter, tableCounter);
                         if(b.type === 'image') photoCounter++;
-                        if(b.type === 'table') tableCounter++;
+                        if(b.type === 'table' || b.type === 'chart') tableCounter++;
                         return html;
                     }).join('');
 
@@ -293,6 +522,9 @@
                                 <button onclick="addBlock('${s.id}', 'image')" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-500 transition-colors flex items-center gap-1">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> Galería
                                 </button>
+                                <button onclick="addBlock('${s.id}', 'chart')" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-purple-500 transition-colors flex items-center gap-1">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Gráfico
+                                </button>
                             </div>
                             <div class="nested-sortable space-y-4 mt-2" data-level="${s.level + 1}"></div>
                         </div>`;
@@ -309,17 +541,38 @@
                 <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2" cy="2" r="1.5"/><circle cx="2" cy="6" r="1.5"/><circle cx="2" cy="10" r="1.5"/><circle cx="2" cy="14" r="1.5"/><circle cx="8" cy="2" r="1.5"/><circle cx="8" cy="6" r="1.5"/><circle cx="8" cy="10" r="1.5"/><circle cx="8" cy="14" r="1.5"/></svg>
             </div>`;
 
-            if (b.type === 'text') return `
+            if (b.type === 'text') {
+                const vs = blockVersions[b.id];
+                const hasVersions = vs && vs.versions.length > 1;
+                const versionLabel = vs ? `${vs.current + 1}/${vs.versions.length}` : '1/1';
+                return `
                 <div data-block-id="${b.id}" class="group relative bg-slate-50 p-4 rounded-2xl border border-transparent hover:border-slate-200 transition-all">
                     ${handle}
-                    <textarea oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.content=this.value" 
-                        class="w-full bg-transparent text-sm outline-none resizable-textarea" 
+                    <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold">×</button>
+                    <textarea id="ta_${b.id}" oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.content=this.value;syncVersionText('${b.id}',this.value)" 
+                        class="w-full bg-transparent text-sm outline-none resizable-textarea pr-6" 
                         placeholder="Escribe aquí el contenido...">${b.data.content}</textarea>
+                    <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <span class="ai-badge">IA</span>
+                            <button onclick="openAiRegenerateModal('${sId}','${b.id}')" class="text-[10px] font-bold text-indigo-500 hover:text-indigo-700 uppercase tracking-wide flex items-center gap-1 transition-colors">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                                Regenerar
+                            </button>
+                        </div>
+                        <div class="ai-version-nav">
+                            <button class="ai-version-btn" ${(!vs || vs.current === 0) ? 'disabled' : ''} onclick="changeVersion('${sId}','${b.id}',-1)">‹</button>
+                            <span id="vl_${b.id}" class="px-1">${versionLabel}</span>
+                            <button class="ai-version-btn" ${(!vs || vs.current === vs.versions.length - 1) ? 'disabled' : ''} onclick="changeVersion('${sId}','${b.id}',1)">›</button>
+                        </div>
+                    </div>
                 </div>`;
+            }
             
             if (b.type === 'table') return `
                 <div data-block-id="${b.id}" class="group relative bg-indigo-50/20 p-4 rounded-2xl border border-indigo-100 space-y-3">
                     ${handle}
+                    <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold">×</button>
                     <div class="flex gap-2 items-center bg-white p-2 rounded-xl border border-slate-100">
                         <span class="text-[10px] font-bold text-indigo-500 whitespace-nowrap">Tabla ${tableIndex}.</span>
                         <input type="text" placeholder="Ingresa titulo..." value="${b.data.caption || ''}" oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.caption=this.value" class="w-full bg-transparent text-[10px] font-bold outline-none border-none p-0">
@@ -341,6 +594,7 @@
                 return `
                 <div data-block-id="${b.id}" class="group relative bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200 space-y-4">
                     ${handle}
+                    <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold">×</button>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] font-bold text-slate-400 uppercase">Figuras (Máx 3)</span>
                         <div class="flex gap-2">
@@ -354,6 +608,47 @@
                     <div class="flex gap-2 items-center bg-white p-2 rounded-xl border border-slate-100">
                         <span class="text-[10px] font-bold text-indigo-500 whitespace-nowrap">Fotografía ${photoIndex}.</span>
                         <input type="text" placeholder="Ingresa titulo..." value="${b.data.caption || ''}" oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.caption=this.value" class="w-full bg-transparent text-[10px] italic outline-none border-none p-0">
+                    </div>
+                </div>`;
+            }
+
+            if (b.type === 'chart') {
+                const chartId = 'chart_' + b.id;
+                const dsLabels = b.data.datasets.map(d => `<span class="inline-flex items-center gap-1 text-[10px] font-bold" style="color:${d.color}"><span style="background:${d.color}" class="inline-block w-2 h-2 rounded-full"></span>${d.label}</span>`).join(' ');
+                // Render mini preview after paint using setTimeout
+                setTimeout(() => {
+                    const canvas = document.getElementById(chartId);
+                    if (!canvas) return;
+                    if (canvas._chartInstance) canvas._chartInstance.destroy();
+                    canvas._chartInstance = new Chart(canvas, {
+                        type: b.data.chartType || 'bar',
+                        data: {
+                            labels: b.data.labels,
+                            datasets: b.data.datasets.map(d => ({
+                                label: d.label,
+                                data: d.data,
+                                backgroundColor: d.color + 'cc',
+                                borderColor: d.color,
+                                borderWidth: 2,
+                                tension: 0.4,
+                                fill: b.data.chartType === 'line' ? false : undefined
+                            }))
+                        },
+                        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: b.data.datasets.length > 1 } } }
+                    });
+                }, 50);
+                return `
+                <div data-block-id="${b.id}" class="group relative bg-slate-50 p-4 rounded-2xl border border-purple-100 space-y-3">
+                    ${handle}
+                    <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold">×</button>
+                    <div class="flex gap-2 items-center bg-white p-2 rounded-xl border border-slate-100">
+                        <span class="text-[10px] font-bold text-purple-500 whitespace-nowrap">Gráfico ${tableIndex}.</span>
+                        <input type="text" placeholder="Título del gráfico..." value="${b.data.caption || ''}" oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.caption=this.value" class="w-full bg-transparent text-[10px] font-bold outline-none border-none p-0">
+                    </div>
+                    <canvas id="${chartId}" class="w-full rounded-xl bg-white p-2" style="max-height:200px"></canvas>
+                    <div class="flex items-center justify-between">
+                        <div class="flex gap-2 flex-wrap">${dsLabels}</div>
+                        <button onclick="chartEditor.open('${sId}','${b.id}')" class="text-xs font-bold bg-white text-purple-600 px-4 py-2 rounded-xl border shadow-sm hover:shadow-md transition-shadow">EDITAR DATOS</button>
                     </div>
                 </div>`;
             }
@@ -413,7 +708,14 @@
             if (type === 'text') data = { content: '' };
             if (type === 'table') data = { headers: ['Clave', 'Valor'], rows: [['...', '...']], caption: '' };
             if (type === 'image') data = { images: [], caption: '' };
+            if (type === 'chart') data = { caption: '', chartType: 'bar', labels: ['Ene','Feb','Mar'], datasets: [{ label: 'Serie 1', data: [10,20,15], color: '#6366f1' }] };
             s.blocks.push({ id: Math.random().toString(36).substr(2,9), type, data });
+            render();
+        }
+
+        function removeBlock(sId, bId) {
+            const s = findById(sections, sId);
+            s.blocks = s.blocks.filter(b => b.id !== bId);
             render();
         }
 
@@ -469,6 +771,176 @@
         };
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // ─── CHART EDITOR ─────────────────────────────────────────────────────────
+        let currentEditingChart = null;
+        const chartEditor = {
+            temp: null,
+            open(sId, bId) {
+                currentEditingChart = { sId, bId };
+                const b = findById(sections, sId).blocks.find(x => x.id === bId);
+                this.temp = JSON.parse(JSON.stringify(b.data));
+                document.getElementById('chartTypeSelect').value = this.temp.chartType || 'bar';
+                document.getElementById('chartLabels').value = this.temp.labels.join(', ');
+                document.getElementById('chartTxtImport').value = '';
+                this.drawDatasets();
+                document.getElementById('chartModal').style.display = 'flex';
+            },
+            drawDatasets() {
+                const c = document.getElementById('chartDatasetsContainer');
+                c.innerHTML = this.temp.datasets.map((d, i) => `
+                    <div class="flex items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <input type="color" value="${d.color}" oninput="chartEditor.temp.datasets[${i}].color=this.value;chartEditor.drawDatasets()" class="w-8 h-8 rounded-lg border-none cursor-pointer p-0">
+                        <input type="text" value="${d.label}" oninput="chartEditor.temp.datasets[${i}].label=this.value" placeholder="Nombre serie" class="w-32 border-b border-slate-200 text-sm outline-none bg-transparent font-bold">
+                        <input type="text" value="${d.data.join(', ')}" oninput="chartEditor.temp.datasets[${i}].data=this.value.split(',').map(x=>parseFloat(x.trim())||0)" placeholder="10, 20, 15" class="flex-1 border-b border-slate-200 text-sm outline-none bg-transparent font-mono">
+                        ${this.temp.datasets.length > 1 ? `<button onclick="chartEditor.removeDataset(${i})" class="text-rose-300 hover:text-rose-500 font-bold">×</button>` : ''}
+                    </div>`).join('');
+            },
+            addDataset() {
+                const colors = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4'];
+                this.temp.datasets.push({ label: `Serie ${this.temp.datasets.length + 1}`, data: this.temp.labels.map(() => 0), color: colors[this.temp.datasets.length % colors.length] });
+                this.drawDatasets();
+            },
+            removeDataset(i) { this.temp.datasets.splice(i, 1); this.drawDatasets(); },
+            importFromTxt() {
+                const raw = document.getElementById('chartTxtImport').value.trim();
+                if (!raw) return;
+                const rows = raw.split('\n').map(r => r.split(',').map(c => c.trim()));
+                if (rows.length < 1) return;
+                const firstRow = rows[0];
+                const isHeader = isNaN(parseFloat(firstRow[1]));
+                const colors = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4'];
+                if (isHeader) {
+                    this.temp.labels = firstRow.slice(1);
+                    this.temp.datasets = rows.slice(1).map((r, i) => ({ label: r[0], data: r.slice(1).map(x => parseFloat(x) || 0), color: colors[i % colors.length] }));
+                } else {
+                    this.temp.labels = firstRow;
+                    this.temp.datasets = rows.slice(1).map((r, i) => ({ label: `Serie ${i+1}`, data: r.map(x => parseFloat(x) || 0), color: colors[i % colors.length] }));
+                }
+                document.getElementById('chartLabels').value = this.temp.labels.join(', ');
+                this.drawDatasets();
+            },
+            save() {
+                this.temp.chartType = document.getElementById('chartTypeSelect').value;
+                this.temp.labels = document.getElementById('chartLabels').value.split(',').map(l => l.trim());
+                findById(sections, currentEditingChart.sId).blocks.find(x => x.id === currentEditingChart.bId).data = this.temp;
+                closeModal('chartModal'); render();
+            }
+        };
+
+        // ─── ANNEXES ─────────────────────────────────────────────────────────────
+        function updateAnnexCounts() {
+            const ncEl = document.getElementById('ncCount');
+            const afEl = document.getElementById('afCount');
+            if (ncEl) ncEl.textContent = `${annexNoConformidades.length} registro${annexNoConformidades.length !== 1 ? 's' : ''}`;
+            if (afEl) afEl.textContent = `${annexFotografico.length} fotografía${annexFotografico.length !== 1 ? 's' : ''}`;
+        }
+
+        function openAnnexModal(type) {
+            editingAnnexType = type;
+            editingAnnexId = null;
+            const modal = document.getElementById('annexModal');
+            document.getElementById('annexModalTitle').textContent = type === 'nc' ? '📋 No Conformidades' : '📷 Anexo Fotográfico';
+            renderAnnexList();
+            renderAnnexForm(null);
+            modal.style.display = 'flex';
+        }
+
+        function renderAnnexList() {
+            const list = document.getElementById('annexList');
+            const items = editingAnnexType === 'nc' ? annexNoConformidades : annexFotografico;
+            if (items.length === 0) {
+                list.innerHTML = `<p class="text-[11px] text-slate-400 text-center mt-4 px-2">Sin registros aún.<br>Haz clic en "+ Agregar".</p>`;
+                return;
+            }
+            list.innerHTML = items.map((item, i) => `
+                <div onclick="selectAnnexItem('${item.id}')" class="flex items-center gap-2 p-3 rounded-xl cursor-pointer transition-all ${editingAnnexId === item.id ? 'bg-indigo-50 border border-indigo-200' : 'hover:bg-slate-50 border border-transparent'}">
+                    <div class="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                        ${item.foto ? `<img src="${item.foto}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-slate-300 text-lg">📷</div>`}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-bold text-slate-700 truncate">${editingAnnexType === 'nc' ? (item.descripcion || 'Sin descripción') : (item.descripcion || 'Sin descripción')}</p>
+                        <p class="text-[10px] text-slate-400">${item.fecha || 'Sin fecha'}</p>
+                    </div>
+                    <button onclick="event.stopPropagation();removeAnnexItem('${item.id}')" class="text-rose-300 hover:text-rose-500 font-bold text-sm shrink-0">×</button>
+                </div>`).join('');
+        }
+
+        function selectAnnexItem(id) {
+            editingAnnexId = id;
+            const items = editingAnnexType === 'nc' ? annexNoConformidades : annexFotografico;
+            const item = items.find(x => x.id === id);
+            renderAnnexList();
+            renderAnnexForm(item);
+        }
+
+        function addAnnexItem() {
+            const id = Math.random().toString(36).substr(2, 9);
+            const newItem = { id, foto: '', fecha: new Date().toISOString().split('T')[0], descripcion: '' };
+            if (editingAnnexType === 'nc') annexNoConformidades.push(newItem);
+            else annexFotografico.push(newItem);
+            editingAnnexId = id;
+            renderAnnexList();
+            renderAnnexForm(newItem);
+            updateAnnexCounts();
+        }
+
+        function removeAnnexItem(id) {
+            if (editingAnnexType === 'nc') annexNoConformidades = annexNoConformidades.filter(x => x.id !== id);
+            else annexFotografico = annexFotografico.filter(x => x.id !== id);
+            if (editingAnnexId === id) { editingAnnexId = null; renderAnnexForm(null); }
+            renderAnnexList();
+            updateAnnexCounts();
+        }
+
+        function renderAnnexForm(item) {
+            const form = document.getElementById('annexForm');
+            if (!item) { form.innerHTML = `<p class="text-slate-400 text-sm text-center mt-8">Selecciona o crea un item</p>`; return; }
+            const isNC = editingAnnexType === 'nc';
+            form.innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">${isNC ? 'Fotografía de la No Conformidad' : 'Fotografía'}</label>
+                        <div class="w-full aspect-video bg-slate-50 rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 flex items-center justify-center relative group cursor-pointer" onclick="document.getElementById('annexImgInput_${item.id}').click()">
+                            ${item.foto ? `<img src="${item.foto}" class="w-full h-full object-cover">` : `<div class="flex flex-col items-center gap-2 text-slate-300"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg><p class="text-xs">Clic para subir foto</p></div>`}
+                            <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">Cambiar foto</div>
+                        </div>
+                        <input type="file" id="annexImgInput_${item.id}" class="hidden" accept="image/*" onchange="loadAnnexImage('${item.id}', this)">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">${isNC ? 'Fecha de Detección' : 'Fecha'}</label>
+                        <input type="date" value="${item.fecha}" oninput="updateAnnexField('${item.id}','fecha',this.value)" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400">
+                    </div>
+                    ${isNC ? `
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Descripción del Caso</label>
+                        <textarea rows="4" oninput="updateAnnexField('${item.id}','descripcion',this.value)" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400 resize-none" placeholder="Describe la no conformidad encontrada...">${item.descripcion}</textarea>
+                    </div>` : `
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Descripción</label>
+                        <textarea rows="3" oninput="updateAnnexField('${item.id}','descripcion',this.value)" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-400 resize-none" placeholder="Describe lo que muestra la fotografía...">${item.descripcion}</textarea>
+                    </div>`}
+                </div>`;
+        }
+
+        function updateAnnexField(id, field, value) {
+            const items = editingAnnexType === 'nc' ? annexNoConformidades : annexFotografico;
+            const item = items.find(x => x.id === id);
+            if (item) item[field] = value;
+        }
+
+        function loadAnnexImage(id, input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const processed = await normalizeImage(e.target.result);
+                const items = editingAnnexType === 'nc' ? annexNoConformidades : annexFotografico;
+                const item = items.find(x => x.id === id);
+                if (item) { item.foto = processed.src; renderAnnexList(); renderAnnexForm(item); updateAnnexCounts(); }
+            };
+            reader.readAsDataURL(file);
+        }
 
         async function generateDocument(mode = 'download') {
             const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
@@ -652,6 +1124,48 @@
                             currentY += (captionLines.length * 4) + 6;
                             if(!isMeasuring) photoCounterGlobal++;
                         }
+
+                        if (b.type === 'chart' && b.data.labels && b.data.datasets) {
+                            // Render chart to canvas offscreen, then add as image
+                            if (currentY > safeBottomLimit - 30) {
+                                targetDoc.addPage();
+                                if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
+                                currentY = 30;
+                            }
+                            const chartTitle = `Gráfico ${tableCounterGlobal}. ${b.data.caption || "Sin título"}`;
+                            targetDoc.setFontSize(8); targetDoc.setFont("helvetica", "bold"); targetDoc.setTextColor(100, 100, 100);
+                            targetDoc.text(chartTitle, margin, currentY);
+                            currentY += 6;
+
+                            if (!isMeasuring) {
+                                try {
+                                    const offCanvas = document.createElement('canvas');
+                                    offCanvas.width = 800; offCanvas.height = 400;
+                                    const offCtx = offCanvas.getContext('2d');
+                                    const offChart = new Chart(offCtx, {
+                                        type: b.data.chartType || 'bar',
+                                        data: {
+                                            labels: b.data.labels,
+                                            datasets: b.data.datasets.map(d => ({
+                                                label: d.label, data: d.data,
+                                                backgroundColor: d.color + 'cc', borderColor: d.color, borderWidth: 2, tension: 0.4
+                                            }))
+                                        },
+                                        options: { responsive: false, animation: false, plugins: { legend: { display: b.data.datasets.length > 1 } } }
+                                    });
+                                    const imgData = offCanvas.toDataURL('image/png');
+                                    offChart.destroy();
+                                    const chartH = 60;
+                                    const chartW = pageWidth - (margin * 2);
+                                    targetDoc.addImage(imgData, 'PNG', margin, currentY, chartW, chartH);
+                                    currentY += chartH + 6;
+                                    tableCounterGlobal++;
+                                } catch(e) { currentY += 6; }
+                            } else {
+                                currentY += 66;
+                                tableCounterGlobal++;
+                            }
+                        }
                     });
                 });
             };
@@ -698,6 +1212,62 @@
             // CONTENIDO FINAL
             renderContent(doc, false);
 
+            // ── ANEXO: NO CONFORMIDADES ──────────────────────────────────────────
+            if (annexNoConformidades.length > 0) {
+                doc.addPage();
+                addHeader(doc, doc.internal.getNumberOfPages());
+                let ay = 30;
+                doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(79, 70, 229);
+                doc.text("ANEXO: NO CONFORMIDADES", margin, ay); ay += 12;
+                annexNoConformidades.forEach((item, i) => {
+                    if (ay > safeBottomLimit - 80) { doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); ay = 30; }
+                    doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(217, 119, 6);
+                    doc.text(`NC-${String(i+1).padStart(3,'0')}`, margin, ay); ay += 6;
+                    doc.setFontSize(9); doc.setFont("helvetica", "bold"); doc.setTextColor(100,100,100);
+                    doc.text(`Fecha de detección: `, margin, ay);
+                    doc.setFont("helvetica", "normal"); doc.setTextColor(30,41,59);
+                    doc.text(item.fecha || '-', margin + 38, ay); ay += 6;
+                    doc.setFont("helvetica", "bold"); doc.setTextColor(100,100,100);
+                    doc.text("Descripción:", margin, ay); ay += 5;
+                    doc.setFont("helvetica", "normal"); doc.setTextColor(71,85,105);
+                    const descLines = doc.splitTextToSize(item.descripcion || '', pageWidth - margin - 70);
+                    if (item.foto) {
+                        // photo on right
+                        try { doc.addImage(item.foto, 'JPEG', pageWidth - margin - 60, ay - 5, 55, 40); } catch(e){}
+                    }
+                    descLines.forEach(dl => { doc.text(dl, margin, ay); ay += 5; });
+                    ay += 8;
+                    doc.setDrawColor(240,240,240); doc.line(margin, ay, pageWidth-margin, ay); ay += 6;
+                });
+            }
+
+            // ── ANEXO FOTOGRÁFICO ────────────────────────────────────────────────
+            if (annexFotografico.length > 0) {
+                doc.addPage();
+                addHeader(doc, doc.internal.getNumberOfPages());
+                let fy = 30;
+                doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(79, 70, 229);
+                doc.text("ANEXO FOTOGRÁFICO", margin, fy); fy += 12;
+                const totalW = pageWidth - margin * 2;
+                const imgW = (totalW - 8) / 2;
+                const imgH = imgW * 0.66;
+                let col = 0;
+                annexFotografico.forEach((item, i) => {
+                    const x = margin + col * (imgW + 8);
+                    if (fy + imgH + 20 > safeBottomLimit) { doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); fy = 30; col = 0; }
+                    try { if (item.foto) doc.addImage(item.foto, 'JPEG', x, fy, imgW, imgH); } catch(e){}
+                    doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(79,70,229);
+                    doc.text(`Foto ${i+1} — ${item.fecha || ''}`, x, fy + imgH + 4);
+                    if (item.descripcion) {
+                        doc.setFont("helvetica", "normal"); doc.setTextColor(71,85,105);
+                        const capLines = doc.splitTextToSize(item.descripcion, imgW);
+                        capLines.slice(0,2).forEach((cl,ci) => doc.text(cl, x, fy + imgH + 8 + ci*4));
+                    }
+                    col++;
+                    if (col >= 2) { col = 0; fy += imgH + 22; }
+                });
+            }
+
             if (mode === 'download') { 
                 doc.save(`${projectHeader.replace(/\s+/g, '_')}_Informe.pdf`); 
                 document.getElementById('modal').style.display='flex'; 
@@ -727,14 +1297,16 @@
             lines.push('</portada>');
             lines.push('');
 
-            // Recopilar tablas y fotografías con IDs para referencia
+            // Recopilar tablas, fotografías y gráficos con IDs para referencia
             const allTables = [];
             const allPhotos = [];
+            const allCharts = [];
             const gatherMedia = (list) => {
                 list.forEach(s => {
                     s.blocks.forEach(b => {
                         if (b.type === 'table') allTables.push({ id: `t${allTables.length + 1}`, block: b });
                         if (b.type === 'image') allPhotos.push({ id: `f${allPhotos.length + 1}`, block: b });
+                        if (b.type === 'chart') allCharts.push({ id: `g${allCharts.length + 1}`, block: b });
                     });
                     gatherMedia(s.children);
                 });
@@ -746,6 +1318,8 @@
             allTables.forEach(t => tableMap[t.block.id] = t.id);
             const photoMap = {};
             allPhotos.forEach(p => photoMap[p.block.id] = p.id);
+            const chartMap = {};
+            allCharts.forEach(g => chartMap[g.block.id] = g.id);
 
             // SECCIONES
             lines.push('//-------------------------------------------------');
@@ -761,6 +1335,8 @@
                         lines.push(`<id="${tableMap[b.id]}">`);
                     } else if (b.type === 'image') {
                         lines.push(`<id="${photoMap[b.id]}">`);
+                    } else if (b.type === 'chart') {
+                        lines.push(`<id="${chartMap[b.id]}">`);
                     }
                 });
                 s.children.forEach(child => writeSection(child, depth + 1));
@@ -796,6 +1372,55 @@
                     b.data.rows.forEach(row => lines.push(`  ${row.join(' | ')}`));
                     lines.push('</tabla>');
                 });
+                lines.push('');
+            }
+
+            // GRÁFICOS
+            if (allCharts.length > 0) {
+                lines.push('//-------------------------------------------------');
+                lines.push('// Gráficos');
+                lines.push('//-------------------------------------------------');
+                allCharts.forEach(g => {
+                    const b = g.block;
+                    lines.push(`<grafico id="${g.id}" nombre="${b.data.caption || ''}" tipo="${b.data.chartType || 'bar'}">`);
+                    lines.push(`  etiquetas: ${b.data.labels.join(' | ')}`);
+                    lines.push('  ---');
+                    b.data.datasets.forEach(ds => {
+                        lines.push(`  ${ds.label} | ${ds.color} | ${ds.data.join(' | ')}`);
+                    });
+                    lines.push('</grafico>');
+                });
+                lines.push('');
+            }
+
+            // NO CONFORMIDADES
+            if (annexNoConformidades.length > 0) {
+                lines.push('//-------------------------------------------------');
+                lines.push('// Anexo: No Conformidades');
+                lines.push('//-------------------------------------------------');
+                annexNoConformidades.forEach(item => {
+                    lines.push(`<no-conformidad id="${item.id}">`);
+                    lines.push(`  fecha: "${item.fecha}"`);
+                    lines.push(`  descripcion: "${item.descripcion.replace(/"/g, "'")}"`);
+                    if (item.foto) lines.push(`  foto: "${item.foto}"`);
+                    lines.push('</no-conformidad>');
+                });
+                lines.push('');
+            }
+
+            // ANEXO FOTOGRÁFICO
+            if (annexFotografico.length > 0) {
+                lines.push('//-------------------------------------------------');
+                lines.push('// Anexo: Fotográfico');
+                lines.push('//-------------------------------------------------');
+                annexFotografico.forEach(item => {
+                    lines.push(`<anexo-foto id="${item.id}">`);
+                    lines.push(`  fecha: "${item.fecha}"`);
+                    lines.push(`  descripcion: "${item.descripcion.replace(/"/g, "'")}"`);
+                    if (item.foto) lines.push(`  foto: "${item.foto}"`);
+                    lines.push('</anexo-foto>');
+                });
+                lines.push('');
             }
 
             const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
@@ -809,6 +1434,7 @@
 
         // ─── IMPORTAR TXT ────────────────────────────────────────────────────────
         function importTxt(text) {
+            lastImportedTxt = text; // guardar para contexto de IA
             // Quitar comentarios
             const clean = text.split('\n').filter(l => !l.trim().startsWith('//')).join('\n');
 
@@ -851,6 +1477,30 @@
                 });
                 renderCoverFields();
             }
+
+            // ── GRÁFICOS (diccionario id→data) ──
+            const chartDict = {};
+            getBlock('grafico', clean).forEach(g => {
+                const id = attr(g.attrs, 'id');
+                const nombre = attr(g.attrs, 'nombre');
+                const tipo = attr(g.attrs, 'tipo') || 'bar';
+                const lines2 = g.inner.split('\n').map(l=>l.trim()).filter(Boolean);
+                const labLine = lines2.find(l => l.startsWith('etiquetas:'));
+                const labels = labLine ? labLine.replace('etiquetas:','').trim().split('|').map(h=>h.trim()) : [];
+                const datasets = [];
+                let pastSep2 = false;
+                lines2.forEach(l => {
+                    if (l === '---') { pastSep2 = true; return; }
+                    if (pastSep2 && l) {
+                        const parts = l.split('|').map(p=>p.trim());
+                        const dsLabel = parts[0];
+                        const color = parts[1] || '#6366f1';
+                        const data = parts.slice(2).map(x => parseFloat(x) || 0);
+                        datasets.push({ label: dsLabel, color, data });
+                    }
+                });
+                chartDict[id] = { caption: nombre, chartType: tipo, labels, datasets };
+            });
 
             // ── TABLAS (diccionario id→data) ──
             const tableDict = {};
@@ -939,11 +1589,30 @@
                         currentSec.blocks.push({ id: Math.random().toString(36).substr(2,9), type: 'table', data: JSON.parse(JSON.stringify(tableDict[refId])) });
                     } else if (photoDict[refId]) {
                         currentSec.blocks.push({ id: Math.random().toString(36).substr(2,9), type: 'image', data: JSON.parse(JSON.stringify(photoDict[refId])) });
+                    } else if (chartDict[refId]) {
+                        currentSec.blocks.push({ id: Math.random().toString(36).substr(2,9), type: 'chart', data: JSON.parse(JSON.stringify(chartDict[refId])) });
                     }
                     return;
                 }
             });
 
+            // ── NO CONFORMIDADES ──
+            annexNoConformidades = [];
+            getBlock('no-conformidad', clean).forEach(nc => {
+                const id = attr(nc.attrs, 'id') || Math.random().toString(36).substr(2,9);
+                const getVal = (key) => { const m = nc.inner.match(new RegExp(`^\\s*${key}:\\s*"([^"]*)"`, 'm')); return m ? m[1] : ''; };
+                annexNoConformidades.push({ id, fecha: getVal('fecha'), descripcion: getVal('descripcion'), foto: getVal('foto') });
+            });
+
+            // ── ANEXO FOTOGRÁFICO ──
+            annexFotografico = [];
+            getBlock('anexo-foto', clean).forEach(af => {
+                const id = attr(af.attrs, 'id') || Math.random().toString(36).substr(2,9);
+                const getVal = (key) => { const m = af.inner.match(new RegExp(`^\\s*${key}:\\s*"([^"]*)"`, 'm')); return m ? m[1] : ''; };
+                annexFotografico.push({ id, fecha: getVal('fecha'), descripcion: getVal('descripcion'), foto: getVal('foto') });
+            });
+
+            updateAnnexCounts();
             render();
         }
 
@@ -972,6 +1641,268 @@
                 pre.classList.add('hidden'); 
             } catch(e) { 
                 pre.innerHTML = "Error al generar la vista previa."; 
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // IA — funciones principales
+        // ─────────────────────────────────────────────────────────────────────────
+
+        // ─── CLOUDFLARE SETTINGS ─────────────────────────────────────────────────
+        function saveCfSettings() {
+            localStorage.setItem('cf_account_id', document.getElementById('cfAccountId').value.trim());
+            localStorage.setItem('cf_api_token', document.getElementById('cfApiToken').value.trim());
+            localStorage.setItem('cf_model', document.getElementById('cfModel').value.trim());
+            const st = document.getElementById('cfSaveStatus');
+            st.classList.remove('hidden');
+            setTimeout(() => { st.classList.add('hidden'); document.getElementById('cfSettingsModal').style.display='none'; }, 1200);
+            updateCfNavBtn();
+        }
+
+        function loadCfSettings() {
+            const id = localStorage.getItem('cf_account_id') || '';
+            const token = localStorage.getItem('cf_api_token') || '';
+            const model = localStorage.getItem('cf_model') || '';
+            document.getElementById('cfAccountId').value = id;
+            document.getElementById('cfApiToken').value = token;
+            document.getElementById('cfModel').value = model;
+        }
+
+        function updateCfNavBtn() {
+            const configured = !!(localStorage.getItem('cf_account_id') && localStorage.getItem('cf_api_token'));
+            const btn = document.getElementById('cfSettingsNavBtn');
+            if (configured) {
+                btn.classList.remove('bg-slate-100','text-slate-500');
+                btn.classList.add('bg-orange-100','text-orange-600');
+            } else {
+                btn.classList.remove('bg-orange-100','text-orange-600');
+                btn.classList.add('bg-slate-100','text-slate-500');
+            }
+        }
+
+        // Inicializar al cargar
+        window.addEventListener('DOMContentLoaded', () => { loadCfSettings(); updateCfNavBtn(); });
+
+        // ─── LLAMADA A CLOUDFLARE AI ──────────────────────────────────────────────
+        async function callClaude(systemPrompt, userPrompt) {
+            const accountId = localStorage.getItem('cf_account_id');
+            const apiToken  = localStorage.getItem('cf_api_token');
+            const model     = localStorage.getItem('cf_model') || '@cf/meta/llama-3.1-8b-instruct';
+
+            if (!accountId || !apiToken) {
+                throw new Error('Configura el Account ID y API Token de Cloudflare (botón ⚙ en la barra).');
+            }
+
+            const proxyUrl = `https://cors-anywhere.herokuapp.com/https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`;
+
+            const payload = {
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user',   content: userPrompt }
+                ],
+                max_tokens: 4000
+            };
+
+            const response = await fetch(proxyUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiToken}`,
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.errors?.[0]?.message || `HTTP ${response.status}`);
+            }
+            return result.result?.response || '';
+        }
+
+        // Obtener todos los bloques de texto del informe actual como contexto
+        function getAllTextContext() {
+            const lines = [];
+            const walk = (list, prefix = '') => {
+                list.forEach((s, i) => {
+                    const num = prefix + (i + 1);
+                    lines.push(`[SECCIÓN ${num}: ${s.title}]`);
+                    s.blocks.forEach(b => {
+                        if (b.type === 'text') lines.push(b.data.content);
+                    });
+                    walk(s.children, num + '.');
+                });
+            };
+            walk(sections);
+            return lines.join('\n');
+        }
+
+        // Extraer solo los bloques de texto del txt original (para pasarle a la IA como base)
+        function extractTextBlocksFromTxt(txt) {
+            const clean = txt.split('\n').filter(l => !l.trim().startsWith('//')).join('\n');
+            const matches = [];
+            const re = /<t>([\s\S]*?)<\/t>/gi;
+            let m;
+            while ((m = re.exec(clean)) !== null) matches.push(m[1].trim());
+            return matches;
+        }
+
+        // ─── GENERAR INFORME COMPLETO ────────────────────────────────────────────
+        function openAiGenerateModal() {
+            if (!lastImportedTxt) {
+                alert('Primero importa un archivo .txt para que la IA tenga contexto.');
+                return;
+            }
+            document.getElementById('aiGenerateModal').style.display = 'flex';
+            document.getElementById('aiGenerateStatus').classList.add('hidden');
+            document.getElementById('aiGenerateBtn').disabled = false;
+        }
+
+        async function runAiGenerate() {
+            const userInstructions = document.getElementById('aiGeneratePrompt').value.trim();
+            const btn = document.getElementById('aiGenerateBtn');
+            const status = document.getElementById('aiGenerateStatus');
+            const statusText = document.getElementById('aiGenerateStatusText');
+
+            btn.disabled = true;
+            status.classList.remove('hidden');
+
+            const systemPrompt = `Eres un asistente especializado en redacción técnica de informes de ingeniería.
+Recibirás el contenido de un archivo TXT con la estructura de un informe técnico.
+Tu tarea es devolver EXACTAMENTE el mismo archivo TXT, con el mismo formato y etiquetas, pero con todos los textos dentro de etiquetas <t>...</t> reescritos y mejorados.
+NO cambies la estructura, etiquetas, secciones, tablas, fotografías, portada, ni IDs.
+Solo reescribe el contenido de los bloques <t>...</t>.
+Devuelve ÚNICAMENTE el TXT completo, sin explicaciones, sin markdown, sin bloques de código.`;
+
+            const extraInstructions = userInstructions 
+                ? `\n\nInstrucciones adicionales del usuario: ${userInstructions}` 
+                : '';
+
+            try {
+                statusText.textContent = 'Analizando estructura del informe...';
+                const result = await callClaude(
+                    systemPrompt,
+                    `Aquí está el archivo TXT del informe:\n\n${lastImportedTxt}${extraInstructions}`
+                );
+
+                statusText.textContent = 'Aplicando cambios al editor...';
+                // El resultado es un nuevo TXT: importarlo
+                lastImportedTxt = result;
+                importTxt(result);
+
+                // Registrar versión inicial para todos los bloques de texto
+                const allBlocks = [];
+                const collectBlocks = (list) => {
+                    list.forEach(s => {
+                        s.blocks.forEach(b => { if (b.type === 'text') allBlocks.push(b); });
+                        collectBlocks(s.children);
+                    });
+                };
+                collectBlocks(sections);
+                allBlocks.forEach(b => {
+                    if (!blockVersions[b.id]) {
+                        blockVersions[b.id] = { versions: [b.data.content], current: 0 };
+                    }
+                });
+
+                render();
+                document.getElementById('aiGenerateModal').style.display = 'none';
+            } catch (err) {
+                statusText.textContent = `Error: ${err.message}`;
+                btn.disabled = false;
+            }
+        }
+
+        // ─── REGENERAR SECCIÓN INDIVIDUAL ────────────────────────────────────────
+        function openAiRegenerateModal(sId, bId) {
+            const s = findById(sections, sId);
+            const b = s.blocks.find(x => x.id === bId);
+            aiRegenerateTarget = { sId, bId };
+            document.getElementById('aiRegenerateSubtitle').textContent = `Sección: ${s.title}`;
+            document.getElementById('aiRegenerateCurrentText').textContent = b.data.content || '(vacío)';
+            document.getElementById('aiRegeneratePrompt').value = '';
+            document.getElementById('aiRegenerateStatus').classList.add('hidden');
+            document.getElementById('aiRegenerateBtn').disabled = false;
+            document.getElementById('aiRegenerateModal').style.display = 'flex';
+        }
+
+        async function runAiRegenerate() {
+            if (!aiRegenerateTarget) return;
+            const { sId, bId } = aiRegenerateTarget;
+            const s = findById(sections, sId);
+            const b = s.blocks.find(x => x.id === bId);
+            const extraPrompt = document.getElementById('aiRegeneratePrompt').value.trim();
+            const btn = document.getElementById('aiRegenerateBtn');
+            const status = document.getElementById('aiRegenerateStatus');
+
+            btn.disabled = true;
+            status.classList.remove('hidden');
+
+            // Inicializar versiones si no existen
+            if (!blockVersions[bId]) {
+                blockVersions[bId] = { versions: [b.data.content], current: 0 };
+            }
+
+            const currentText = b.data.content;
+            const reportContext = getAllTextContext();
+
+            const systemPrompt = `Eres un asistente experto en redacción técnica de informes de ingeniería.
+Tu tarea es mejorar o reescribir un párrafo específico de un informe técnico.
+Devuelve ÚNICAMENTE el texto mejorado, sin explicaciones, sin comillas, sin encabezados.
+El texto debe ser coherente con el resto del informe.
+Mantén un tono profesional y técnico.`;
+
+            const userMsg = `Contexto del informe completo:
+${reportContext}
+
+---
+Sección actual: "${s.title}"
+Texto a mejorar:
+${currentText}
+
+${extraPrompt ? `Instrucciones adicionales: ${extraPrompt}` : ''}
+
+Por favor, reescribe y mejora el texto de esa sección.`;
+
+            try {
+                const newText = await callClaude(systemPrompt, userMsg);
+                const trimmed = newText.trim();
+
+                // Agregar nueva versión
+                const vs = blockVersions[bId];
+                // Si estamos en medio del historial, truncar
+                vs.versions = vs.versions.slice(0, vs.current + 1);
+                vs.versions.push(trimmed);
+                vs.current = vs.versions.length - 1;
+
+                // Actualizar datos
+                b.data.content = trimmed;
+
+                render();
+                document.getElementById('aiRegenerateModal').style.display = 'none';
+            } catch (err) {
+                status.innerHTML = `<span class="text-red-500">Error: ${err.message}</span>`;
+                btn.disabled = false;
+            }
+        }
+
+        // ─── NAVEGAR VERSIONES ────────────────────────────────────────────────────
+        function changeVersion(sId, bId, delta) {
+            const vs = blockVersions[bId];
+            if (!vs) return;
+            const newIdx = vs.current + delta;
+            if (newIdx < 0 || newIdx >= vs.versions.length) return;
+            vs.current = newIdx;
+            const s = findById(sections, sId);
+            const b = s.blocks.find(x => x.id === bId);
+            b.data.content = vs.versions[newIdx];
+            render();
+        }
+
+        // Sincronizar el texto editado manualmente con la versión actual
+        function syncVersionText(bId, newText) {
+            if (blockVersions[bId]) {
+                blockVersions[bId].versions[blockVersions[bId].current] = newText;
             }
         }
     </script>

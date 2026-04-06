@@ -1688,35 +1688,67 @@
                 addHeader(doc, doc.internal.getNumberOfPages());
                 let ay = 30;
                 doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(...cHeading);
-                doc.text("ANEXO: NO CONFORMIDADES", margin, ay); ay += 12;
+                doc.text("ANEXO: NO CONFORMIDADES", margin, ay); ay += 14;
+
                 for (let i = 0; i < annexNoConformidades.length; i++) {
                     const item = annexNoConformidades[i];
-                    if (ay > safeBottomLimit - 80) { doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); ay = 30; }
+
+                    // Resolver foto primero para conocer su ratio
+                    let fotoSrc = item.foto;
+                    let fotoRatio = 4/3;
+                    if (!fotoSrc && item.driveId) {
+                        const cached = await resolveDriveImage(item.driveId, 'w400');
+                        if (cached) { fotoSrc = cached.src; fotoRatio = cached.ratio || 4/3; }
+                    }
+
+                    // Calcular espacio que ocupa esta NC
+                    const imgColW = 65;
+                    const imgColH = Math.round(imgColW / fotoRatio);
+                    const textColW = pageWidth - margin * 2 - imgColW - 6;
+                    const descLines = doc.splitTextToSize(item.descripcion || '', textColW);
+                    // altura mínima: título + fecha + "Descripción:" + líneas de texto
+                    const textH = 6 + 6 + 5 + descLines.length * 5;
+                    const blockH = Math.max(textH, imgColH) + 14; // +margen inferior
+
+                    if (ay + blockH > safeBottomLimit) {
+                        doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); ay = 30;
+                    }
+
+                    const blockStartY = ay;
+
+                    // Número NC
                     doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(217, 119, 6);
-                    doc.text(`NC-${String(i+1).padStart(3,'0')}`, margin, ay); ay += 6;
+                    doc.text(`NC-${String(i+1).padStart(3,'0')}`, margin, ay); ay += 7;
+
+                    // Fecha
                     doc.setFontSize(9); doc.setFont("helvetica", "bold"); doc.setTextColor(100,100,100);
                     doc.text(`Fecha de detección: `, margin, ay);
                     doc.setFont("helvetica", "normal"); doc.setTextColor(30,41,59);
-                    doc.text(item.fecha || '-', margin + 38, ay); ay += 6;
+                    doc.text(item.fecha || '-', margin + 40, ay); ay += 7;
+
+                    // Descripción (columna izquierda)
                     doc.setFont("helvetica", "bold"); doc.setTextColor(100,100,100);
                     doc.text("Descripción:", margin, ay); ay += 5;
                     doc.setFont("helvetica", "normal"); doc.setTextColor(71,85,105);
-                    const descLines = doc.splitTextToSize(item.descripcion || '', pageWidth - margin - 70);
-                    // Resolve photo
-                    let fotoSrc = item.foto;
-                    if (!fotoSrc && item.driveId) {
-                        const cached = await resolveDriveImage(item.driveId, 'w400');
-                        if (cached) fotoSrc = cached.src;
-                    }
+                    descLines.forEach(dl => { doc.text(dl, margin, ay); ay += 5; });
+
+                    // Foto (columna derecha, alineada desde blockStartY)
                     if (fotoSrc) {
                         try {
                             const fmt = fotoSrc.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-                            doc.addImage(fotoSrc, fmt, pageWidth - margin - 60, ay - 5, 55, 40);
+                            const imgX = pageWidth - margin - imgColW;
+                            doc.addImage(fotoSrc, fmt, imgX, blockStartY, imgColW, imgColH);
                         } catch(e) {}
                     }
-                    descLines.forEach(dl => { doc.text(dl, margin, ay); ay += 5; });
-                    ay += 8;
-                    doc.setDrawColor(240,240,240); doc.line(margin, ay, pageWidth-margin, ay); ay += 6;
+
+                    // Avanzar al final del bloque más alto (texto o imagen)
+                    const endY = blockStartY + Math.max(ay - blockStartY, imgColH) + 8;
+                    ay = endY;
+
+                    // Línea divisoria
+                    doc.setDrawColor(240,240,240);
+                    doc.line(margin, ay, pageWidth - margin, ay);
+                    ay += 6;
                 }
             }
 
@@ -1726,42 +1758,77 @@
                 addHeader(doc, doc.internal.getNumberOfPages());
                 let fy = 30;
                 doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(...cHeading);
-                doc.text("ANEXO FOTOGRÁFICO", margin, fy); fy += 12;
+                doc.text("ANEXO FOTOGRÁFICO", margin, fy); fy += 14;
+
                 const totalW = pageWidth - margin * 2;
-                const imgW = (totalW - 8) / 2;
-                const imgH = imgW * 0.66;
+                const imgW = (totalW - 8) / 2; // 2 columnas con gap de 8
+                const captionH = 14; // espacio para caption bajo cada foto
                 let col = 0;
+                let rowMaxH = 0; // altura máxima de la fila actual
+
                 for (let i = 0; i < annexFotografico.length; i++) {
                     const item = annexFotografico[i];
-                    const x = margin + col * (imgW + 8);
-                    if (fy + imgH + 20 > safeBottomLimit) { doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); fy = 30; col = 0; }
-                    // Resolve photo
+
+                    // Resolver foto y obtener ratio real
                     let fotoSrc = item.foto;
+                    let fotoRatio = 4/3;
                     if (!fotoSrc && item.driveId) {
                         const cached = await resolveDriveImage(item.driveId, 'w800');
-                        if (cached) fotoSrc = cached.src;
+                        if (cached) { fotoSrc = cached.src; fotoRatio = cached.ratio || 4/3; }
+                    } else if (fotoSrc) {
+                        // Para fotos locales intentar obtener ratio desde cache o calcular
+                        const key = item.id || i;
+                        if (driveImageCache[key]) {
+                            fotoRatio = driveImageCache[key].ratio || 4/3;
+                        }
                     }
+
+                    // Calcular altura respetando ratio real, máximo 80mm
+                    const imgH = Math.min(imgW / fotoRatio, 80);
+                    const blockH = imgH + captionH;
+
+                    // Verificar salto de página (usar altura de esta imagen)
+                    if (fy + blockH > safeBottomLimit) {
+                        doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); fy = 30; col = 0; rowMaxH = 0;
+                    }
+
+                    const x = margin + col * (imgW + 8);
+
+                    // Dibujar imagen o placeholder
                     try {
                         if (fotoSrc) {
                             const fmt = fotoSrc.startsWith('data:image/png') ? 'PNG' : 'JPEG';
                             doc.addImage(fotoSrc, fmt, x, fy, imgW, imgH);
                         } else {
-                            // Placeholder when image unavailable
                             doc.setDrawColor(200,200,200); doc.setFillColor(245,245,245);
                             doc.rect(x, fy, imgW, imgH, 'FD');
                             doc.setFontSize(7); doc.setTextColor(150,150,150);
                             doc.text('Imagen no disponible', x + imgW/2, fy + imgH/2, { align: 'center' });
                         }
                     } catch(e) {}
+
+                    // Caption
                     doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(79,70,229);
-                    doc.text(`Foto ${i+1} — ${item.fecha || ''}`, x, fy + imgH + 4);
+                    doc.text(`Foto ${i+1} — ${item.fecha || ''}`, x, fy + imgH + 5);
                     if (item.descripcion) {
                         doc.setFont("helvetica", "normal"); doc.setTextColor(71,85,105);
                         const capLines = doc.splitTextToSize(item.descripcion, imgW);
-                        capLines.slice(0,2).forEach((cl,ci) => doc.text(cl, x, fy + imgH + 8 + ci*4));
+                        capLines.slice(0,2).forEach((cl, ci) => doc.text(cl, x, fy + imgH + 9 + ci*4));
                     }
+
+                    // Rastrear la altura máxima de esta fila
+                    if (blockH > rowMaxH) rowMaxH = blockH;
+
                     col++;
-                    if (col >= 2) { col = 0; fy += imgH + 22; }
+                    if (col >= 2) {
+                        fy += rowMaxH + 6;
+                        col = 0;
+                        rowMaxH = 0;
+                    }
+                }
+                // Si quedó una foto en la columna izquierda sin cerrar fila
+                if (col > 0) {
+                    fy += rowMaxH + 6;
                 }
             }
 

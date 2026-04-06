@@ -43,6 +43,13 @@
         .ai-thinking { animation: pulse 1.4s ease-in-out infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         .ai-badge { background: linear-gradient(135deg,#6366f1,#8b5cf6); color:white; border-radius:8px; font-size:9px; font-weight:800; padding:2px 7px; letter-spacing:.05em; text-transform:uppercase; }
+
+        /* Settings panel styles */
+        .settings-tab.active { background: white; color: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+        .sfield-label { display: block; font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
+        .sfield { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; font-size: 13px; outline: none; transition: border-color .15s, box-shadow .15s; background: white; }
+        .sfield:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+        select.sfield { cursor: pointer; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
@@ -63,8 +70,8 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Exportar
                 </button>
-                <button onclick="document.getElementById('cfSettingsModal').style.display='flex'" title="Configurar IA" class="bg-slate-100 hover:bg-slate-200 text-slate-500 w-10 h-10 rounded-xl flex items-center justify-center transition-all" id="cfSettingsNavBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+                <button onclick="openSettings()" title="Configuración" class="bg-slate-100 hover:bg-slate-200 text-slate-500 w-10 h-10 rounded-xl flex items-center justify-center transition-all" id="cfSettingsNavBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
                 <button onclick="openAiGenerateModal()" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90 text-white px-5 py-2 rounded-xl font-bold transition-all text-sm flex items-center gap-2 shadow-lg shadow-indigo-100">
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
@@ -178,63 +185,268 @@
         </div>
     </div>
 
-    <!-- CF Settings Modal -->
-    <div id="cfSettingsModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-[120] backdrop-blur-sm p-4">
-        <div class="bg-white p-8 rounded-3xl max-w-md w-full shadow-2xl flex flex-col gap-5">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-orange-500 flex items-center justify-center text-white font-black text-sm">CF</div>
-                    <div>
-                        <h3 class="text-lg font-bold">Configuración de IA</h3>
-                        <p class="text-xs text-slate-400">Cloudflare Workers AI</p>
-                    </div>
-                </div>
-                <button onclick="document.getElementById('cfSettingsModal').style.display='none'" class="text-slate-300 hover:text-slate-600 text-xl font-bold transition-colors">✕</button>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Account ID</label>
-                    <input type="text" id="cfAccountId" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-400 transition-all font-mono">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">API Token</label>
-                    <input type="password" id="cfApiToken" placeholder="••••••••••••••••••••••••••••••••" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-400 transition-all font-mono">
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Modelo</label>
-                    <input type="text" id="cfModel" placeholder="@cf/meta/llama-3.1-8b-instruct" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-400 transition-all font-mono">
-                    <p class="text-[10px] text-slate-400 mt-1">Ej: @cf/meta/llama-3.3-70b-instruct-fp8-fast</p>
-                </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Google API Key</label>
-                    <input type="password" id="googleApiKey" placeholder="AIzaSy..." class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-400 transition-all font-mono">
-                    <p class="text-[10px] text-slate-400 mt-1">Necesaria para cargar fotos desde Google Drive. Crea una en <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="underline text-orange-500">Google Cloud Console</a> con la API de Drive habilitada.</p>
-                </div>
+    <!-- ══════════════════════════════════════════════════════════════
+         ADVANCED SETTINGS MODAL
+    ══════════════════════════════════════════════════════════════ -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-[120] backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex overflow-hidden">
 
-                <!-- CORS notice - file:// limitation -->
-                <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-[11px] text-rose-800 leading-relaxed">
-                    <strong>⚠ Limitación del navegador:</strong> Al abrir el archivo directamente (<code>file://</code>), el navegador bloquea <em>todos</em> los fetch externos por política CORS, sin importar el servidor de destino. La solución es usar un <strong>Worker proxy propio</strong> en Cloudflare.
-                </div>
-
-                <!-- Worker proxy — PRIMARY -->
-                <div class="border-2 border-indigo-200 rounded-2xl p-4 space-y-3 bg-indigo-50/40">
+            <!-- Sidebar -->
+            <div class="w-56 shrink-0 bg-slate-50 border-r border-slate-100 flex flex-col">
+                <div class="p-5 border-b border-slate-100">
                     <div class="flex items-center gap-2">
-                        <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Worker Proxy</span>
-                        <span class="text-[9px] bg-indigo-600 text-white font-bold px-2 py-0.5 rounded-full">Solución recomendada</span>
+                        <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </div>
+                        <span class="font-bold text-sm text-slate-800">Configuración</span>
                     </div>
+                </div>
+                <nav class="flex-1 p-3 space-y-1 overflow-y-auto">
+                    <button onclick="switchSettingsTab('ia')" id="stab-ia" class="settings-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left text-slate-600 hover:bg-white hover:text-slate-900">
+                        <div class="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center shrink-0"><span class="text-orange-600 font-black text-[11px]">CF</span></div>
+                        IA — Cloudflare
+                    </button>
+                    <button onclick="switchSettingsTab('google')" id="stab-google" class="settings-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left text-slate-600 hover:bg-white hover:text-slate-900">
+                        <div class="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path d="M12 8v4l3 3"/></svg>
+                        </div>
+                        Google Drive
+                    </button>
+                    <button onclick="switchSettingsTab('documento')" id="stab-documento" class="settings-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left text-slate-600 hover:bg-white hover:text-slate-900">
+                        <div class="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        </div>
+                        Documento PDF
+                    </button>
+                    <button onclick="switchSettingsTab('tipografia')" id="stab-tipografia" class="settings-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left text-slate-600 hover:bg-white hover:text-slate-900">
+                        <div class="w-7 h-7 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.5"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                        </div>
+                        Tipografía y Color
+                    </button>
+                    <button onclick="switchSettingsTab('cors')" id="stab-cors" class="settings-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left text-slate-600 hover:bg-white hover:text-slate-900">
+                        <div class="w-7 h-7 rounded-lg bg-rose-100 flex items-center justify-center shrink-0">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </div>
+                        CORS / Proxy
+                    </button>
+                </nav>
+                <div class="p-3 border-t border-slate-100">
+                    <button onclick="closeSettings()" class="w-full text-xs text-slate-400 hover:text-slate-600 font-medium py-2 transition-colors">Cerrar sin guardar</button>
+                </div>
+            </div>
+
+            <!-- Content area -->
+            <div class="flex-1 flex flex-col min-w-0">
+                <!-- Panel header -->
+                <div class="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
                     <div>
-                        <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">URL del Worker</label>
-                        <input type="text" id="cfWorkerUrl" placeholder="https://mi-worker.usuario.workers.dev" class="w-full border border-indigo-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-mono">
+                        <h2 id="settingsPanelTitle" class="font-bold text-lg text-slate-900">IA — Cloudflare</h2>
+                        <p id="settingsPanelDesc" class="text-xs text-slate-400 mt-0.5">Configura el modelo y credenciales de Cloudflare Workers AI</p>
                     </div>
-                    <details open class="text-[10px] text-slate-600">
-                        <summary class="cursor-pointer font-bold text-indigo-600 hover:underline select-none mb-2">Cómo crear el Worker (2 minutos)</summary>
-                        <ol class="space-y-1 mb-2 list-decimal list-inside text-slate-500">
-                            <li>Ve a <a href="https://dash.cloudflare.com/?to=/:account/workers-and-pages/create/workers/new" target="_blank" class="underline text-indigo-500 font-bold">Dashboard → Workers → Crear</a></li>
-                            <li>Pega el código de abajo y haz clic en <strong>Deploy</strong></li>
-                            <li>Ve a <strong>Settings → Variables</strong> y agrega <code>ACCOUNT_ID</code> y <code>API_TOKEN</code> como secretos</li>
-                            <li>Copia la URL del Worker y pégala arriba</li>
-                        </ol>
-                        <pre class="bg-white border border-slate-200 rounded-xl p-3 overflow-x-auto leading-relaxed whitespace-pre text-[10px]">export default {
+                    <button onclick="closeSettings()" class="text-slate-300 hover:text-slate-600 text-xl font-bold transition-colors ml-4">✕</button>
+                </div>
+
+                <!-- Panels scroll area -->
+                <div class="flex-1 overflow-y-auto p-6">
+
+                    <!-- ── IA Cloudflare ─────────────────────────────────────── -->
+                    <div id="spanel-ia" class="settings-panel space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2">
+                                <label class="sfield-label">Account ID</label>
+                                <input type="text" id="cfAccountId" placeholder="xxxxxxxxxxxxxxxxxxxxxxxx" class="sfield font-mono">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="sfield-label">API Token</label>
+                                <div class="relative">
+                                    <input type="password" id="cfApiToken" placeholder="••••••••••••••••••••••••••" class="sfield font-mono pr-10">
+                                    <button onclick="togglePwd('cfApiToken',this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="sfield-label">Modelo</label>
+                                <input type="text" id="cfModel" placeholder="@cf/meta/llama-3.1-8b-instruct" class="sfield font-mono">
+                                <p class="text-[10px] text-slate-400 mt-1">Ej: <code>@cf/meta/llama-3.3-70b-instruct-fp8-fast</code> · <code>@cf/meta/llama-3.2-11b-vision-instruct</code></p>
+                            </div>
+                        </div>
+                        <div class="bg-orange-50 border border-orange-100 rounded-2xl p-4">
+                            <p class="text-[11px] font-bold text-orange-700 uppercase tracking-wide mb-2">Licencia de modelos restringidos</p>
+                            <p class="text-[11px] text-orange-600 mb-3">Algunos modelos (Meta Llama) requieren aceptar su licencia antes de usarlos. Haz clic para registrar la aceptación.</p>
+                            <button id="acceptLicenseBtn" onclick="acceptModelLicense()" class="flex items-center gap-2 bg-white border border-orange-200 hover:border-orange-400 text-orange-700 px-4 py-2 rounded-xl text-xs font-bold transition-all">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                                Aceptar licencia de Meta
+                            </button>
+                            <p id="acceptLicenseStatus" class="text-[10px] mt-2 hidden"></p>
+                        </div>
+                    </div>
+
+                    <!-- ── Google Drive ─────────────────────────────────────── -->
+                    <div id="spanel-google" class="settings-panel hidden space-y-5">
+                        <div>
+                            <label class="sfield-label">Google API Key</label>
+                            <div class="relative">
+                                <input type="password" id="googleApiKey" placeholder="AIzaSy..." class="sfield font-mono pr-10">
+                                <button onclick="togglePwd('googleApiKey',this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1">Crea una en <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="underline text-blue-500">Google Cloud Console</a> con la <strong>Drive API</strong> habilitada (modo solo lectura es suficiente).</p>
+                        </div>
+                        <div>
+                            <label class="sfield-label">Carpeta Drive predeterminada (ID)</label>
+                            <input type="text" id="driveFolderIdSettings" class="sfield font-mono" placeholder="1Sox86IWQ6Io...">
+                            <p class="text-[10px] text-slate-400 mt-1">Se usará como valor inicial en el selector de fotos. Puedes cambiarlo en cada sesión.</p>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-[11px] text-blue-700 space-y-1">
+                            <p class="font-bold">¿Cómo obtener el ID de carpeta?</p>
+                            <p>Abre la carpeta en Drive y copia el segmento largo al final de la URL: <code class="bg-white px-1 rounded">drive.google.com/drive/folders/<strong>ESTE_ES_EL_ID</strong></code></p>
+                        </div>
+                    </div>
+
+                    <!-- ── Documento PDF ────────────────────────────────────── -->
+                    <div id="spanel-documento" class="settings-panel hidden space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="sfield-label">Margen (mm)</label>
+                                <input type="number" id="pdfMargin" min="10" max="40" value="25" class="sfield">
+                            </div>
+                            <div>
+                                <label class="sfield-label">Tamaño de página</label>
+                                <select id="pdfPageSize" class="sfield">
+                                    <option value="a4">A4</option>
+                                    <option value="letter">Carta (Letter)</option>
+                                    <option value="legal">Legal</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="sfield-label">Tamaño texto cuerpo (pt)</label>
+                                <input type="number" id="pdfBodySize" min="7" max="14" value="10" class="sfield">
+                            </div>
+                            <div>
+                                <label class="sfield-label">Interlineado texto</label>
+                                <input type="number" id="pdfLineHeight" min="4" max="9" step="0.5" value="5.5" class="sfield">
+                            </div>
+                            <div>
+                                <label class="sfield-label">Tamaño sección principal (pt)</label>
+                                <input type="number" id="pdfH1Size" min="12" max="24" value="16" class="sfield">
+                            </div>
+                            <div>
+                                <label class="sfield-label">Tamaño subsección (pt)</label>
+                                <input type="number" id="pdfH2Size" min="10" max="20" value="13" class="sfield">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="sfield-label">Pie de página personalizado</label>
+                            <input type="text" id="pdfFooterText" placeholder="Deja vacío para usar el nombre del proyecto" class="sfield">
+                        </div>
+                        <div class="flex items-center justify-between bg-slate-50 rounded-2xl p-4">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-700">Incluir número de página</p>
+                                <p class="text-[11px] text-slate-400">Muestra "PÁGINA N" en el encabezado</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="pdfShowPageNum" class="sr-only peer" checked>
+                                <div class="w-10 h-6 bg-slate-200 peer-checked:bg-indigo-600 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between bg-slate-50 rounded-2xl p-4">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-700">Texto justificado</p>
+                                <p class="text-[11px] text-slate-400">Justifica los párrafos de texto</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="pdfJustify" class="sr-only peer" checked>
+                                <div class="w-10 h-6 bg-slate-200 peer-checked:bg-indigo-600 rounded-full transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- ── Tipografía y Color ───────────────────────────────── -->
+                    <div id="spanel-tipografia" class="settings-panel hidden space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="sfield-label">Color de títulos de sección</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="color" id="colorHeading" value="#4f46e5" class="w-12 h-10 rounded-xl border border-slate-200 cursor-pointer p-1">
+                                    <input type="text" id="colorHeadingHex" value="#4f46e5" oninput="syncColor('colorHeading','colorHeadingHex')" class="sfield font-mono flex-1">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="sfield-label">Color de texto del cuerpo</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="color" id="colorBody" value="#475569" class="w-12 h-10 rounded-xl border border-slate-200 cursor-pointer p-1">
+                                    <input type="text" id="colorBodyHex" value="#475569" oninput="syncColor('colorBody','colorBodyHex')" class="sfield font-mono flex-1">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="sfield-label">Color de encabezado de tablas</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="color" id="colorTableHead" value="#4f46e5" class="w-12 h-10 rounded-xl border border-slate-200 cursor-pointer p-1">
+                                    <input type="text" id="colorTableHeadHex" value="#4f46e5" oninput="syncColor('colorTableHead','colorTableHeadHex')" class="sfield font-mono flex-1">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="sfield-label">Color del índice / links</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="color" id="colorIndex" value="#4f46e5" class="w-12 h-10 rounded-xl border border-slate-200 cursor-pointer p-1">
+                                    <input type="text" id="colorIndexHex" value="#4f46e5" oninput="syncColor('colorIndex','colorIndexHex')" class="sfield font-mono flex-1">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="sfield-label">Color título portada</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="color" id="colorCoverTitle" value="#1e293b" class="w-12 h-10 rounded-xl border border-slate-200 cursor-pointer p-1">
+                                    <input type="text" id="colorCoverTitleHex" value="#1e293b" oninput="syncColor('colorCoverTitle','colorCoverTitleHex')" class="sfield font-mono flex-1">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="sfield-label">Color subtítulo portada</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="color" id="colorCoverSub" value="#4f46e5" class="w-12 h-10 rounded-xl border border-slate-200 cursor-pointer p-1">
+                                    <input type="text" id="colorCoverSubHex" value="#4f46e5" oninput="syncColor('colorCoverSub','colorCoverSubHex')" class="sfield font-mono flex-1">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Preview strip -->
+                        <div class="rounded-2xl border border-slate-100 overflow-hidden">
+                            <div class="px-4 py-2 bg-slate-50 border-b border-slate-100">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase">Vista previa de colores</p>
+                            </div>
+                            <div class="p-4 space-y-2">
+                                <p id="prev-heading" class="font-bold text-base" style="color:#4f46e5">1. Título de sección principal</p>
+                                <p id="prev-body" class="text-sm" style="color:#475569">Texto del cuerpo del informe. Este es un ejemplo de párrafo con el estilo configurado.</p>
+                                <div class="inline-block px-3 py-1 rounded text-white text-xs font-bold" id="prev-table-head" style="background:#4f46e5">Encabezado de tabla</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── CORS / Proxy ────────────────────────────────────── -->
+                    <div id="spanel-cors" class="settings-panel hidden space-y-5">
+                        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 text-[11px] text-rose-800 leading-relaxed">
+                            <p class="font-bold text-sm mb-1">⚠ Limitación CORS (archivo local)</p>
+                            <p>Al abrir este archivo con <code>file://</code>, el navegador bloquea todos los fetch externos. La solución es un <strong>Worker proxy propio</strong> en Cloudflare que añade cabeceras CORS.</p>
+                        </div>
+                        <div>
+                            <label class="sfield-label">URL del Worker Proxy</label>
+                            <input type="text" id="cfWorkerUrl" placeholder="https://mi-worker.usuario.workers.dev" class="sfield font-mono">
+                            <p class="text-[10px] text-slate-400 mt-1">Si se configura, todas las llamadas de IA pasarán por este Worker. Deja vacío para llamada directa.</p>
+                        </div>
+                        <details class="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden">
+                            <summary class="px-4 py-3 cursor-pointer font-bold text-sm text-indigo-600 hover:bg-indigo-50 transition-colors select-none list-none flex items-center justify-between">
+                                <span>Código del Worker (copia y despliega)</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                            </summary>
+                            <div class="border-t border-slate-200">
+                                <ol class="text-[11px] text-slate-500 px-4 py-3 space-y-1 list-decimal list-inside border-b border-slate-100">
+                                    <li>Ve a <a href="https://dash.cloudflare.com/?to=/:account/workers-and-pages/create/workers/new" target="_blank" class="underline text-indigo-500 font-bold">Dashboard → Workers → Crear</a></li>
+                                    <li>Pega el código, haz clic en <strong>Deploy</strong></li>
+                                    <li>En <strong>Settings → Variables</strong> agrega <code>ACCOUNT_ID</code> y <code>API_TOKEN</code> como secretos</li>
+                                    <li>Copia la URL y pégala arriba</li>
+                                </ol>
+                                <pre class="bg-slate-900 text-emerald-300 text-[10px] p-4 overflow-x-auto leading-relaxed">export default {
   async fetch(req, env) {
     const cors = {
       'Access-Control-Allow-Origin': '*',
@@ -243,7 +455,6 @@
     };
     if (req.method === 'OPTIONS')
       return new Response(null, { headers: cors });
-
     const { model, messages } = await req.json();
     const url = `https://api.cloudflare.com/client/v4/accounts/`
               + `${env.ACCOUNT_ID}/ai/run/${model}`;
@@ -258,21 +469,20 @@
     return Response.json(await r.json(), { headers: cors });
   },
 };</pre>
-                    </details>
+                            </div>
+                        </details>
+                    </div>
+
                 </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Licencia de modelos restringidos</label>
-                    <button id="acceptLicenseBtn" onclick="acceptModelLicense()" class="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-slate-600 hover:text-indigo-600 px-4 py-2.5 rounded-xl text-sm font-bold transition-all">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
-                        Aceptar licencia de Meta / modelos restringidos
-                    </button>
-                    <p id="acceptLicenseStatus" class="text-[10px] mt-1 text-center hidden"></p>
+
+                <!-- Footer -->
+                <div class="p-5 border-t border-slate-100 flex items-center justify-between shrink-0">
+                    <p id="settingsSavedMsg" class="text-xs font-bold text-green-500 hidden">✓ Configuración guardada</p>
+                    <div class="flex gap-3 ml-auto">
+                        <button onclick="closeSettings()" class="px-5 py-2.5 text-slate-400 font-bold text-sm rounded-xl hover:bg-slate-50 transition-colors">Cancelar</button>
+                        <button onclick="saveAllSettings()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md shadow-indigo-100">Guardar cambios</button>
+                    </div>
                 </div>
-            </div>
-            <div id="cfSaveStatus" class="hidden text-xs font-bold text-green-500 text-center">✓ Configuración guardada</div>
-            <div class="flex gap-3 justify-end pt-1">
-                <button onclick="document.getElementById('cfSettingsModal').style.display='none'" class="px-5 py-2.5 text-slate-400 font-bold text-sm rounded-xl hover:bg-slate-50">Cancelar</button>
-                <button onclick="saveCfSettings()" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md shadow-orange-100">Guardar</button>
             </div>
         </div>
     </div>
@@ -512,6 +722,10 @@
         let editingAnnexType = null;
         let editingAnnexId = null;
 
+        // ─── IMAGE CACHE (driveId -> {src, ratio, w, h}) ────────────────────────
+        // Evita re-descargar imagenes de Drive en cada generacion de PDF.
+        const driveImageCache = {};
+
         window.onload = () => {
             document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
             addSection();
@@ -727,12 +941,21 @@
                 </div>`;
 
             if (b.type === 'image') {
-                const imagesHtml = b.data.images.map((img, idx) => `
+                const imagesHtml = b.data.images.map((img, idx) => {
+                    // Drive image: use thumbnail URL; local: use base64 src
+                    const displaySrc = img.driveId
+                        ? `https://drive.google.com/thumbnail?id=${img.driveId}&sz=w300`
+                        : img.src;
+                    const badge = img.driveId
+                        ? `<div class="absolute bottom-1 left-1 bg-emerald-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">Drive</div>`
+                        : '';
+                    return `
                     <div class="relative w-full aspect-square bg-white rounded-xl overflow-hidden border group/img shadow-sm img-container">
-                        ${img.src ? `<img src="${img.src}">` : `<div class="w-full h-full flex flex-col items-center justify-center text-[8px] text-slate-300">VACÍO</div>`}
+                        ${displaySrc ? `<img src="${displaySrc}">` : `<div class="w-full h-full flex flex-col items-center justify-center text-[8px] text-slate-300">VACÍO</div>`}
+                        ${badge}
                         <button onclick="removeBlockImage('${sId}', '${b.id}', ${idx})" class="absolute top-1 right-1 bg-rose-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs opacity-0 group-hover/img:opacity-100 transition-opacity shadow-sm z-10">×</button>
-                    </div>
-                `).join('');
+                    </div>`;
+                }).join('');
 
                 return `
                 <div data-block-id="${b.id}" class="group relative bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200 space-y-4">
@@ -805,21 +1028,69 @@
         async function normalizeImage(dataUrl) {
             return new Promise((resolve) => {
                 const img = new Image();
+                img.crossOrigin = 'anonymous';
                 img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                    resolve({
-                        src: canvas.toDataURL('image/jpeg', 0.8),
-                        ratio: img.width / img.height,
-                        w: img.width,
-                        h: img.height
-                    });
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.width || 800;
+                        canvas.height = img.height || 600;
+                        ctx.drawImage(img, 0, 0);
+                        // Test for tainted canvas before reading
+                        const out = canvas.toDataURL('image/jpeg', 0.8);
+                        if (!out || out === 'data:,') throw new Error('empty canvas');
+                        resolve({
+                            src: out,
+                            ratio: img.width / img.height,
+                            w: img.width,
+                            h: img.height
+                        });
+                    } catch(e) {
+                        // Canvas tainted or empty — return original dataUrl as-is
+                        resolve({
+                            src: dataUrl,
+                            ratio: img.width && img.height ? img.width / img.height : 4/3,
+                            w: img.width || 800,
+                            h: img.height || 600
+                        });
+                    }
+                };
+                img.onerror = () => {
+                    // Could not load image at all — return original dataUrl
+                    resolve({ src: dataUrl, ratio: 4/3, w: 800, h: 600 });
                 };
                 img.src = dataUrl;
             });
+        }
+
+        // Descarga una imagen de Drive y la guarda en cache.
+        // Las llamadas posteriores con el mismo driveId devuelven el resultado inmediatamente.
+        async function resolveDriveImage(driveId, size = 'w800') {
+            if (driveImageCache[driveId]) return driveImageCache[driveId];
+
+            const apiKey = localStorage.getItem('google_api_key');
+            const urls = [
+                apiKey ? `https://www.googleapis.com/drive/v3/files/${driveId}?alt=media&key=${apiKey}` : null,
+                `https://drive.google.com/thumbnail?id=${driveId}&sz=${size}`,
+                `https://drive.google.com/thumbnail?id=${driveId}&sz=w400`
+            ].filter(Boolean);
+
+            for (const url of urls) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) continue;
+                    const blob = await res.blob();
+                    if (!blob || blob.size === 0) continue;
+                    const src = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(blob); });
+                    if (!src || src === 'data:application/octet-stream;base64,') continue;
+                    const norm = await normalizeImage(src);
+                    if (norm && norm.src) {
+                        driveImageCache[driveId] = norm; // guardar en cache
+                        return norm;
+                    }
+                } catch(e) { continue; }
+            }
+            return null; // todos los intentos fallaron
         }
 
         async function handleBlockImage(sId, bId, input) {
@@ -1000,17 +1271,22 @@
                 list.innerHTML = `<p class="text-[11px] text-slate-400 text-center mt-4 px-2">Sin registros aún.<br>Haz clic en "+ Agregar".</p>`;
                 return;
             }
-            list.innerHTML = items.map((item, i) => `
+            list.innerHTML = items.map((item, i) => {
+                const thumbSrc = item.driveId
+                    ? `https://drive.google.com/thumbnail?id=${item.driveId}&sz=w80`
+                    : item.foto || null;
+                return `
                 <div onclick="selectAnnexItem('${item.id}')" class="flex items-center gap-2 p-3 rounded-xl cursor-pointer transition-all ${editingAnnexId === item.id ? 'bg-indigo-50 border border-indigo-200' : 'hover:bg-slate-50 border border-transparent'}">
                     <div class="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0">
-                        ${item.foto ? `<img src="${item.foto}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-slate-300 text-lg">📷</div>`}
+                        ${thumbSrc ? `<img src="${thumbSrc}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-slate-300 text-lg">📷</div>`}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-xs font-bold text-slate-700 truncate">${editingAnnexType === 'nc' ? (item.descripcion || 'Sin descripción') : (item.descripcion || 'Sin descripción')}</p>
-                        <p class="text-[10px] text-slate-400">${item.fecha || 'Sin fecha'}</p>
+                        <p class="text-xs font-bold text-slate-700 truncate">${item.descripcion || 'Sin descripción'}</p>
+                        <p class="text-[10px] text-slate-400">${item.fecha || 'Sin fecha'}${item.driveId ? ' · Drive' : ''}</p>
                     </div>
                     <button onclick="event.stopPropagation();removeAnnexItem('${item.id}')" class="text-rose-300 hover:text-rose-500 font-bold text-sm shrink-0">×</button>
-                </div>`).join('');
+                </div>`;
+            }).join('');
         }
 
         function selectAnnexItem(id) {
@@ -1044,12 +1320,19 @@
             const form = document.getElementById('annexForm');
             if (!item) { form.innerHTML = `<p class="text-slate-400 text-sm text-center mt-8">Selecciona o crea un item</p>`; return; }
             const isNC = editingAnnexType === 'nc';
+            const fotoSrc = item.driveId
+                ? `https://drive.google.com/thumbnail?id=${item.driveId}&sz=w400`
+                : item.foto || null;
+            const fotoBadge = item.driveId
+                ? `<div class="absolute top-2 left-2 bg-emerald-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">Drive</div>`
+                : '';
             form.innerHTML = `
                 <div class="space-y-4">
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">${isNC ? 'Fotografía de la No Conformidad' : 'Fotografía'}</label>
                         <div class="w-full aspect-video bg-slate-50 rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 flex items-center justify-center relative group cursor-pointer" onclick="document.getElementById('annexImgInput_${item.id}').click()">
-                            ${item.foto ? `<img src="${item.foto}" class="w-full h-full object-cover">` : `<div class="flex flex-col items-center gap-2 text-slate-300"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg><p class="text-xs">Clic para subir foto</p></div>`}
+                            ${fotoSrc ? `<img src="${fotoSrc}" class="w-full h-full object-cover">` : `<div class="flex flex-col items-center gap-2 text-slate-300"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg><p class="text-xs">Clic para subir foto</p></div>`}
+                            ${fotoBadge}
                             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">Cambiar foto</div>
                         </div>
                         <div class="flex gap-2 mt-2">
@@ -1099,12 +1382,24 @@
         }
 
         async function generateDocument(mode = 'download') {
-            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: pdfCfg('pdf_page_size','a4'), compress: true });
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 25;
-            const projectHeader = document.getElementById('projectName').value || "REPORTE TÉCNICO";
+            const margin = parseFloat(pdfCfg('pdf_margin','25'));
+            const projectHeader = pdfCfg('pdf_footer','') || document.getElementById('projectName').value || "REPORTE TÉCNICO";
             const safeBottomLimit = pageHeight - 25;
+            const bodySize    = parseFloat(pdfCfg('pdf_body_size','10'));
+            const lineHeight  = parseFloat(pdfCfg('pdf_line_height','5.5'));
+            const h1Size      = parseFloat(pdfCfg('pdf_h1_size','16'));
+            const h2Size      = parseFloat(pdfCfg('pdf_h2_size','13'));
+            const showPageNum = pdfCfg('pdf_page_num','1') === '1';
+            const doJustify   = pdfCfg('pdf_justify','1') === '1';
+            const cHeading    = hexToRgb(pdfCfg('color_heading','#4f46e5'));
+            const cBody       = hexToRgb(pdfCfg('color_body','#475569'));
+            const cTableHead  = hexToRgb(pdfCfg('color_table_head','#4f46e5'));
+            const cIndex      = hexToRgb(pdfCfg('color_index','#4f46e5'));
+            const cCoverTitle = hexToRgb(pdfCfg('color_cover_title','#1e293b'));
+            const cCoverSub   = hexToRgb(pdfCfg('color_cover_sub','#4f46e5'));
             
             let photoCounterGlobal = 1;
             let tableCounterGlobal = 1;
@@ -1112,13 +1407,12 @@
             const addHeader = (d, pNum) => {
                 d.setFont("helvetica", "normal"); 
                 d.setFontSize(8); 
-                d.setTextColor(160, 160, 160); // Asegurar color sólido
+                d.setTextColor(160, 160, 160);
                 d.text(projectHeader.toUpperCase(), margin, 12);
-                d.text(`PÁGINA ${pNum}`, pageWidth - margin, 12, { align: 'right' });
+                if (showPageNum) d.text(`PÁGINA ${pNum}`, pageWidth - margin, 12, { align: 'right' });
                 d.setDrawColor(245, 245, 245); 
                 d.line(margin, 14, pageWidth - margin, 14);
-                // Resetear estado para evitar que afecte al contenido
-                d.setTextColor(71, 85, 105);
+                d.setTextColor(...cBody);
             };
 
             // Algoritmo de Justificación Manual para evitar errores visuales
@@ -1149,7 +1443,7 @@
             };
             flatten(sections);
 
-            const renderContent = (targetDoc, isMeasuring = false, pageOffset = 0) => {
+            const renderContent = async (targetDoc, isMeasuring = false, pageOffset = 0) => {
                 let currentY = 30;
                 let first = true;
                 if(!isMeasuring) {
@@ -1157,7 +1451,7 @@
                     tableCounterGlobal = 1;
                 }
 
-                flat.forEach((item, idx) => {
+                for (const item of flat) {
                     if (!first && (item.level === 1 || item.forcePageBreak)) {
                         targetDoc.addPage();
                         if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
@@ -1179,17 +1473,17 @@
                         currentY = 30;
                     }
 
-                    targetDoc.setFontSize(item.level === 1 ? 16 : 13);
+                    targetDoc.setFontSize(item.level === 1 ? h1Size : h2Size);
                     targetDoc.setFont("helvetica", "bold");
-                    targetDoc.setTextColor(79, 70, 229); // #4f46e5
+                    targetDoc.setTextColor(...cHeading);
                     targetDoc.text(`${item.number} ${item.title}`, margin, currentY);
                     currentY += 10;
 
-                    item.blocks.forEach(b => {
+                    for (const b of item.blocks) {
                         if (b.type === 'text') {
                             targetDoc.setFont("helvetica", "normal"); 
-                            targetDoc.setFontSize(10); 
-                            targetDoc.setTextColor(71, 85, 105); // #475569 - Consistente
+                            targetDoc.setFontSize(bodySize); 
+                            targetDoc.setTextColor(...cBody);
                             
                             const textToRender = b.data.content || "Sin contenido.";
                             const lines = targetDoc.splitTextToSize(textToRender, pageWidth - (margin * 2));
@@ -1198,20 +1492,18 @@
                                 if (currentY > safeBottomLimit) {
                                     targetDoc.addPage();
                                     if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
-                                    // RE-APLICAR ESTILOS tras cambio de página para evitar "cambio de forma"
                                     targetDoc.setFont("helvetica", "normal"); 
-                                    targetDoc.setFontSize(10); 
-                                    targetDoc.setTextColor(71, 85, 105);
+                                    targetDoc.setFontSize(bodySize); 
+                                    targetDoc.setTextColor(...cBody);
                                     currentY = 30;
                                 }
-
-                                // Si es la última línea del párrafo, no se justifica (alineación izquierda natural)
-                                if (lineIdx === lines.length - 1) {
-                                    targetDoc.text(line, margin, currentY);
-                                } else {
+                                const isLast = lineIdx === lines.length - 1;
+                                if (!isLast && doJustify) {
                                     drawJustifiedText(targetDoc, line, margin, currentY, pageWidth - (margin * 2));
+                                } else {
+                                    targetDoc.text(line, margin, currentY);
                                 }
-                                currentY += 5.5; 
+                                currentY += lineHeight; 
                             });
                             currentY += 4;
                         }
@@ -1236,7 +1528,7 @@
                                 body: b.data.rows,
                                 margin: { left: margin, right: margin, bottom: 25 }, 
                                 styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak' },
-                                headStyles: { fillColor: [79, 70, 229], fontStyle: 'bold' },
+                                headStyles: { fillColor: cTableHead, fontStyle: 'bold' },
                                 didDrawPage: (data) => { if(!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages()); }
                             });
                             currentY = targetDoc.lastAutoTable.finalY + 10;
@@ -1251,10 +1543,19 @@
                             const galleryMaxH = 65; 
                             let effectiveMaxH = 0;
 
-                            const drawImages = b.data.images.map(img => {
+                            // Resolve Drive images usando cache (solo descarga una vez por sesion)
+                            const resolvedImages = await Promise.all(b.data.images.map(async img => {
+                                if (img.driveId && !isMeasuring) {
+                                    const cached = await resolveDriveImage(img.driveId, 'w800');
+                                    if (cached) return cached;
+                                }
+                                return img;
+                            }));
+
+                            const drawImages = resolvedImages.map(img => {
                                 let w = singleWidth;
-                                let h = singleWidth / img.ratio;
-                                if (h > galleryMaxH) { h = galleryMaxH; w = h * img.ratio; }
+                                let h = singleWidth / (img.ratio || 4/3);
+                                if (h > galleryMaxH) { h = galleryMaxH; w = h * (img.ratio || 4/3); }
                                 if (h > effectiveMaxH) effectiveMaxH = h;
                                 return { ...img, drawW: w, drawH: h };
                             });
@@ -1269,7 +1570,20 @@
                                 const containerCenterX = margin + (i * (singleWidth + gap)) + (singleWidth / 2);
                                 const x = containerCenterX - (img.drawW / 2);
                                 const yOffset = (effectiveMaxH - img.drawH) / 2;
-                                try { targetDoc.addImage(img.src, 'JPEG', x, currentY + yOffset, img.drawW, img.drawH); } catch(err) {}
+                                if (!img.src) return; // skip images without resolved source
+                                try {
+                                    const fmt = img.src.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                                    targetDoc.addImage(img.src, fmt, x, currentY + yOffset, img.drawW, img.drawH);
+                                } catch(err) {
+                                    // Draw placeholder rectangle on error
+                                    try {
+                                        targetDoc.setDrawColor(200, 200, 200);
+                                        targetDoc.setFillColor(245, 245, 245);
+                                        targetDoc.rect(x, currentY + yOffset, img.drawW, img.drawH, 'FD');
+                                        targetDoc.setFontSize(7); targetDoc.setTextColor(150,150,150);
+                                        targetDoc.text('Imagen no disponible', x + img.drawW/2, currentY + yOffset + img.drawH/2, { align: 'center' });
+                                    } catch(e2) {}
+                                }
                             });
 
                             currentY += effectiveMaxH + 4;
@@ -1322,27 +1636,27 @@
                                 tableCounterGlobal++;
                             }
                         }
-                    });
-                });
+                    } // end for...of blocks
+                } // end for...of flat
             };
 
             const itemsPerIdxPage = 35; 
             const indexPagesCount = Math.ceil(flat.length / itemsPerIdxPage) || 1;
             const measureDoc = new jsPDF();
-            renderContent(measureDoc, true, 1 + indexPagesCount - 1); 
+            await renderContent(measureDoc, true, 1 + indexPagesCount - 1); 
 
             // PORTADA
-            if (companyLogo) try { doc.addImage(companyLogo, 'PNG', margin, 20, 25, 25); } catch(e){}
-            doc.setFontSize(26); doc.setFont("helvetica", "bold"); doc.setTextColor(30, 41, 59);
+            if (companyLogo) try { const logoFmt = companyLogo.startsWith('data:image/png') ? 'PNG' : 'JPEG'; doc.addImage(companyLogo, logoFmt, margin, 20, 25, 25); } catch(e){}
+            doc.setFontSize(26); doc.setFont("helvetica", "bold"); doc.setTextColor(...cCoverTitle);
             doc.text(document.getElementById('reportTitle').value.toUpperCase(), margin, 100);
-            doc.setFontSize(10); doc.setTextColor(79, 70, 229);
-            doc.text(projectHeader.toUpperCase(), margin, 90);
+            doc.setFontSize(10); doc.setTextColor(...cCoverSub);
+            doc.text(document.getElementById('projectName').value.toUpperCase(), margin, 90);
             
             let cy = 230;
             const df = (l, v) => { 
                 doc.setFont("helvetica", "bold"); doc.setTextColor(148, 163, 184); 
                 doc.text(`${l.toUpperCase()}:`, margin, cy); 
-                doc.setFont("helvetica", "normal"); doc.setTextColor(30, 41, 59); 
+                doc.setFont("helvetica", "normal"); doc.setTextColor(...cCoverTitle); 
                 doc.text(v, margin+35, cy); cy+=7; 
             };
             df("Autor", document.getElementById('reportAuthor').value);
@@ -1352,12 +1666,12 @@
             // ÍNDICE
             doc.addPage();
             addHeader(doc, 2);
-            doc.setFontSize(18); doc.setTextColor(30, 41, 59); doc.text("ÍNDICE", margin, 30);
+            doc.setFontSize(18); doc.setTextColor(...cCoverTitle); doc.text("ÍNDICE", margin, 30);
             let iy = 45;
             flat.forEach((item) => {
                 if (iy > 270) { doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); iy = 30; }
                 const ind = (item.level-1)*6;
-                doc.setFontSize(9); doc.setTextColor(79, 70, 229);
+                doc.setFontSize(9); doc.setTextColor(...cIndex);
                 doc.text(`${item.number} ${item.title}`, margin + ind, iy);
                 doc.setTextColor(148, 163, 184);
                 doc.text(item.page.toString(), pageWidth - margin, iy, { align: 'right' });
@@ -1366,16 +1680,17 @@
             });
 
             // CONTENIDO FINAL
-            renderContent(doc, false);
+            await renderContent(doc, false);
 
             // ── ANEXO: NO CONFORMIDADES ──────────────────────────────────────────
             if (annexNoConformidades.length > 0) {
                 doc.addPage();
                 addHeader(doc, doc.internal.getNumberOfPages());
                 let ay = 30;
-                doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(79, 70, 229);
+                doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(...cHeading);
                 doc.text("ANEXO: NO CONFORMIDADES", margin, ay); ay += 12;
-                annexNoConformidades.forEach((item, i) => {
+                for (let i = 0; i < annexNoConformidades.length; i++) {
+                    const item = annexNoConformidades[i];
                     if (ay > safeBottomLimit - 80) { doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); ay = 30; }
                     doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(217, 119, 6);
                     doc.text(`NC-${String(i+1).padStart(3,'0')}`, margin, ay); ay += 6;
@@ -1387,14 +1702,22 @@
                     doc.text("Descripción:", margin, ay); ay += 5;
                     doc.setFont("helvetica", "normal"); doc.setTextColor(71,85,105);
                     const descLines = doc.splitTextToSize(item.descripcion || '', pageWidth - margin - 70);
-                    if (item.foto) {
-                        // photo on right
-                        try { doc.addImage(item.foto, 'JPEG', pageWidth - margin - 60, ay - 5, 55, 40); } catch(e){}
+                    // Resolve photo
+                    let fotoSrc = item.foto;
+                    if (!fotoSrc && item.driveId) {
+                        const cached = await resolveDriveImage(item.driveId, 'w400');
+                        if (cached) fotoSrc = cached.src;
+                    }
+                    if (fotoSrc) {
+                        try {
+                            const fmt = fotoSrc.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                            doc.addImage(fotoSrc, fmt, pageWidth - margin - 60, ay - 5, 55, 40);
+                        } catch(e) {}
                     }
                     descLines.forEach(dl => { doc.text(dl, margin, ay); ay += 5; });
                     ay += 8;
                     doc.setDrawColor(240,240,240); doc.line(margin, ay, pageWidth-margin, ay); ay += 6;
-                });
+                }
             }
 
             // ── ANEXO FOTOGRÁFICO ────────────────────────────────────────────────
@@ -1402,16 +1725,34 @@
                 doc.addPage();
                 addHeader(doc, doc.internal.getNumberOfPages());
                 let fy = 30;
-                doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(79, 70, 229);
+                doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(...cHeading);
                 doc.text("ANEXO FOTOGRÁFICO", margin, fy); fy += 12;
                 const totalW = pageWidth - margin * 2;
                 const imgW = (totalW - 8) / 2;
                 const imgH = imgW * 0.66;
                 let col = 0;
-                annexFotografico.forEach((item, i) => {
+                for (let i = 0; i < annexFotografico.length; i++) {
+                    const item = annexFotografico[i];
                     const x = margin + col * (imgW + 8);
                     if (fy + imgH + 20 > safeBottomLimit) { doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); fy = 30; col = 0; }
-                    try { if (item.foto) doc.addImage(item.foto, 'JPEG', x, fy, imgW, imgH); } catch(e){}
+                    // Resolve photo
+                    let fotoSrc = item.foto;
+                    if (!fotoSrc && item.driveId) {
+                        const cached = await resolveDriveImage(item.driveId, 'w800');
+                        if (cached) fotoSrc = cached.src;
+                    }
+                    try {
+                        if (fotoSrc) {
+                            const fmt = fotoSrc.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                            doc.addImage(fotoSrc, fmt, x, fy, imgW, imgH);
+                        } else {
+                            // Placeholder when image unavailable
+                            doc.setDrawColor(200,200,200); doc.setFillColor(245,245,245);
+                            doc.rect(x, fy, imgW, imgH, 'FD');
+                            doc.setFontSize(7); doc.setTextColor(150,150,150);
+                            doc.text('Imagen no disponible', x + imgW/2, fy + imgH/2, { align: 'center' });
+                        }
+                    } catch(e) {}
                     doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(79,70,229);
                     doc.text(`Foto ${i+1} — ${item.fecha || ''}`, x, fy + imgH + 4);
                     if (item.descripcion) {
@@ -1421,7 +1762,7 @@
                     }
                     col++;
                     if (col >= 2) { col = 0; fy += imgH + 22; }
-                });
+                }
             }
 
             if (mode === 'download') { 
@@ -1508,8 +1849,11 @@
                 allPhotos.forEach(p => {
                     const b = p.block;
                     lines.push(`<fotografia id="${p.id}" nombre="${b.data.caption || ''}">`);
-                    const srcs = b.data.images.map(img => `"${img.src}"`).join(',');
-                    if (srcs) lines.push(`img: ${srcs}`);
+                    // Separate Drive refs from local base64
+                    const driveIds = b.data.images.filter(img => img.driveId).map(img => `"${img.driveId}"`).join(',');
+                    const localSrcs = b.data.images.filter(img => !img.driveId && img.src).map(img => `"${img.src}"`).join(',');
+                    if (driveIds) lines.push(`drive: ${driveIds}`);
+                    if (localSrcs) lines.push(`img: ${localSrcs}`);
                     lines.push('</fotografia>');
                 });
                 lines.push('');
@@ -1557,8 +1901,9 @@
                 annexNoConformidades.forEach(item => {
                     lines.push(`<no-conformidad id="${item.id}">`);
                     lines.push(`  fecha: "${item.fecha}"`);
-                    lines.push(`  descripcion: "${item.descripcion.replace(/"/g, "'")}"`);
-                    if (item.foto) lines.push(`  foto: "${item.foto}"`);
+                    lines.push(`  descripcion: "${(item.descripcion || '').replace(/"/g, "'")}"`);
+                    if (item.driveId) lines.push(`  driveId: "${item.driveId}"`);
+                    else if (item.foto) lines.push(`  foto: "${item.foto}"`);
                     lines.push('</no-conformidad>');
                 });
                 lines.push('');
@@ -1572,8 +1917,9 @@
                 annexFotografico.forEach(item => {
                     lines.push(`<anexo-foto id="${item.id}">`);
                     lines.push(`  fecha: "${item.fecha}"`);
-                    lines.push(`  descripcion: "${item.descripcion.replace(/"/g, "'")}"`);
-                    if (item.foto) lines.push(`  foto: "${item.foto}"`);
+                    lines.push(`  descripcion: "${(item.descripcion || '').replace(/"/g, "'")}"`);
+                    if (item.driveId) lines.push(`  driveId: "${item.driveId}"`);
+                    else if (item.foto) lines.push(`  foto: "${item.foto}"`);
                     lines.push('</anexo-foto>');
                 });
                 lines.push('');
@@ -1680,16 +2026,18 @@
             getBlock('fotografia', clean).forEach(p => {
                 const id = attr(p.attrs, 'id');
                 const nombre = attr(p.attrs, 'nombre');
-                const imgLine = p.inner.split('\n').find(l => l.trim().startsWith('img:'));
                 const images = [];
+                // Parse drive: IDs
+                const driveLine = p.inner.split('\n').find(l => l.trim().startsWith('drive:'));
+                if (driveLine) {
+                    const ids = driveLine.replace('drive:','').trim().split(',').map(s=>s.trim().replace(/^"|"$/g,''));
+                    ids.forEach(did => { if (did) images.push({ driveId: did, ratio: 4/3, w: 800, h: 600 }); });
+                }
+                // Parse img: local base64
+                const imgLine = p.inner.split('\n').find(l => l.trim().startsWith('img:'));
                 if (imgLine) {
                     const urls = imgLine.replace('img:','').trim().split(',').map(s=>s.trim().replace(/^"|"$/g,''));
-                    urls.forEach(url => {
-                        if (url) {
-                            // Para URLs externas almacenamos como objeto compatible
-                            images.push({ src: url, ratio: 4/3, w: 800, h: 600 });
-                        }
-                    });
+                    urls.forEach(url => { if (url) images.push({ src: url, ratio: 4/3, w: 800, h: 600 }); });
                 }
                 photoDict[id] = { images, caption: nombre };
             });
@@ -1757,7 +2105,13 @@
             getBlock('no-conformidad', clean).forEach(nc => {
                 const id = attr(nc.attrs, 'id') || Math.random().toString(36).substr(2,9);
                 const getVal = (key) => { const m = nc.inner.match(new RegExp(`^\\s*${key}:\\s*"([^"]*)"`, 'm')); return m ? m[1] : ''; };
-                annexNoConformidades.push({ id, fecha: getVal('fecha'), descripcion: getVal('descripcion'), foto: getVal('foto') });
+                annexNoConformidades.push({
+                    id,
+                    fecha: getVal('fecha'),
+                    descripcion: getVal('descripcion'),
+                    foto: getVal('foto') || null,
+                    driveId: getVal('driveId') || null
+                });
             });
 
             // ── ANEXO FOTOGRÁFICO ──
@@ -1765,7 +2119,13 @@
             getBlock('anexo-foto', clean).forEach(af => {
                 const id = attr(af.attrs, 'id') || Math.random().toString(36).substr(2,9);
                 const getVal = (key) => { const m = af.inner.match(new RegExp(`^\\s*${key}:\\s*"([^"]*)"`, 'm')); return m ? m[1] : ''; };
-                annexFotografico.push({ id, fecha: getVal('fecha'), descripcion: getVal('descripcion'), foto: getVal('foto') });
+                annexFotografico.push({
+                    id,
+                    fecha: getVal('fecha'),
+                    descripcion: getVal('descripcion'),
+                    foto: getVal('foto') || null,
+                    driveId: getVal('driveId') || null
+                });
             });
 
             updateAnnexCounts();
@@ -1805,34 +2165,174 @@
         // ─────────────────────────────────────────────────────────────────────────
 
         // ─── CLOUDFLARE SETTINGS ─────────────────────────────────────────────────
-        function saveCfSettings() {
-            localStorage.setItem('cf_account_id', document.getElementById('cfAccountId').value.trim());
-            localStorage.setItem('cf_api_token', document.getElementById('cfApiToken').value.trim());
-            localStorage.setItem('cf_model', document.getElementById('cfModel').value.trim());
-            localStorage.setItem('cf_worker_url', document.getElementById('cfWorkerUrl').value.trim());
-            localStorage.setItem('google_api_key', document.getElementById('googleApiKey').value.trim());
-            const st = document.getElementById('cfSaveStatus');
-            st.classList.remove('hidden');
-            setTimeout(() => { st.classList.add('hidden'); document.getElementById('cfSettingsModal').style.display='none'; }, 1200);
-            updateCfNavBtn();
+        // ─────────────────────────────────────────────────────────────────────────
+        // ADVANCED SETTINGS
+        // ─────────────────────────────────────────────────────────────────────────
+        const SETTINGS_TABS = {
+            ia:          { title: 'IA — Cloudflare', desc: 'Configura el modelo y credenciales de Cloudflare Workers AI' },
+            google:      { title: 'Google Drive', desc: 'API Key y carpeta predeterminada para cargar fotos' },
+            documento:   { title: 'Documento PDF', desc: 'Márgenes, tamaños de fuente y opciones de página' },
+            tipografia:  { title: 'Tipografía y Color', desc: 'Colores de títulos, cuerpo y elementos del PDF' },
+            cors:        { title: 'CORS / Proxy', desc: 'Solución para llamadas desde archivo local (file://)' },
+        };
+        let currentSettingsTab = 'ia';
+
+        function openSettings(tab = 'ia') {
+            loadAllSettings();
+            switchSettingsTab(tab);
+            document.getElementById('settingsModal').style.display = 'flex';
+            document.getElementById('settingsSavedMsg').classList.add('hidden');
         }
 
-        function loadCfSettings() {
-            document.getElementById('cfAccountId').value  = localStorage.getItem('cf_account_id') || '';
-            document.getElementById('cfApiToken').value   = localStorage.getItem('cf_api_token')  || '';
-            document.getElementById('cfModel').value      = localStorage.getItem('cf_model')      || '';
-            document.getElementById('cfWorkerUrl').value  = localStorage.getItem('cf_worker_url') || '';
-            document.getElementById('googleApiKey').value = localStorage.getItem('google_api_key') || '';
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function switchSettingsTab(tab) {
+            currentSettingsTab = tab;
+            // Update sidebar active state
+            document.querySelectorAll('.settings-tab').forEach(b => b.classList.remove('active'));
+            document.getElementById(`stab-${tab}`)?.classList.add('active');
+            // Show correct panel
+            document.querySelectorAll('.settings-panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`spanel-${tab}`)?.classList.remove('hidden');
+            // Update header
+            const info = SETTINGS_TABS[tab];
+            if (info) {
+                document.getElementById('settingsPanelTitle').textContent = info.title;
+                document.getElementById('settingsPanelDesc').textContent = info.desc;
+            }
+        }
+
+        function togglePwd(inputId, btn) {
+            const inp = document.getElementById(inputId);
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+        }
+
+        function syncColor(colorId, hexId) {
+            const hex = document.getElementById(hexId).value;
+            if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+                document.getElementById(colorId).value = hex;
+                updateColorPreviews();
+            }
+        }
+
+        function updateColorPreviews() {
+            const heading = document.getElementById('colorHeading')?.value || '#4f46e5';
+            const body    = document.getElementById('colorBody')?.value    || '#475569';
+            const tHead   = document.getElementById('colorTableHead')?.value || '#4f46e5';
+            const ph = document.getElementById('prev-heading');
+            const pb = document.getElementById('prev-body');
+            const pt = document.getElementById('prev-table-head');
+            if (ph) ph.style.color = heading;
+            if (pb) pb.style.color = body;
+            if (pt) pt.style.background = tHead;
+        }
+
+        // Attach live preview to color inputs
+        document.addEventListener('DOMContentLoaded', () => {
+            ['colorHeading','colorBody','colorTableHead','colorIndex','colorCoverTitle','colorCoverSub'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', () => {
+                    const hexEl = document.getElementById(id + 'Hex');
+                    if (hexEl) hexEl.value = el.value;
+                    updateColorPreviews();
+                });
+            });
+        });
+
+        function saveAllSettings() {
+            // IA / CF
+            localStorage.setItem('cf_account_id', document.getElementById('cfAccountId').value.trim());
+            localStorage.setItem('cf_api_token',  document.getElementById('cfApiToken').value.trim());
+            localStorage.setItem('cf_model',      document.getElementById('cfModel').value.trim());
+            // Google
+            localStorage.setItem('google_api_key',    document.getElementById('googleApiKey').value.trim());
+            localStorage.setItem('drive_folder_id',   document.getElementById('driveFolderIdSettings').value.trim());
+            // Document
+            localStorage.setItem('pdf_margin',        document.getElementById('pdfMargin').value);
+            localStorage.setItem('pdf_page_size',     document.getElementById('pdfPageSize').value);
+            localStorage.setItem('pdf_body_size',     document.getElementById('pdfBodySize').value);
+            localStorage.setItem('pdf_line_height',   document.getElementById('pdfLineHeight').value);
+            localStorage.setItem('pdf_h1_size',       document.getElementById('pdfH1Size').value);
+            localStorage.setItem('pdf_h2_size',       document.getElementById('pdfH2Size').value);
+            localStorage.setItem('pdf_footer',        document.getElementById('pdfFooterText').value.trim());
+            localStorage.setItem('pdf_page_num',      document.getElementById('pdfShowPageNum').checked ? '1' : '0');
+            localStorage.setItem('pdf_justify',       document.getElementById('pdfJustify').checked ? '1' : '0');
+            // Typography / Color
+            localStorage.setItem('color_heading',     document.getElementById('colorHeading').value);
+            localStorage.setItem('color_body',        document.getElementById('colorBody').value);
+            localStorage.setItem('color_table_head',  document.getElementById('colorTableHead').value);
+            localStorage.setItem('color_index',       document.getElementById('colorIndex').value);
+            localStorage.setItem('color_cover_title', document.getElementById('colorCoverTitle').value);
+            localStorage.setItem('color_cover_sub',   document.getElementById('colorCoverSub').value);
+            // CORS
+            localStorage.setItem('cf_worker_url',     document.getElementById('cfWorkerUrl').value.trim());
+
+            updateCfNavBtn();
+            const msg = document.getElementById('settingsSavedMsg');
+            msg.classList.remove('hidden');
+            setTimeout(() => { msg.classList.add('hidden'); closeSettings(); }, 1200);
+        }
+
+        // Keep old name as alias so acceptModelLicense still works
+        function saveCfSettings() { saveAllSettings(); }
+
+        function loadAllSettings() {
+            const g = (k, def) => localStorage.getItem(k) ?? def;
+            // IA
+            document.getElementById('cfAccountId').value  = g('cf_account_id','');
+            document.getElementById('cfApiToken').value   = g('cf_api_token','');
+            document.getElementById('cfModel').value      = g('cf_model','');
+            // Google
+            document.getElementById('googleApiKey').value         = g('google_api_key','');
+            document.getElementById('driveFolderIdSettings').value= g('drive_folder_id', DRIVE_FOLDER_ID || '');
+            // Document
+            document.getElementById('pdfMargin').value      = g('pdf_margin','25');
+            document.getElementById('pdfPageSize').value    = g('pdf_page_size','a4');
+            document.getElementById('pdfBodySize').value    = g('pdf_body_size','10');
+            document.getElementById('pdfLineHeight').value  = g('pdf_line_height','5.5');
+            document.getElementById('pdfH1Size').value      = g('pdf_h1_size','16');
+            document.getElementById('pdfH2Size').value      = g('pdf_h2_size','13');
+            document.getElementById('pdfFooterText').value  = g('pdf_footer','');
+            document.getElementById('pdfShowPageNum').checked = g('pdf_page_num','1') === '1';
+            document.getElementById('pdfJustify').checked   = g('pdf_justify','1') === '1';
+            // Colors
+            const setColor = (id, key, def) => {
+                const v = g(key, def);
+                document.getElementById(id).value = v;
+                document.getElementById(id+'Hex').value = v;
+            };
+            setColor('colorHeading',    'color_heading',     '#4f46e5');
+            setColor('colorBody',       'color_body',        '#475569');
+            setColor('colorTableHead',  'color_table_head',  '#4f46e5');
+            setColor('colorIndex',      'color_index',       '#4f46e5');
+            setColor('colorCoverTitle', 'color_cover_title', '#1e293b');
+            setColor('colorCoverSub',   'color_cover_sub',   '#4f46e5');
+            updateColorPreviews();
+            // CORS
+            document.getElementById('cfWorkerUrl').value = g('cf_worker_url','');
+        }
+
+        // Keep old alias for DOMContentLoaded init
+        function loadCfSettings() { loadAllSettings(); }
+
+        // Helper to read a saved pdf/color setting at PDF generation time
+        function pdfCfg(key, def) { return localStorage.getItem(key) ?? def; }
+        function hexToRgb(hex) {
+            const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return r ? [parseInt(r[1],16), parseInt(r[2],16), parseInt(r[3],16)] : [0,0,0];
         }
 
         function updateCfNavBtn() {
             const configured = !!(localStorage.getItem('cf_account_id') && localStorage.getItem('cf_api_token'));
             const btn = document.getElementById('cfSettingsNavBtn');
+            if (!btn) return;
             if (configured) {
                 btn.classList.remove('bg-slate-100','text-slate-500');
-                btn.classList.add('bg-orange-100','text-orange-600');
+                btn.classList.add('bg-indigo-100','text-indigo-600');
             } else {
-                btn.classList.remove('bg-orange-100','text-orange-600');
+                btn.classList.remove('bg-indigo-100','text-indigo-600');
                 btn.classList.add('bg-slate-100','text-slate-500');
             }
         }
@@ -1883,7 +2383,13 @@
         }
 
         // Inicializar al cargar
-        window.addEventListener('DOMContentLoaded', () => { loadCfSettings(); updateCfNavBtn(); });
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAllSettings();
+            updateCfNavBtn();
+            // Sync drive folder default from settings
+            const savedFolder = localStorage.getItem('drive_folder_id');
+            if (savedFolder) document.getElementById('driveFolderId').value = savedFolder;
+        });
 
         // ─── LLAMADA A CLOUDFLARE AI ──────────────────────────────────────────────
         // Usa AI Gateway con nombre fijo "informes-app" — se crea una sola vez en el dashboard.
@@ -2438,47 +2944,30 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             const statusTx = document.getElementById('driveStatusText');
             statusEl.classList.remove('hidden');
 
-            // ── ANNEX MODE: insert single photo into annex item ──────────────────
+            // ── ANNEX MODE: store driveId reference for annex item ───────────────
             if (driveAnnexMode) {
                 const fileId   = [...driveSelected][0];
                 const fileInfo = driveAllFiles.find(f => f.id === fileId);
-                statusTx.textContent = 'Descargando foto...';
-                try {
-                    const url  = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
-                    const res  = await fetch(url);
-                    const blob = await res.blob();
-                    const dataUrl = await new Promise(resolve => {
-                        const reader = new FileReader();
-                        reader.onload = e => resolve(e.target.result);
-                        reader.readAsDataURL(blob);
-                    });
-                    const processed = await normalizeImage(dataUrl);
+                statusTx.textContent = 'Guardando referencia...';
 
-                    const items = editingAnnexType === 'nc' ? annexNoConformidades : annexFotografico;
-                    const item  = items.find(x => x.id === driveAnnexItemId);
-                    if (item) {
-                        item.foto = processed.src;
-                        // Auto-fill fecha from filename if item fecha is empty
-                        if (!item.fecha && fileInfo?.fecha) {
-                            item.fecha = formatFecha(fileInfo.fecha);
-                        }
-                        // Auto-fill descripcion from filename if empty
-                        if (!item.descripcion && fileInfo?.temaSecundario) {
-                            item.descripcion = fileInfo.temaSecundario;
-                        }
-                    }
-                    statusEl.classList.add('hidden');
-                    closeModal('drivePickerModal');
-                    renderAnnexList();
-                    renderAnnexForm(item);
-                    updateAnnexCounts();
-                } catch(e) {
-                    statusTx.textContent = `Error: ${e.message}`;
+                const items = editingAnnexType === 'nc' ? annexNoConformidades : annexFotografico;
+                const item  = items.find(x => x.id === driveAnnexItemId);
+                if (item) {
+                    // Store driveId — thumbnail shown in editor, full image fetched for PDF
+                    item.foto    = null;
+                    item.driveId = fileId;
+                    if (!item.fecha && fileInfo?.fecha) item.fecha = formatFecha(fileInfo.fecha);
+                    if (!item.descripcion && fileInfo?.temaSecundario) item.descripcion = fileInfo.temaSecundario;
                 }
+                statusEl.classList.add('hidden');
+                closeModal('drivePickerModal');
+                renderAnnexList();
+                renderAnnexForm(item);
+                updateAnnexCounts();
                 return;
             }
 
-            // ── BLOCK MODE: insert up to 3 photos into image block ───────────────
+            // ── BLOCK MODE: store driveId reference (no base64 download) ────────
             const s = findById(sections, driveTargetSId);
             const b = s?.blocks.find(x => x.id === driveTargetBId);
             if (!b) return;
@@ -2487,26 +2976,17 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             if (available <= 0) { alert('El bloque ya tiene 3 imágenes (máximo).'); return; }
 
             const toInsert = [...driveSelected].slice(0, available);
-            statusTx.textContent = `Descargando ${toInsert.length} foto(s)...`;
 
             for (const fileId of toInsert) {
-                try {
-                    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
-                    const res = await fetch(url);
-                    const blob = await res.blob();
-                    const dataUrl = await new Promise(resolve => {
-                        const reader = new FileReader();
-                        reader.onload = e => resolve(e.target.result);
-                        reader.readAsDataURL(blob);
-                    });
-                    const processed = await normalizeImage(dataUrl);
-                    const fileInfo = driveAllFiles.find(f => f.id === fileId);
-                    if (!b.data.caption && fileInfo) {
-                        b.data.caption = fileInfo.temaSecundario || fileInfo.name;
-                    }
-                    b.data.images.push(processed);
-                } catch(e) {
-                    console.warn('Error descargando imagen:', fileId, e);
+                const fileInfo = driveAllFiles.find(f => f.id === fileId);
+                // Store only the Drive file ID — no base64 download
+                b.data.images.push({
+                    driveId: fileId,
+                    name: fileInfo?.name || fileId,
+                    ratio: 4/3, w: 800, h: 600
+                });
+                if (!b.data.caption && fileInfo?.temaSecundario) {
+                    b.data.caption = fileInfo.temaSecundario;
                 }
             }
 

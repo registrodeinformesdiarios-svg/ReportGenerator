@@ -205,9 +205,68 @@
                     <input type="text" id="cfModel" placeholder="@cf/meta/llama-3.1-8b-instruct" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-400 transition-all font-mono">
                     <p class="text-[10px] text-slate-400 mt-1">Ej: @cf/meta/llama-3.3-70b-instruct-fp8-fast</p>
                 </div>
-                <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 text-[11px] text-amber-700">
-                    <strong>Requiere proxy CORS.</strong> Activa el proxy en 
-                    <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank" class="underline font-bold">cors-anywhere.herokuapp.com/corsdemo</a> antes de usar la IA.
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Google API Key</label>
+                    <input type="password" id="googleApiKey" placeholder="AIzaSy..." class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-orange-400 transition-all font-mono">
+                    <p class="text-[10px] text-slate-400 mt-1">Necesaria para cargar fotos desde Google Drive. Crea una en <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="underline text-orange-500">Google Cloud Console</a> con la API de Drive habilitada.</p>
+                </div>
+
+                <!-- CORS notice - file:// limitation -->
+                <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-[11px] text-rose-800 leading-relaxed">
+                    <strong>⚠ Limitación del navegador:</strong> Al abrir el archivo directamente (<code>file://</code>), el navegador bloquea <em>todos</em> los fetch externos por política CORS, sin importar el servidor de destino. La solución es usar un <strong>Worker proxy propio</strong> en Cloudflare.
+                </div>
+
+                <!-- Worker proxy — PRIMARY -->
+                <div class="border-2 border-indigo-200 rounded-2xl p-4 space-y-3 bg-indigo-50/40">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Worker Proxy</span>
+                        <span class="text-[9px] bg-indigo-600 text-white font-bold px-2 py-0.5 rounded-full">Solución recomendada</span>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase mb-1 block">URL del Worker</label>
+                        <input type="text" id="cfWorkerUrl" placeholder="https://mi-worker.usuario.workers.dev" class="w-full border border-indigo-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-mono">
+                    </div>
+                    <details open class="text-[10px] text-slate-600">
+                        <summary class="cursor-pointer font-bold text-indigo-600 hover:underline select-none mb-2">Cómo crear el Worker (2 minutos)</summary>
+                        <ol class="space-y-1 mb-2 list-decimal list-inside text-slate-500">
+                            <li>Ve a <a href="https://dash.cloudflare.com/?to=/:account/workers-and-pages/create/workers/new" target="_blank" class="underline text-indigo-500 font-bold">Dashboard → Workers → Crear</a></li>
+                            <li>Pega el código de abajo y haz clic en <strong>Deploy</strong></li>
+                            <li>Ve a <strong>Settings → Variables</strong> y agrega <code>ACCOUNT_ID</code> y <code>API_TOKEN</code> como secretos</li>
+                            <li>Copia la URL del Worker y pégala arriba</li>
+                        </ol>
+                        <pre class="bg-white border border-slate-200 rounded-xl p-3 overflow-x-auto leading-relaxed whitespace-pre text-[10px]">export default {
+  async fetch(req, env) {
+    const cors = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    };
+    if (req.method === 'OPTIONS')
+      return new Response(null, { headers: cors });
+
+    const { model, messages } = await req.json();
+    const url = `https://api.cloudflare.com/client/v4/accounts/`
+              + `${env.ACCOUNT_ID}/ai/run/${model}`;
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messages }),
+    });
+    return Response.json(await r.json(), { headers: cors });
+  },
+};</pre>
+                    </details>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 block">Licencia de modelos restringidos</label>
+                    <button id="acceptLicenseBtn" onclick="acceptModelLicense()" class="w-full flex items-center justify-center gap-2 bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-slate-600 hover:text-indigo-600 px-4 py-2.5 rounded-xl text-sm font-bold transition-all">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+                        Aceptar licencia de Meta / modelos restringidos
+                    </button>
+                    <p id="acceptLicenseStatus" class="text-[10px] mt-1 text-center hidden"></p>
                 </div>
             </div>
             <div id="cfSaveStatus" class="hidden text-xs font-bold text-green-500 text-center">✓ Configuración guardada</div>
@@ -285,6 +344,90 @@
             </div>
             <div class="p-4 border-t border-slate-100 flex justify-end">
                 <button onclick="closeModal('annexModal')" class="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md text-sm">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drive Photo Picker Modal -->
+    <div id="drivePickerModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-[115] backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl max-w-5xl w-full shadow-2xl flex flex-col max-h-[92vh]">
+            <!-- Header -->
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path d="m8 12 3 3 5-5"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold">Fotos desde Google Drive</h3>
+                        <p class="text-[10px] text-slate-400">Selecciona por fecha y tema</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('drivePickerModal')" class="text-slate-300 hover:text-slate-600 text-xl font-bold">✕</button>
+            </div>
+
+            <!-- Filters bar -->
+            <div class="p-4 border-b border-slate-100 bg-slate-50 shrink-0 flex flex-wrap gap-3 items-end">
+                <!-- Folder ID -->
+                <div class="flex-1 min-w-48">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">ID de carpeta Drive</label>
+                    <input type="text" id="driveFolderId" placeholder="ID de la carpeta..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono outline-none focus:ring-2 focus:ring-emerald-400 bg-white">
+                </div>
+                <!-- Disciplina -->
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Disciplina</label>
+                    <select id="driveDisciplina" onchange="onDisciplinaChange()" class="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400 bg-white">
+                        <option value="">— Seleccionar —</option>
+                        <option value="civil">Civil</option>
+                        <option value="em">Electromecánica</option>
+                    </select>
+                </div>
+                <!-- Tema principal -->
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Tema principal</label>
+                    <select id="driveTemaPrincipal" onchange="onTemaPrincipalChange()" class="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400 bg-white min-w-48">
+                        <option value="">— Primero elige disciplina —</option>
+                    </select>
+                </div>
+                <!-- Tema secundario -->
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Tema secundario</label>
+                    <select id="driveTemaSec" onchange="filterDrivePhotos()" class="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400 bg-white min-w-48">
+                        <option value="">— Todos —</option>
+                    </select>
+                </div>
+                <!-- Fecha desde/hasta -->
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Desde</label>
+                    <input type="date" id="driveFechaDesde" onchange="filterDrivePhotos()" class="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400 bg-white">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Hasta</label>
+                    <input type="date" id="driveFechaHasta" onchange="filterDrivePhotos()" class="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400 bg-white">
+                </div>
+                <!-- Cargar -->
+                <button onclick="loadDriveFolder()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl font-bold text-sm transition-colors shadow-sm">
+                    Cargar fotos
+                </button>
+            </div>
+
+            <!-- Status bar -->
+            <div id="driveStatus" class="hidden px-5 py-2 text-xs font-bold text-emerald-600 bg-emerald-50 border-b border-emerald-100 flex items-center gap-2 shrink-0">
+                <svg class="animate-spin shrink-0" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                <span id="driveStatusText">Cargando...</span>
+            </div>
+
+            <!-- Photo grid -->
+            <div id="drivePhotoGrid" class="flex-1 overflow-y-auto p-4">
+                <p class="text-slate-400 text-sm text-center mt-12">Ingresa el ID de carpeta y haz clic en <strong>Cargar fotos</strong>.</p>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-4 border-t border-slate-100 flex items-center justify-between shrink-0">
+                <p class="text-xs text-slate-400"><span id="driveSelectedCount">0</span> foto(s) seleccionada(s)</p>
+                <div class="flex gap-3">
+                    <button onclick="closeModal('drivePickerModal')" class="px-5 py-2.5 text-slate-400 font-bold text-sm rounded-xl hover:bg-slate-50">Cancelar</button>
+                    <button onclick="insertDrivePhotos()" class="bg-emerald-600 text-white px-8 py-2.5 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all shadow-md">Insertar seleccionadas</button>
+                </div>
             </div>
         </div>
     </div>
@@ -598,6 +741,10 @@
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] font-bold text-slate-400 uppercase">Figuras (Máx 3)</span>
                         <div class="flex gap-2">
+                             <button onclick="openDrivePicker('${sId}','${b.id}')" class="text-[10px] font-bold bg-white text-emerald-600 border border-emerald-200 px-3 py-1 rounded-lg hover:bg-emerald-50 transition-colors flex items-center gap-1">
+                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path d="m8 12 3 3 5-5"/></svg>
+                                 Drive
+                             </button>
                              <input type="file" id="file_${b.id}" class="hidden" accept="image/*" onchange="handleBlockImage('${sId}', '${b.id}', this)">
                              <label for="file_${b.id}" class="text-[10px] font-bold bg-indigo-600 text-white px-3 py-1 rounded-lg cursor-pointer hover:bg-indigo-700 transition-colors shadow-sm">+ SUBIR</label>
                         </div>
@@ -905,7 +1052,16 @@
                             ${item.foto ? `<img src="${item.foto}" class="w-full h-full object-cover">` : `<div class="flex flex-col items-center gap-2 text-slate-300"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg><p class="text-xs">Clic para subir foto</p></div>`}
                             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">Cambiar foto</div>
                         </div>
-                        <input type="file" id="annexImgInput_${item.id}" class="hidden" accept="image/*" onchange="loadAnnexImage('${item.id}', this)">
+                        <div class="flex gap-2 mt-2">
+                            <input type="file" id="annexImgInput_${item.id}" class="hidden" accept="image/*" onchange="loadAnnexImage('${item.id}', this)">
+                            <label for="annexImgInput_${item.id}" class="flex-1 text-center text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-2 rounded-xl cursor-pointer transition-colors">
+                                + Subir archivo
+                            </label>
+                            <button onclick="openDrivePickerForAnnex('${item.id}')" class="flex-1 text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-xl transition-colors flex items-center justify-center gap-1">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path d="m8 12 3 3 5-5"/></svg>
+                                Desde Drive
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">${isNC ? 'Fecha de Detección' : 'Fecha'}</label>
@@ -1653,6 +1809,8 @@
             localStorage.setItem('cf_account_id', document.getElementById('cfAccountId').value.trim());
             localStorage.setItem('cf_api_token', document.getElementById('cfApiToken').value.trim());
             localStorage.setItem('cf_model', document.getElementById('cfModel').value.trim());
+            localStorage.setItem('cf_worker_url', document.getElementById('cfWorkerUrl').value.trim());
+            localStorage.setItem('google_api_key', document.getElementById('googleApiKey').value.trim());
             const st = document.getElementById('cfSaveStatus');
             st.classList.remove('hidden');
             setTimeout(() => { st.classList.add('hidden'); document.getElementById('cfSettingsModal').style.display='none'; }, 1200);
@@ -1660,12 +1818,11 @@
         }
 
         function loadCfSettings() {
-            const id = localStorage.getItem('cf_account_id') || '';
-            const token = localStorage.getItem('cf_api_token') || '';
-            const model = localStorage.getItem('cf_model') || '';
-            document.getElementById('cfAccountId').value = id;
-            document.getElementById('cfApiToken').value = token;
-            document.getElementById('cfModel').value = model;
+            document.getElementById('cfAccountId').value  = localStorage.getItem('cf_account_id') || '';
+            document.getElementById('cfApiToken').value   = localStorage.getItem('cf_api_token')  || '';
+            document.getElementById('cfModel').value      = localStorage.getItem('cf_model')      || '';
+            document.getElementById('cfWorkerUrl').value  = localStorage.getItem('cf_worker_url') || '';
+            document.getElementById('googleApiKey').value = localStorage.getItem('google_api_key') || '';
         }
 
         function updateCfNavBtn() {
@@ -1680,44 +1837,108 @@
             }
         }
 
+        async function acceptModelLicense() {
+            const accountId = document.getElementById('cfAccountId').value.trim() || localStorage.getItem('cf_account_id');
+            const apiToken  = document.getElementById('cfApiToken').value.trim()  || localStorage.getItem('cf_api_token');
+            const model     = document.getElementById('cfModel').value.trim()     || localStorage.getItem('cf_model') || '@cf/meta/llama-3.1-8b-instruct';
+
+            if (!accountId || !apiToken) {
+                const st = document.getElementById('acceptLicenseStatus');
+                st.className = 'text-[10px] mt-1 text-center block text-amber-500';
+                st.textContent = 'Ingresa Account ID y API Token primero.';
+                return;
+            }
+
+            const btn = document.getElementById('acceptLicenseBtn');
+            const st  = document.getElementById('acceptLicenseStatus');
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Enviando...`;
+            st.className = 'text-[10px] mt-1 text-center block text-slate-400';
+            st.textContent = '';
+
+            try {
+                const workerUrl = document.getElementById('cfWorkerUrl').value.trim() || localStorage.getItem('cf_worker_url');
+
+                let url, fetchOpts;
+                if (workerUrl) {
+                    url = workerUrl.replace(/\/$/, '');
+                    fetchOpts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model, messages: [{ role: 'user', content: 'agree' }] }) };
+                } else {
+                    url = `https://gateway.ai.cloudflare.com/v1/${accountId}/informes-app/workers-ai/${model}`;
+                    fetchOpts = { method: 'POST', headers: { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'user', content: 'agree' }] }) };
+                }
+
+                const response = await fetch(url, fetchOpts);
+                const ok = response.status < 500;
+                st.className = `text-[10px] mt-1 text-center block ${ok ? 'text-green-500' : 'text-red-500'}`;
+                st.textContent = ok ? '✓ Licencia aceptada correctamente.' : `Error ${response.status} — verifica tus credenciales.`;
+            } catch (err) {
+                st.className = 'text-[10px] mt-1 text-center block text-red-500';
+                st.textContent = `Error de red: ${err.message}`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg> Aceptar licencia de Meta / modelos restringidos`;
+                st.classList.remove('hidden');
+            }
+        }
+
         // Inicializar al cargar
         window.addEventListener('DOMContentLoaded', () => { loadCfSettings(); updateCfNavBtn(); });
 
         // ─── LLAMADA A CLOUDFLARE AI ──────────────────────────────────────────────
+        // Usa AI Gateway con nombre fijo "informes-app" — se crea una sola vez en el dashboard.
+        // Esto resuelve CORS desde file:// sin necesidad de configuración adicional.
         async function callClaude(systemPrompt, userPrompt) {
             const accountId = localStorage.getItem('cf_account_id');
             const apiToken  = localStorage.getItem('cf_api_token');
             const model     = localStorage.getItem('cf_model') || '@cf/meta/llama-3.1-8b-instruct';
+            const workerUrl = localStorage.getItem('cf_worker_url');
 
             if (!accountId || !apiToken) {
                 throw new Error('Configura el Account ID y API Token de Cloudflare (botón ⚙ en la barra).');
             }
 
-            const proxyUrl = `https://cors-anywhere.herokuapp.com/https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`;
+            const messages = [
+                { role: 'system', content: systemPrompt },
+                { role: 'user',   content: userPrompt }
+            ];
 
-            const payload = {
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user',   content: userPrompt }
-                ],
-                max_tokens: 4000
-            };
+            let url, headers, body;
 
-            const response = await fetch(proxyUrl, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${apiToken}`,
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(payload)
-            });
+            if (workerUrl) {
+                const response = await fetch(workerUrl.replace(/\/$/, ''), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model, messages })
+                });
+                const result = await response.json();
+                console.log('[CF Worker] respuesta completa:', JSON.stringify(result, null, 2));
 
+                const text = result?.result?.response
+                    ?? result?.result?.generated_text
+                    ?? result?.result?.[0]?.generated_text
+                    ?? result?.result?.choices?.[0]?.message?.content
+                    ?? result?.choices?.[0]?.message?.content
+                    ?? result?.response
+                    ?? result?.generated_text
+                    ?? null;
+
+                if (text !== null && text !== undefined) return text;
+                throw new Error('Respuesta inesperada. Abre la consola (F12) y busca "[CF Worker] respuesta completa" para ver la estructura.');
+            }
+
+            // AI Gateway con nombre fijo — resuelve CORS desde file://
+            // El gateway "informes-app" debe existir en el dashboard de Cloudflare.
+            url     = `https://gateway.ai.cloudflare.com/v1/${accountId}/informes-app/workers-ai/${model}`;
+            headers = { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' };
+            body    = JSON.stringify({ messages });
+
+            const response = await fetch(url, { method: 'POST', headers, body });
             const result = await response.json();
-            if (!response.ok) {
+            if (!response.ok && !result.success) {
                 throw new Error(result.errors?.[0]?.message || `HTTP ${response.status}`);
             }
-            return result.result?.response || '';
+            return result.result?.response ?? result.result?.generated_text ?? result.response ?? '';
         }
 
         // Obtener todos los bloques de texto del informe actual como contexto
@@ -1904,6 +2125,394 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             if (blockVersions[bId]) {
                 blockVersions[bId].versions[blockVersions[bId].current] = newText;
             }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────────
+        // DRIVE PHOTO PICKER
+        // ─────────────────────────────────────────────────────────────────────────
+        const DRIVE_FOLDER_ID = '1Sox86IWQ6IoAWDUxmc_EOhvGrXGRve0eHbWZ7M545f26jVmCrWe58QiWoCs-VfPkan0oB2Zf';
+        const TOPICS_CIVIL_URL = 'https://raw.githubusercontent.com/registrodeinformesdiarios-svg/marcas-agua-supervision/refs/heads/main/TitulosCivil.txt';
+        const TOPICS_EM_URL    = 'https://raw.githubusercontent.com/registrodeinformesdiarios-svg/marcas-agua-supervision/refs/heads/main/TitulosEM.txt';
+
+        let driveTopics    = { civil: null, em: null };
+        let driveAllFiles  = [];
+        let driveFiltered  = [];
+        let driveSelected  = new Set();
+        let driveTargetSId = null;
+        let driveTargetBId = null;
+        let driveAnnexMode = false;  // true = picking for an annex item (single photo)
+        let driveAnnexItemId = null; // annex item id when in annex mode
+
+        // ── Parse topics TXT ──────────────────────────────────────────────────────
+        function parseTopicsTxt(txt) {
+            // Returns { mainTopics: [{label, subs:[]}] }
+            const lines = txt.split('\n').map(l => l.trim()).filter(Boolean);
+            const result = [];
+            let current = null;
+            for (const line of lines) {
+                const mainMatch = line.match(/^<(.+)>$/);
+                if (mainMatch) {
+                    current = { label: mainMatch[1], subs: [] };
+                    result.push(current);
+                } else if (current) {
+                    // Sub-items may have prefixes like "1<...>", "2<...>" or plain text
+                    const subMatch = line.match(/^\d+<(.+)>$/) || line.match(/^<(.+)>$/);
+                    const label = subMatch ? subMatch[1] : line;
+                    current.subs.push(label);
+                }
+            }
+            return result;
+        }
+
+        async function loadTopics(disciplina) {
+            if (driveTopics[disciplina]) return driveTopics[disciplina];
+            const url = disciplina === 'civil' ? TOPICS_CIVIL_URL : TOPICS_EM_URL;
+            const res = await fetch(url);
+            const txt = await res.text();
+            driveTopics[disciplina] = parseTopicsTxt(txt);
+            return driveTopics[disciplina];
+        }
+
+        // ── Parse filename → { fecha, temaPrincipal, temaSecundario } ─────────────
+        // Real formats observed:
+        //   "20260327_Escavacion para estructuras mayores.jpg"           → solo secundario
+        //   "20260329_Puesta a tierra de maquinaria (18.Seguridad…)_1.jpg" → secundario + (principal) + _N
+        function parseFilename(name) {
+            // Remove extension
+            const base = name.replace(/\.[^.]+$/, '');
+            // Remove trailing sequence number "_1", "_2", etc.
+            const noSeq = base.replace(/_\d+$/, '');
+            // Match: DATE_SecundaryTopic (PrimaryTopic)
+            const m = noSeq.match(/^(\d{8})_(.+?)\s*\(([^)]+)\)\s*$/);
+            if (m) return { fecha: m[1], temaSecundario: m[2].trim(), temaPrincipal: m[3].trim() };
+            // Fallback: DATE_SecundaryTopic (no primary topic)
+            const d = noSeq.match(/^(\d{8})_(.+)$/);
+            if (d) return { fecha: d[1], temaSecundario: d[2].trim(), temaPrincipal: '' };
+            // Last resort
+            return { fecha: '', temaSecundario: base, temaPrincipal: '' };
+        }
+
+        function formatFecha(f) {
+            // "20260329" → "2026-03-29"
+            if (!f || f.length !== 8) return f;
+            return `${f.slice(0,4)}-${f.slice(4,6)}-${f.slice(6,8)}`;
+        }
+
+        // ── Open picker for a section image block ─────────────────────────────────
+        function openDrivePicker(sId, bId) {
+            const apiKey = localStorage.getItem('google_api_key');
+            if (!apiKey) {
+                alert('Configura tu Google API Key en el botón ⚙ de configuración.');
+                return;
+            }
+            driveTargetSId  = sId;
+            driveTargetBId  = bId;
+            driveAnnexMode  = false;
+            driveAnnexItemId = null;
+            driveSelected   = new Set();
+            _openDrivePickerModal();
+        }
+
+        // ── Open picker for an annex item (single photo) ──────────────────────────
+        function openDrivePickerForAnnex(annexItemId) {
+            const apiKey = localStorage.getItem('google_api_key');
+            if (!apiKey) {
+                alert('Configura tu Google API Key en el botón ⚙ de configuración.');
+                return;
+            }
+            driveAnnexMode   = true;
+            driveAnnexItemId = annexItemId;
+            driveTargetSId   = null;
+            driveTargetBId   = null;
+            driveSelected    = new Set();
+            // Update footer hint for single-select mode
+            _openDrivePickerModal();
+            document.getElementById('driveSelectedCount').textContent = '0';
+            // Change insert button label to reflect single selection
+            document.querySelector('#drivePickerModal .bg-emerald-600:last-child').textContent = 'Usar foto seleccionada';
+        }
+
+        function _openDrivePickerModal() {
+            driveAllFiles  = [];
+            driveFiltered  = [];
+            document.getElementById('driveFolderId').value             = localStorage.getItem('drive_folder_id') || DRIVE_FOLDER_ID;
+            document.getElementById('driveDisciplina').value           = '';
+            document.getElementById('driveTemaPrincipal').innerHTML    = '<option value="">— Primero elige disciplina —</option>';
+            document.getElementById('driveTemaSec').innerHTML          = '<option value="">— Todos —</option>';
+            document.getElementById('driveFechaDesde').value           = '';
+            document.getElementById('driveFechaHasta').value           = '';
+            document.getElementById('drivePhotoGrid').innerHTML        = '<p class="text-slate-400 text-sm text-center mt-12">Ingresa el ID de carpeta y haz clic en <strong>Cargar fotos</strong>.</p>';
+            document.getElementById('driveSelectedCount').textContent  = '0';
+            document.getElementById('driveStatus').classList.add('hidden');
+            document.getElementById('drivePickerModal').style.display  = 'flex';
+        }
+
+        // ── Load folder from Drive API ────────────────────────────────────────────
+        async function loadDriveFolder() {
+            const apiKey   = localStorage.getItem('google_api_key');
+            const folderId = document.getElementById('driveFolderId').value.trim() || DRIVE_FOLDER_ID;
+            localStorage.setItem('drive_folder_id', folderId);
+
+            const statusEl     = document.getElementById('driveStatus');
+            const statusTextEl = document.getElementById('driveStatusText');
+            const grid         = document.getElementById('drivePhotoGrid');
+
+            statusEl.classList.remove('hidden');
+            statusTextEl.textContent = 'Obteniendo lista de fotos...';
+            grid.innerHTML = '';
+            driveAllFiles  = [];
+
+            try {
+                // Paginate through all files in folder
+                let pageToken = '';
+                let total = 0;
+                do {
+                    const params = new URLSearchParams({
+                        q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
+                        fields: 'nextPageToken,files(id,name,mimeType,thumbnailLink,webContentLink)',
+                        pageSize: 1000,
+                        key: apiKey,
+                        ...(pageToken ? { pageToken } : {})
+                    });
+                    const res  = await fetch(`https://www.googleapis.com/drive/v3/files?${params}`);
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error.message);
+                    const files = data.files || [];
+                    files.forEach(f => {
+                        const parsed = parseFilename(f.name);
+                        driveAllFiles.push({ ...f, ...parsed });
+                    });
+                    total += files.length;
+                    pageToken = data.nextPageToken || '';
+                    statusTextEl.textContent = `Cargando... ${total} fotos encontradas`;
+                } while (pageToken);
+
+                statusEl.classList.add('hidden');
+                filterDrivePhotos();
+            } catch (err) {
+                statusTextEl.textContent = `Error: ${err.message}`;
+                statusEl.classList.remove('hidden');
+            }
+        }
+
+        // ── Disciplina change → populate main topics ──────────────────────────────
+        async function onDisciplinaChange() {
+            const disc = document.getElementById('driveDisciplina').value;
+            const mainSel = document.getElementById('driveTemaPrincipal');
+            const secSel  = document.getElementById('driveTemaSec');
+            mainSel.innerHTML = '<option value="">— Todos —</option>';
+            secSel.innerHTML  = '<option value="">— Todos —</option>';
+            if (!disc) return;
+            try {
+                const topics = await loadTopics(disc);
+                topics.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.label;
+                    opt.textContent = t.label;
+                    mainSel.appendChild(opt);
+                });
+            } catch(e) { console.warn('Error cargando temas:', e); }
+            filterDrivePhotos();
+        }
+
+        // ── Main topic change → populate secondary topics ─────────────────────────
+        async function onTemaPrincipalChange() {
+            const disc  = document.getElementById('driveDisciplina').value;
+            const main  = document.getElementById('driveTemaPrincipal').value;
+            const secSel = document.getElementById('driveTemaSec');
+            secSel.innerHTML = '<option value="">— Todos —</option>';
+            if (!disc || !main) { filterDrivePhotos(); return; }
+            const topics = await loadTopics(disc);
+            const found  = topics.find(t => t.label === main);
+            if (found) {
+                found.subs.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s; opt.textContent = s;
+                    secSel.appendChild(opt);
+                });
+            }
+            filterDrivePhotos();
+        }
+
+        // ── Filter and render photos ──────────────────────────────────────────────
+        function filterDrivePhotos() {
+            const principal  = document.getElementById('driveTemaPrincipal').value.toLowerCase().trim();
+            const secundario = document.getElementById('driveTemaSec').value.toLowerCase().trim();
+            const desde      = document.getElementById('driveFechaDesde').value.replace(/-/g,'');
+            const hasta      = document.getElementById('driveFechaHasta').value.replace(/-/g,'');
+
+            driveFiltered = driveAllFiles.filter(f => {
+                // Principal: match against temaPrincipal in filename (partial, case-insensitive)
+                // Also match files without temaPrincipal when no filter is set
+                if (principal) {
+                    if (!f.temaPrincipal) return false; // has no principal info → exclude when filtering by principal
+                    if (!f.temaPrincipal.toLowerCase().includes(principal) &&
+                        !principal.includes(f.temaPrincipal.toLowerCase())) return false;
+                }
+                // Secundario: partial match
+                if (secundario) {
+                    if (!f.temaSecundario.toLowerCase().includes(secundario) &&
+                        !secundario.includes(f.temaSecundario.toLowerCase())) return false;
+                }
+                if (desde && f.fecha && f.fecha < desde) return false;
+                if (hasta && f.fecha && f.fecha > hasta) return false;
+                return true;
+            });
+
+            renderDriveGrid();
+        }
+
+        function renderDriveGrid() {
+            const grid = document.getElementById('drivePhotoGrid');
+            if (driveAllFiles.length === 0) {
+                grid.innerHTML = '<p class="text-slate-400 text-sm text-center mt-12">Haz clic en <strong>Cargar fotos</strong> primero.</p>';
+                return;
+            }
+            if (driveFiltered.length === 0) {
+                grid.innerHTML = '<p class="text-slate-400 text-sm text-center mt-12">No hay fotos que coincidan con los filtros.</p>';
+                return;
+            }
+
+            // Group by date
+            const byDate = {};
+            driveFiltered.forEach(f => {
+                const d = formatFecha(f.fecha) || 'Sin fecha';
+                if (!byDate[d]) byDate[d] = [];
+                byDate[d].push(f);
+            });
+
+            grid.innerHTML = Object.entries(byDate).sort(([a],[b]) => b.localeCompare(a)).map(([date, files]) => `
+                <div class="mb-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="text-xs font-black text-slate-500 uppercase tracking-widest">${date}</span>
+                        <div class="flex-1 border-t border-slate-100"></div>
+                        <span class="text-[10px] text-slate-400">${files.length} foto(s)</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                        ${files.map(f => drivePhotoCard(f)).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function drivePhotoCard(f) {
+            const sel     = driveSelected.has(f.id);
+            // Use thumbnail from Drive API (requires API key in URL)
+            const apiKey  = localStorage.getItem('google_api_key');
+            const thumb   = f.thumbnailLink
+                ? f.thumbnailLink.replace(/=s\d+/, '=s200')
+                : `https://drive.google.com/thumbnail?id=${f.id}&sz=w200&key=${apiKey}`;
+
+            return `
+            <div onclick="toggleDrivePhoto('${f.id}')" title="${f.temaSecundario}\n${f.temaPrincipal}"
+                class="relative cursor-pointer rounded-xl overflow-hidden border-2 transition-all ${sel ? 'border-emerald-500 ring-2 ring-emerald-200' : 'border-transparent hover:border-slate-300'}" style="aspect-ratio:1">
+                <img src="${thumb}" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%23f1f5f9%22 width=%22100%22 height=%22100%22/><text y=%2255%22 x=%2250%22 text-anchor=%22middle%22 font-size=%2230%22>📷</text></svg>'">
+                ${sel ? `<div class="absolute top-1 right-1 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-md">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="m5 12 5 5L20 7"/></svg>
+                </div>` : ''}
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                    <p class="text-white text-[9px] font-bold leading-tight truncate">${f.temaSecundario || f.name}</p>
+                    ${f.temaPrincipal ? `<p class="text-white/70 text-[8px] truncate">${f.temaPrincipal}</p>` : ''}
+                </div>
+            </div>`;
+        }
+
+        function toggleDrivePhoto(fileId) {
+            if (driveAnnexMode) {
+                // Single selection for annex
+                driveSelected = driveSelected.has(fileId) ? new Set() : new Set([fileId]);
+            } else {
+                if (driveSelected.has(fileId)) driveSelected.delete(fileId);
+                else driveSelected.add(fileId);
+            }
+            document.getElementById('driveSelectedCount').textContent = driveSelected.size;
+            renderDriveGrid();
+        }
+
+        // ── Insert selected photos into block or annex item ───────────────────────
+        async function insertDrivePhotos() {
+            if (driveSelected.size === 0) return;
+
+            const apiKey   = localStorage.getItem('google_api_key');
+            const statusEl = document.getElementById('driveStatus');
+            const statusTx = document.getElementById('driveStatusText');
+            statusEl.classList.remove('hidden');
+
+            // ── ANNEX MODE: insert single photo into annex item ──────────────────
+            if (driveAnnexMode) {
+                const fileId   = [...driveSelected][0];
+                const fileInfo = driveAllFiles.find(f => f.id === fileId);
+                statusTx.textContent = 'Descargando foto...';
+                try {
+                    const url  = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
+                    const res  = await fetch(url);
+                    const blob = await res.blob();
+                    const dataUrl = await new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.readAsDataURL(blob);
+                    });
+                    const processed = await normalizeImage(dataUrl);
+
+                    const items = editingAnnexType === 'nc' ? annexNoConformidades : annexFotografico;
+                    const item  = items.find(x => x.id === driveAnnexItemId);
+                    if (item) {
+                        item.foto = processed.src;
+                        // Auto-fill fecha from filename if item fecha is empty
+                        if (!item.fecha && fileInfo?.fecha) {
+                            item.fecha = formatFecha(fileInfo.fecha);
+                        }
+                        // Auto-fill descripcion from filename if empty
+                        if (!item.descripcion && fileInfo?.temaSecundario) {
+                            item.descripcion = fileInfo.temaSecundario;
+                        }
+                    }
+                    statusEl.classList.add('hidden');
+                    closeModal('drivePickerModal');
+                    renderAnnexList();
+                    renderAnnexForm(item);
+                    updateAnnexCounts();
+                } catch(e) {
+                    statusTx.textContent = `Error: ${e.message}`;
+                }
+                return;
+            }
+
+            // ── BLOCK MODE: insert up to 3 photos into image block ───────────────
+            const s = findById(sections, driveTargetSId);
+            const b = s?.blocks.find(x => x.id === driveTargetBId);
+            if (!b) return;
+
+            const available = 3 - b.data.images.length;
+            if (available <= 0) { alert('El bloque ya tiene 3 imágenes (máximo).'); return; }
+
+            const toInsert = [...driveSelected].slice(0, available);
+            statusTx.textContent = `Descargando ${toInsert.length} foto(s)...`;
+
+            for (const fileId of toInsert) {
+                try {
+                    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
+                    const res = await fetch(url);
+                    const blob = await res.blob();
+                    const dataUrl = await new Promise(resolve => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.readAsDataURL(blob);
+                    });
+                    const processed = await normalizeImage(dataUrl);
+                    const fileInfo = driveAllFiles.find(f => f.id === fileId);
+                    if (!b.data.caption && fileInfo) {
+                        b.data.caption = fileInfo.temaSecundario || fileInfo.name;
+                    }
+                    b.data.images.push(processed);
+                } catch(e) {
+                    console.warn('Error descargando imagen:', fileId, e);
+                }
+            }
+
+            statusEl.classList.add('hidden');
+            closeModal('drivePickerModal');
+            render();
         }
     </script>
 </body>

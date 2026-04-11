@@ -2740,13 +2740,14 @@ function out(obj) {
             // Recopilar tablas, fotografías y gráficos con IDs para referencia
             const allTables = [];
             const allPhotos = [];
+            const allFigures = [];
             const allCharts = [];
             const gatherMedia = (list) => {
                 list.forEach(s => {
                     s.blocks.forEach(b => {
                         if (b.type === 'table') allTables.push({ id: `t${allTables.length + 1}`, block: b });
                         if (b.type === 'image') allPhotos.push({ id: `f${allPhotos.length + 1}`, block: b });
-                        if (b.type === 'figure') allPhotos.push({ id: `f${allPhotos.length + 1}`, block: b });
+                        if (b.type === 'figure') allFigures.push({ id: `fig${allFigures.length + 1}`, block: b });
                         if (b.type === 'chart') allCharts.push({ id: `g${allCharts.length + 1}`, block: b });
                     });
                     gatherMedia(s.children);
@@ -2759,6 +2760,8 @@ function out(obj) {
             allTables.forEach(t => tableMap[t.block.id] = t.id);
             const photoMap = {};
             allPhotos.forEach(p => photoMap[p.block.id] = p.id);
+            const figureMap = {};
+            allFigures.forEach(p => figureMap[p.block.id] = p.id);
             const chartMap = {};
             allCharts.forEach(g => chartMap[g.block.id] = g.id);
 
@@ -2777,7 +2780,7 @@ function out(obj) {
                     } else if (b.type === 'image') {
                         lines.push(`<id="${photoMap[b.id]}">`);
                     } else if (b.type === 'figure') {
-                        lines.push(`<id="${photoMap[b.id]}">`);
+                        lines.push(`<id="${figureMap[b.id]}">`);
                     } else if (b.type === 'chart') {
                         lines.push(`<id="${chartMap[b.id]}">`);
                     }
@@ -2794,22 +2797,30 @@ function out(obj) {
                 lines.push('//-------------------------------------------------');
                 allPhotos.forEach(p => {
                     const b = p.block;
-                    if (b.type === 'image') {
-                        lines.push(`<fotografia id="${p.id}" nombre="${b.data.caption || ''}">`);
-                        const driveIds = b.data.images.filter(img => img.driveId).map(img => `"${img.driveId}"`).join(',');
-                        const localSrcs = b.data.images.filter(img => !img.driveId && img.src).map(img => `"${img.src}"`).join(',');
-                        if (driveIds) lines.push(`drive: ${driveIds}`);
-                        if (localSrcs) lines.push(`img: ${localSrcs}`);
-                        lines.push('</fotografia>');
-                    } else if (b.type === 'figure') {
-                        lines.push(`<figura id="${p.id}" nombre="${b.data.caption || ''}">`);
-                        const img = b.data.image;
-                        if (img) {
-                            if (img.driveId) lines.push(`drive: "${img.driveId}"`);
-                            else if (img.src) lines.push(`img: "${img.src}"`);
-                        }
-                        lines.push('</figura>');
+                    lines.push(`<fotografia id="${p.id}" nombre="${b.data.caption || ''}">`);
+                    const driveIds = b.data.images.filter(img => img.driveId).map(img => `"${img.driveId}"`).join(',');
+                    const localSrcs = b.data.images.filter(img => !img.driveId && img.src).map(img => `"${img.src}"`).join(',');
+                    if (driveIds) lines.push(`drive: ${driveIds}`);
+                    if (localSrcs) lines.push(`img: ${localSrcs}`);
+                    lines.push('</fotografia>');
+                });
+                lines.push('');
+            }
+
+            // FIGURAS
+            if (allFigures.length > 0) {
+                lines.push('//-------------------------------------------------');
+                lines.push('// Figuras');
+                lines.push('//-------------------------------------------------');
+                allFigures.forEach(p => {
+                    const b = p.block;
+                    lines.push(`<figura id="${p.id}" nombre="${b.data.caption || ''}">`);
+                    const img = b.data.image;
+                    if (img) {
+                        if (img.driveId) lines.push(`drive: "${img.driveId}"`);
+                        else if (img.src) lines.push(`img: "${img.src}"`);
                     }
+                    lines.push('</figura>');
                 });
                 lines.push('');
             }
@@ -3390,21 +3401,23 @@ function out(obj) {
             coverExtraFields.forEach(function(f){ lines.push(f.label + ': "' + f.value + '"'); });
             lines.push('</portada>');
             lines.push('');
-            const allTables = [], allPhotos = [], allCharts = [];
+            const allTables = [], allPhotos = [], allFigures = [], allCharts = [];
             const gatherMedia = function(list) {
                 list.forEach(function(s) {
                     s.blocks.forEach(function(b) {
                         if (b.type==='table') allTables.push({id:'t'+(allTables.length+1),block:b});
                         if (b.type==='image') allPhotos.push({id:'f'+(allPhotos.length+1),block:b});
+                        if (b.type==='figure') allFigures.push({id:'fig'+(allFigures.length+1),block:b});
                         if (b.type==='chart') allCharts.push({id:'g'+(allCharts.length+1),block:b});
                     });
                     gatherMedia(s.children);
                 });
             };
             gatherMedia(sections);
-            const tableMap={}, photoMap={}, chartMap={};
+            const tableMap={}, photoMap={}, figureMap={}, chartMap={};
             allTables.forEach(function(t){ tableMap[t.block.id]=t.id; });
             allPhotos.forEach(function(p){ photoMap[p.block.id]=p.id; });
+            allFigures.forEach(function(p){ figureMap[p.block.id]=p.id; });
             allCharts.forEach(function(g){ chartMap[g.block.id]=g.id; });
             lines.push('//-------------------------------------------------');
             lines.push('// Secciones');
@@ -3427,6 +3440,7 @@ function out(obj) {
                     }
                     else if (b.type==='table') lines.push('<id="' + tableMap[b.id] + '">');
                     else if (b.type==='image') lines.push('<id="' + photoMap[b.id] + '">');
+                    else if (b.type==='figure') lines.push('<id="' + figureMap[b.id] + '">');
                     else if (b.type==='chart') lines.push('<id="' + chartMap[b.id] + '">');
                 });
                 s.children.forEach(function(child){ writeSection(child, depth+1); });
@@ -3445,6 +3459,22 @@ function out(obj) {
                     if (driveIds) lines.push('drive: ' + driveIds);
                     if (localSrcs) lines.push('img: ' + localSrcs);
                     lines.push('</fotografia>');
+                });
+                lines.push('');
+            }
+            if (allFigures.length > 0) {
+                lines.push('//-------------------------------------------------');
+                lines.push('// Figuras');
+                lines.push('//-------------------------------------------------');
+                allFigures.forEach(function(p) {
+                    const b = p.block;
+                    lines.push('<figura id="' + p.id + '" nombre="' + (b.data.caption||'') + '">');
+                    const img = b.data.image;
+                    if (img) {
+                        if (img.driveId) lines.push('drive: "' + img.driveId + '"');
+                        else if (img.src) lines.push('img: "' + img.src + '"');
+                    }
+                    lines.push('</figura>');
                 });
                 lines.push('');
             }

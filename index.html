@@ -722,7 +722,6 @@
                                 <pre class="bg-slate-900 text-emerald-300 text-[10px] p-4 overflow-x-auto leading-relaxed">const FOLDER_ID = ''; // Opcional: ID carpeta por defecto
 
 function doPost(e) {
-  const cors = ContentService.createTextOutput;
   try {
     const params = JSON.parse(e.postData.contents);
     const action   = params.action;
@@ -732,7 +731,6 @@ function doPost(e) {
       const folder   = DriveApp.getFolderById(folderId);
       const fileName = params.fileName;
       const content  = params.content;
-      // Buscar archivo existente
       const iter = folder.getFilesByName(fileName);
       if (iter.hasNext()) {
         iter.next().setContent(content);
@@ -757,6 +755,14 @@ function doPost(e) {
     } else if (action === 'read') {
       const file = DriveApp.getFileById(params.fileId);
       return out({ ok: true, content: file.getBlob().getDataAsString() });
+
+    } else if (action === 'getImage') {
+      // Proxy de imágenes: evita CORS al descargar imágenes de Drive para el PDF
+      const file     = DriveApp.getFileById(params.fileId);
+      const blob     = file.getBlob();
+      const base64   = Utilities.base64Encode(blob.getBytes());
+      const mimeType = blob.getContentType();
+      return out({ ok: true, base64: base64, mimeType: mimeType });
     }
 
     return out({ ok: false, error: 'Acción desconocida' });
@@ -1490,29 +1496,52 @@ function out(obj) {
         }
 
         // Descarga una imagen de Drive y la guarda en cache.
-        // Usa thumbnails w400 (suficiente para PDF) con timeout para no bloquear la generación.
+        // Usa el App Script como proxy para evitar errores CORS al acceder a Drive.
         async function resolveDriveImage(driveId) {
             if (driveImageCache[driveId]) return driveImageCache[driveId];
 
+            const appScriptUrl = localStorage.getItem('drive_appscript_url') || '';
+
+            // Helper: fetch con timeout para no quedar bloqueados
+            const fetchWithTimeout = (url, opts, ms = 12000) => {
+                const ctrl = new AbortController();
+                const id = setTimeout(() => ctrl.abort(), ms);
+                return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
+            };
+
+            // ── Intento 1: App Script proxy (resuelve CORS) ──────────────────
+            if (appScriptUrl) {
+                try {
+                    const res = await fetchWithTimeout(appScriptUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify({ action: 'getImage', fileId: driveId })
+                    }, 12000);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.ok && data.base64 && data.mimeType) {
+                            const src = `data:${data.mimeType};base64,${data.base64}`;
+                            const norm = await normalizeImage(src);
+                            if (norm && norm.src) {
+                                driveImageCache[driveId] = norm;
+                                return norm;
+                            }
+                        }
+                    }
+                } catch(e) { /* continuar con fallback */ }
+            }
+
+            // ── Intento 2: fetch directo (solo funciona si el navegador lo permite) ──
             const apiKey = localStorage.getItem('google_api_key');
-            // Preferimos thumbnail w400 — mucho más rápido que descargar el original.
-            // w800 solo si la API key está disponible y como segundo intento.
-            const urls = [
+            const fallbackUrls = [
                 `https://drive.google.com/thumbnail?id=${driveId}&sz=w400`,
                 apiKey ? `https://www.googleapis.com/drive/v3/files/${driveId}?alt=media&key=${apiKey}` : null,
                 `https://drive.google.com/thumbnail?id=${driveId}&sz=w200`,
             ].filter(Boolean);
 
-            // Helper: fetch con timeout para no quedar bloqueados
-            const fetchWithTimeout = (url, ms = 8000) => {
-                const ctrl = new AbortController();
-                const id = setTimeout(() => ctrl.abort(), ms);
-                return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(id));
-            };
-
-            for (const url of urls) {
+            for (const url of fallbackUrls) {
                 try {
-                    const res = await fetchWithTimeout(url, 8000);
+                    const res = await fetchWithTimeout(url, {}, 8000);
                     if (!res.ok) continue;
                     const blob = await res.blob();
                     if (!blob || blob.size === 0) continue;

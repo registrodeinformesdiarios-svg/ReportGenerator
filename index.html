@@ -912,7 +912,7 @@ function out(obj) {
 
         // ─── AI STATE ────────────────────────────────────────────────────────────
         // blockVersions: { [blockId]: { versions: string[], current: number } }
-        const blockVersions = {};
+        let blockVersions = {};
         let aiRegenerateTarget = null; // { sId, bId }
         let lastImportedTxt = ''; // keep the raw txt for AI context
 
@@ -2218,6 +2218,7 @@ function out(obj) {
         // ─── IMPORTAR TXT ────────────────────────────────────────────────────────
         function importTxt(text) {
             lastImportedTxt = text; // guardar para contexto de IA
+            blockVersions = {}; // reset AI versions
             // Quitar comentarios
             const clean = text.split('\n').filter(l => !l.trim().startsWith('//')).join('\n');
 
@@ -2328,6 +2329,7 @@ function out(obj) {
             sections = [];
             const secLines = clean.split('\n');
             const stack = []; // [{section, depth}]
+            let currentTvBlock = null; // state for multi-line <tv> parsing
 
             // Pre-normalizar imágenes de URLs para tener ratio correcto (async, lo hacemos al final)
             const photoLoadPromises = [];
@@ -2358,6 +2360,26 @@ function out(obj) {
 
                 if (!stack.length) return;
                 const currentSec = stack[stack.length-1].section;
+
+                // Texto con versiones <tv current="N">...<v0>...</v0>...</tv>
+                const tvMatch = line.match(/^<tv\s+current="(\d+)">/);
+                if (tvMatch) {
+                    currentTvBlock = { currentIdx: parseInt(tvMatch[1]), versions: [], blockId: Math.random().toString(36).substr(2,9), sec: currentSec };
+                    return;
+                }
+                if (currentTvBlock) {
+                    if (line === '</tv>') {
+                        const { currentIdx, versions, blockId, sec } = currentTvBlock;
+                        const activeText = versions[currentIdx] !== undefined ? versions[currentIdx] : (versions[0] || '');
+                        sec.blocks.push({ id: blockId, type: 'text', data: { content: activeText } });
+                        if (versions.length > 1) blockVersions[blockId] = { versions, current: currentIdx };
+                        currentTvBlock = null;
+                        return;
+                    }
+                    const vm = line.match(/^<v(\d+)>([\s\S]*)<\/v\1>$/);
+                    if (vm) currentTvBlock.versions[parseInt(vm[1])] = vm[2];
+                    return;
+                }
 
                 // Texto <t>...</t>
                 const textMatch = line.match(/^<t>([\s\S]*)<\/t>$/);
@@ -2625,7 +2647,18 @@ function out(obj) {
                 const prefix = depth > 0 ? '#'.repeat(depth) : '';
                 lines.push(prefix + '<seccion nombre="' + s.title + '"' + (s.forcePageBreak ? ' salto="true"' : '') + '>');
                 s.blocks.forEach(function(b) {
-                    if (b.type==='text') lines.push('<t>' + b.data.content + '</t>');
+                    if (b.type==='text') {
+                        const vs = blockVersions[b.id];
+                        if (vs && vs.versions.length > 1) {
+                            lines.push('<tv current="' + vs.current + '">');
+                            vs.versions.forEach(function(v, i) {
+                                lines.push('<v' + i + '>' + v + '</v' + i + '>');
+                            });
+                            lines.push('</tv>');
+                        } else {
+                            lines.push('<t>' + b.data.content + '</t>');
+                        }
+                    }
                     else if (b.type==='table') lines.push('<id="' + tableMap[b.id] + '">');
                     else if (b.type==='image') lines.push('<id="' + photoMap[b.id] + '">');
                     else if (b.type==='chart') lines.push('<id="' + chartMap[b.id] + '">');

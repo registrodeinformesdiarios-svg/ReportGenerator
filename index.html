@@ -1427,6 +1427,9 @@ function out(obj) {
                                 <button onclick="addBlock('${s.id}', 'chart')" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-purple-500 transition-colors flex items-center gap-1">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Gráfico
                                 </button>
+                                <button onclick="addBlock('${s.id}', 'figure')" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-teal-500 transition-colors flex items-center gap-1">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><line x1="12" y1="3" x2="12" y2="21"/></svg> Figura
+                                </button>
                             </div>
                             <div class="nested-sortable space-y-4 mt-2" data-level="${s.level + 1}"></div>
                             </div><!-- /sec-body -->
@@ -1524,6 +1527,36 @@ function out(obj) {
                     <div class="flex gap-2 items-center bg-white p-2 rounded-xl border border-slate-100">
                         <span class="text-[10px] font-bold text-indigo-500 whitespace-nowrap">Fotografía ${photoIndex}.</span>
                         <input type="text" placeholder="Ingresa titulo..." value="${b.data.caption || ''}" oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.caption=this.value" class="w-full bg-transparent text-[10px] italic outline-none border-none p-0">
+                    </div>
+                </div>`;
+            }
+
+            if (b.type === 'figure') {
+                const img = b.data.image;
+                const displaySrc = img ? (img.driveId ? `https://drive.google.com/thumbnail?id=${img.driveId}&sz=w300` : img.src) : null;
+                const badge = img && img.driveId ? `<div class="absolute bottom-1 left-1 bg-emerald-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">Drive</div>` : '';
+                const imgHtml = displaySrc
+                    ? `<div class="relative w-full bg-white rounded-xl overflow-hidden border shadow-sm img-container" style="max-height:220px;"><img src="${displaySrc}" style="width:100%;max-height:220px;object-fit:contain;">${badge}<button onclick="removeFigureImage('${sId}','${b.id}')" class="absolute top-1 right-1 bg-rose-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs shadow-sm z-10">×</button></div>`
+                    : `<div class="w-full flex flex-col items-center justify-center text-[9px] text-slate-300 bg-white rounded-xl border border-dashed border-slate-200 py-8">SIN IMAGEN</div>`;
+                return `
+                <div data-block-id="${b.id}" class="group relative bg-teal-50/30 p-4 rounded-2xl border border-dashed border-teal-200 space-y-4">
+                    ${handle}
+                    <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold">×</button>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-teal-500 uppercase">Figura (1 imagen)</span>
+                        <div class="flex gap-2">
+                            <button onclick="openDrivePickerForFigure('${sId}','${b.id}')" class="text-[10px] font-bold bg-white text-emerald-600 border border-emerald-200 px-3 py-1 rounded-lg hover:bg-emerald-50 transition-colors flex items-center gap-1">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path d="m8 12 3 3 5-5"/></svg>
+                                Drive
+                            </button>
+                            <input type="file" id="fig_${b.id}" class="hidden" accept="image/*" onchange="handleFigureImage('${sId}','${b.id}',this)">
+                            <label for="fig_${b.id}" class="text-[10px] font-bold bg-teal-600 text-white px-3 py-1 rounded-lg cursor-pointer hover:bg-teal-700 transition-colors shadow-sm">+ SUBIR</label>
+                        </div>
+                    </div>
+                    ${imgHtml}
+                    <div class="flex gap-2 items-center bg-white p-2 rounded-xl border border-slate-100">
+                        <span class="text-[10px] font-bold text-teal-500 whitespace-nowrap">Figura ${photoIndex}.</span>
+                        <input type="text" placeholder="Ingresa título..." value="${b.data.caption || ''}" oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.caption=this.value" class="w-full bg-transparent text-[10px] italic outline-none border-none p-0">
                     </div>
                 </div>`;
             }
@@ -1723,6 +1756,53 @@ function out(obj) {
             render();
         }
 
+        async function handleFigureImage(sId, bId, input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const s = findById(sections, sId);
+                    const b = s.blocks.find(x => x.id === bId);
+                    const processedImg = await normalizeImage(e.target.result);
+                    b.data.image = processedImg;
+                    render();
+                };
+                reader.readAsDataURL(file);
+            }
+            input.value = '';
+        }
+
+        function removeFigureImage(sId, bId) {
+            const s = findById(sections, sId);
+            const b = s.blocks.find(x => x.id === bId);
+            b.data.image = null;
+            render();
+        }
+
+        // Drive picker específico para bloques figure (selección única)
+        let driveTargetFigureSId = null;
+        let driveTargetFigureBId = null;
+
+        function openDrivePickerForFigure(sId, bId) {
+            const apiKey = localStorage.getItem('google_api_key');
+            if (!apiKey) {
+                alert('Configura tu Google API Key en el botón ⚙ de configuración.');
+                return;
+            }
+            driveTargetFigureSId = sId;
+            driveTargetFigureBId = bId;
+            driveTargetSId  = null;
+            driveTargetBId  = null;
+            driveAnnexMode  = false;
+            driveAnnexItemId = null;
+            driveSelected   = new Set();
+            // Reutilizamos el modal pero en modo figura (selección única)
+            _openDrivePickerModal();
+            // Cambiar texto del botón insertar
+            const btn = document.querySelector('#drivePickerModal .bg-emerald-600:last-child');
+            if (btn) btn.textContent = 'Insertar figura';
+        }
+
         function addBlock(sId, type) {
             const s = findById(sections, sId);
             let data = {};
@@ -1730,6 +1810,7 @@ function out(obj) {
             if (type === 'table') data = { headers: ['Clave', 'Valor'], rows: [['...', '...']], caption: '' };
             if (type === 'image') data = { images: [], caption: '' };
             if (type === 'chart') data = { caption: '', chartType: 'bar', labels: ['Ene','Feb','Mar'], datasets: [{ label: 'Serie 1', data: [10,20,15], color: '#6366f1' }] };
+            if (type === 'figure') data = { image: null, caption: '' };
             s.blocks.push({ id: Math.random().toString(36).substr(2,9), type, data });
             render();
         }
@@ -2213,6 +2294,50 @@ function out(obj) {
                             if(!isMeasuring) photoCounterGlobal++;
                         }
 
+                        if (b.type === 'figure' && b.data.image) {
+                            const img = b.data.image;
+                            let resolvedImg = img;
+                            if (img.driveId && !isMeasuring) {
+                                const cached = await resolveDriveImage(img.driveId);
+                                if (cached) resolvedImg = cached;
+                            }
+                            const totalWidth = pageWidth - (margin * 2);
+                            const figMaxH = 100;
+                            let fw = totalWidth * 0.7; // 70% page width max
+                            let fh = fw / (resolvedImg.ratio || 4/3);
+                            if (fh > figMaxH) { fh = figMaxH; fw = fh * (resolvedImg.ratio || 4/3); }
+                            if (fw > totalWidth) { fw = totalWidth; fh = fw / (resolvedImg.ratio || 4/3); }
+
+                            if (currentY + fh > safeBottomLimit - 10) {
+                                targetDoc.addPage();
+                                if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
+                                currentY = 30;
+                            }
+
+                            if (resolvedImg.src) {
+                                try {
+                                    const fmt = resolvedImg.src.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                                    const fx = margin + (totalWidth - fw) / 2;
+                                    targetDoc.addImage(resolvedImg.src, fmt, fx, currentY, fw, fh);
+                                } catch(err) {
+                                    try {
+                                        targetDoc.setDrawColor(200,200,200); targetDoc.setFillColor(245,245,245);
+                                        targetDoc.rect(margin, currentY, totalWidth * 0.7, fh, 'FD');
+                                        targetDoc.setFontSize(7); targetDoc.setTextColor(150,150,150);
+                                        targetDoc.text('Imagen no disponible', margin + (totalWidth*0.35), currentY + fh/2, { align: 'center' });
+                                    } catch(e2) {}
+                                }
+                            }
+
+                            currentY += fh + 4;
+                            const figCaption = `Figura ${photoCounterGlobal}. ${b.data.caption || "Ingresa título..."}`;
+                            targetDoc.setFontSize(captionSize); targetDoc.setFont(fontCaption, fontCaptionStyle); targetDoc.setTextColor(...cCaption);
+                            const figCaptionLines = targetDoc.splitTextToSize(figCaption, totalWidth);
+                            targetDoc.text(figCaptionLines, pageWidth / 2, currentY, { align: 'center' });
+                            currentY += (figCaptionLines.length * 4) + spaceAfterFigure;
+                            if(!isMeasuring) photoCounterGlobal++;
+                        }
+
                         if (b.type === 'chart' && b.data.labels && b.data.datasets) {
                             // Render chart to canvas offscreen, then add as image
                             if (currentY > safeBottomLimit - 30) {
@@ -2270,6 +2395,7 @@ function out(obj) {
                 list.forEach(s => {
                     s.blocks.forEach(b => {
                         if (b.type === 'image') b.data.images.forEach(img => { if (img.driveId) allDriveIds.add(img.driveId); });
+                        if (b.type === 'figure' && b.data.image && b.data.image.driveId) allDriveIds.add(b.data.image.driveId);
                     });
                     collectDriveIds(s.children);
                 });
@@ -2340,16 +2466,33 @@ function out(obj) {
 
             // Foto de portada centrada
             if (coverPhoto) {
-                try {
-                    const cpFmt = coverPhoto.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-                    const cpW = pageWidth - (margin * 2);
-                    const cpH = 85;
-                    doc.addImage(coverPhoto, cpFmt, margin, coverY, cpW, cpH);
-                    coverY += cpH + 10;
-                } catch(e){ coverY += 10; }
-            } else {
-                coverY += 10;
-            }
+    try {
+        const cpFmt = coverPhoto.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+        
+        // 1. Obtenemos las dimensiones originales
+        const imgProps = doc.getImageProperties(coverPhoto);
+        
+        // 2. Definimos el ancho al 30% de la página
+        const cpW = pageWidth * 0.30;
+        
+        // 3. Calculamos la altura proporcional para evitar distorsión
+        const cpH = (cpW * imgProps.height) / imgProps.width;
+        
+        // 4. Calculamos la posición X para centrar
+        // Fórmula: (Ancho Total - Ancho Imagen) / 2
+        const centerX = (pageWidth - cpW) / 2;
+
+        // 5. Añadimos la imagen
+        doc.addImage(coverPhoto, cpFmt, centerX, coverY, cpW, cpH);
+        
+        coverY += cpH + 10;
+    } catch(e) { 
+        console.error("Error al procesar la imagen:", e);
+        coverY += 10; 
+    }
+} else {
+    coverY += 10;
+}
 
             // Cliente centrado
             const clienteVal = document.getElementById('coverCliente') ? document.getElementById('coverCliente').value : '';
@@ -2603,6 +2746,7 @@ function out(obj) {
                     s.blocks.forEach(b => {
                         if (b.type === 'table') allTables.push({ id: `t${allTables.length + 1}`, block: b });
                         if (b.type === 'image') allPhotos.push({ id: `f${allPhotos.length + 1}`, block: b });
+                        if (b.type === 'figure') allPhotos.push({ id: `f${allPhotos.length + 1}`, block: b });
                         if (b.type === 'chart') allCharts.push({ id: `g${allCharts.length + 1}`, block: b });
                     });
                     gatherMedia(s.children);
@@ -2632,6 +2776,8 @@ function out(obj) {
                         lines.push(`<id="${tableMap[b.id]}">`);
                     } else if (b.type === 'image') {
                         lines.push(`<id="${photoMap[b.id]}">`);
+                    } else if (b.type === 'figure') {
+                        lines.push(`<id="${photoMap[b.id]}">`);
                     } else if (b.type === 'chart') {
                         lines.push(`<id="${chartMap[b.id]}">`);
                     }
@@ -2648,13 +2794,22 @@ function out(obj) {
                 lines.push('//-------------------------------------------------');
                 allPhotos.forEach(p => {
                     const b = p.block;
-                    lines.push(`<fotografia id="${p.id}" nombre="${b.data.caption || ''}">`);
-                    // Separate Drive refs from local base64
-                    const driveIds = b.data.images.filter(img => img.driveId).map(img => `"${img.driveId}"`).join(',');
-                    const localSrcs = b.data.images.filter(img => !img.driveId && img.src).map(img => `"${img.src}"`).join(',');
-                    if (driveIds) lines.push(`drive: ${driveIds}`);
-                    if (localSrcs) lines.push(`img: ${localSrcs}`);
-                    lines.push('</fotografia>');
+                    if (b.type === 'image') {
+                        lines.push(`<fotografia id="${p.id}" nombre="${b.data.caption || ''}">`);
+                        const driveIds = b.data.images.filter(img => img.driveId).map(img => `"${img.driveId}"`).join(',');
+                        const localSrcs = b.data.images.filter(img => !img.driveId && img.src).map(img => `"${img.src}"`).join(',');
+                        if (driveIds) lines.push(`drive: ${driveIds}`);
+                        if (localSrcs) lines.push(`img: ${localSrcs}`);
+                        lines.push('</fotografia>');
+                    } else if (b.type === 'figure') {
+                        lines.push(`<figura id="${p.id}" nombre="${b.data.caption || ''}">`);
+                        const img = b.data.image;
+                        if (img) {
+                            if (img.driveId) lines.push(`drive: "${img.driveId}"`);
+                            else if (img.src) lines.push(`img: "${img.src}"`);
+                        }
+                        lines.push('</figura>');
+                    }
                 });
                 lines.push('');
             }
@@ -2854,7 +3009,25 @@ function out(obj) {
                     const urls = imgLine.replace('img:','').trim().split(',').map(s=>s.trim().replace(/^"|"$/g,''));
                     urls.forEach(url => { if (url) images.push({ src: url, ratio: 4/3, w: 800, h: 600 }); });
                 }
-                photoDict[id] = { images, caption: nombre };
+                photoDict[id] = { images, caption: nombre, _blockType: 'image' };
+            });
+
+            // ── FIGURAS (diccionario id→data, tipo figure) ──
+            getBlock('figura', clean).forEach(p => {
+                const id = attr(p.attrs, 'id');
+                const nombre = attr(p.attrs, 'nombre');
+                let image = null;
+                const driveLine = p.inner.split('\n').find(l => l.trim().startsWith('drive:'));
+                if (driveLine) {
+                    const did = driveLine.replace('drive:','').trim().replace(/^"|"$/g,'');
+                    if (did) image = { driveId: did, ratio: 4/3, w: 800, h: 600 };
+                }
+                const imgLine = p.inner.split('\n').find(l => l.trim().startsWith('img:'));
+                if (!image && imgLine) {
+                    const url = imgLine.replace('img:','').trim().replace(/^"|"$/g,'');
+                    if (url) image = { src: url, ratio: 4/3, w: 800, h: 600 };
+                }
+                photoDict[id] = { image, caption: nombre, _blockType: 'figure' };
             });
 
             // ── SECCIONES ──
@@ -2928,7 +3101,10 @@ function out(obj) {
                     if (tableDict[refId]) {
                         currentSec.blocks.push({ id: Math.random().toString(36).substr(2,9), type: 'table', data: JSON.parse(JSON.stringify(tableDict[refId])) });
                     } else if (photoDict[refId]) {
-                        currentSec.blocks.push({ id: Math.random().toString(36).substr(2,9), type: 'image', data: JSON.parse(JSON.stringify(photoDict[refId])) });
+                        const pd = JSON.parse(JSON.stringify(photoDict[refId]));
+                        const bType = pd._blockType || 'image';
+                        delete pd._blockType;
+                        currentSec.blocks.push({ id: Math.random().toString(36).substr(2,9), type: bType, data: pd });
                     } else if (chartDict[refId]) {
                         currentSec.blocks.push({ id: Math.random().toString(36).substr(2,9), type: 'chart', data: JSON.parse(JSON.stringify(chartDict[refId])) });
                     }
@@ -4278,8 +4454,8 @@ Por favor, reescribe y mejora el texto de esa sección.`;
         }
 
         function toggleDrivePhoto(fileId) {
-            if (driveAnnexMode) {
-                // Single selection for annex
+            if (driveAnnexMode || driveTargetFigureSId) {
+                // Single selection for annex or figure
                 driveSelected = driveSelected.has(fileId) ? new Set() : new Set([fileId]);
             } else {
                 if (driveSelected.has(fileId)) driveSelected.delete(fileId);
@@ -4297,6 +4473,24 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             const statusEl = document.getElementById('driveStatus');
             const statusTx = document.getElementById('driveStatusText');
             statusEl.classList.remove('hidden');
+
+            // ── FIGURE MODE: store driveId reference for figure block (single image) ─
+            if (driveTargetFigureSId) {
+                const fileId   = [...driveSelected][0];
+                const fileInfo = driveAllFiles.find(f => f.id === fileId);
+                const s = findById(sections, driveTargetFigureSId);
+                const b = s?.blocks.find(x => x.id === driveTargetFigureBId);
+                if (b) {
+                    b.data.image = { driveId: fileId, name: fileInfo?.name || fileId, ratio: 4/3, w: 800, h: 600 };
+                    if (!b.data.caption && fileInfo?.temaSecundario) b.data.caption = fileInfo.temaSecundario;
+                }
+                driveTargetFigureSId = null;
+                driveTargetFigureBId = null;
+                statusEl.classList.add('hidden');
+                closeModal('drivePickerModal');
+                render();
+                return;
+            }
 
             // ── ANNEX MODE: store driveId reference for annex item ───────────────
             if (driveAnnexMode) {

@@ -134,6 +134,18 @@
                     <div><label class="text-[10px] font-bold text-slate-400 uppercase">Autor</label><input type="text" id="reportAuthor" class="w-full border-b border-slate-100 py-1 outline-none text-sm" value="Ing. Marcos Solís"></div>
                     <div><label class="text-[10px] font-bold text-slate-400 uppercase">Fecha</label><input type="date" id="reportDate" class="w-full border-b border-slate-100 py-1 outline-none text-sm"></div>
                 </div>
+                <!-- Cover photo -->
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase block mb-2">Fotografía de portada (opcional)</label>
+                    <div class="relative border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 overflow-hidden" style="min-height:80px;">
+                        <input type="file" id="coverPhotoInput" class="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*">
+                        <div id="coverPhotoPreview" class="w-full flex items-center justify-center py-4 text-[10px] text-slate-400 font-bold uppercase gap-2">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                            Clic para añadir foto de portada
+                        </div>
+                    </div>
+                    <button id="coverPhotoRemoveBtn" onclick="removeCoverPhoto()" class="hidden mt-1 text-[10px] text-rose-400 hover:text-rose-600 font-bold">✕ Quitar fotografía</button>
+                </div>
                 <button onclick="addCoverField()" class="text-[10px] font-bold text-indigo-500 hover:underline uppercase">+ Añadir campo personalizado</button>
             </div>
 
@@ -251,6 +263,18 @@
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.5"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
                         </div>
                         Tipografía y Color
+                    </button>
+                    <button onclick="switchSettingsTab('estilos')" id="stab-estilos" class="settings-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left text-slate-600 hover:bg-white hover:text-slate-900">
+                        <div class="w-7 h-7 rounded-lg bg-pink-100 flex items-center justify-center shrink-0">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#db2777" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        </div>
+                        Estilos de texto
+                    </button>
+                    <button onclick="switchSettingsTab('espaciado')" id="stab-espaciado" class="settings-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left text-slate-600 hover:bg-white hover:text-slate-900">
+                        <div class="w-7 h-7 rounded-lg bg-cyan-100 flex items-center justify-center shrink-0">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0891b2" stroke-width="2.5"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                        </div>
+                        Espaciado
                     </button>
                     <button onclick="switchSettingsTab('archivos')" id="stab-archivos" class="settings-tab w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-left text-slate-600 hover:bg-white hover:text-slate-900">
                         <div class="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
@@ -460,6 +484,180 @@
                                 <p id="prev-body" class="text-sm" style="color:#475569">Texto del cuerpo del informe. Este es un ejemplo de párrafo con el estilo configurado.</p>
                                 <div class="inline-block px-3 py-1 rounded text-white text-xs font-bold" id="prev-table-head" style="background:#4f46e5">Encabezado de tabla</div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Estilos de texto ───────────────────────────────── -->
+                    <div id="spanel-estilos" class="settings-panel hidden space-y-5">
+                        <!-- Helper: font selector reusable structure -->
+                        <!-- TÍTULOS DE SECCIÓN -->
+                        <div class="rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-2 bg-slate-50 border-b border-slate-100"><p class="text-[11px] font-black text-slate-500 uppercase tracking-wide">Títulos de sección</p></div>
+                            <div class="p-4 grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="sfield-label">Fuente</label>
+                                    <select id="fontH1" class="sfield">
+                                        <option value="helvetica">Helvetica</option>
+                                        <option value="times">Times New Roman</option>
+                                        <option value="courier">Courier</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="sfield-label">Estilo</label>
+                                    <select id="fontH1Style" class="sfield">
+                                        <option value="bold">Negrita</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="italic">Itálica</option>
+                                        <option value="bolditalic">Negrita + Itálica</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="sfield-label">Tamaño sección 1 (pt)</label>
+                                    <input type="number" id="pdfH1SizeE" min="10" max="28" value="16" class="sfield">
+                                </div>
+                                <div>
+                                    <label class="sfield-label">Tamaño sección 2 (pt)</label>
+                                    <input type="number" id="pdfH2SizeE" min="9" max="22" value="13" class="sfield">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="sfield-label">Color</label>
+                                    <div class="flex items-center gap-3">
+                                        <input type="color" id="colorHeadingE" value="#4f46e5" class="w-12 h-10 rounded-xl border border-slate-200 cursor-pointer p-1">
+                                        <input type="text" id="colorHeadingEHex" value="#4f46e5" oninput="syncColorE('colorHeadingE','colorHeadingEHex')" class="sfield font-mono flex-1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- CUERPO / PÁRRAFOS -->
+                        <div class="rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-2 bg-slate-50 border-b border-slate-100"><p class="text-[11px] font-black text-slate-500 uppercase tracking-wide">Texto / párrafos</p></div>
+                            <div class="p-4 grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="sfield-label">Fuente</label>
+                                    <select id="fontBody" class="sfield">
+                                        <option value="helvetica">Helvetica</option>
+                                        <option value="times">Times New Roman</option>
+                                        <option value="courier">Courier</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="sfield-label">Estilo</label>
+                                    <select id="fontBodyStyle" class="sfield">
+                                        <option value="normal">Normal</option>
+                                        <option value="bold">Negrita</option>
+                                        <option value="italic">Itálica</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="sfield-label">Tamaño (pt)</label>
+                                    <input type="number" id="pdfBodySizeE" min="7" max="14" value="10" class="sfield">
+                                </div>
+                                <div>
+                                    <label class="sfield-label">Interlineado</label>
+                                    <input type="number" id="pdfLineHeightE" min="4" max="9" step="0.5" value="5.5" class="sfield">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="sfield-label">Color</label>
+                                    <div class="flex items-center gap-3">
+                                        <input type="color" id="colorBodyE" value="#475569" class="w-12 h-10 rounded-xl border border-slate-200 cursor-pointer p-1">
+                                        <input type="text" id="colorBodyEHex" value="#475569" oninput="syncColorE('colorBodyE','colorBodyEHex')" class="sfield font-mono flex-1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- PIE DE FIGURAS -->
+                        <div class="rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-2 bg-slate-50 border-b border-slate-100"><p class="text-[11px] font-black text-slate-500 uppercase tracking-wide">Pie de figuras (fotos, tablas, gráficos)</p></div>
+                            <div class="p-4 grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="sfield-label">Fuente</label>
+                                    <select id="fontCaption" class="sfield">
+                                        <option value="helvetica">Helvetica</option>
+                                        <option value="times">Times New Roman</option>
+                                        <option value="courier">Courier</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="sfield-label">Estilo</label>
+                                    <select id="fontCaptionStyle" class="sfield">
+                                        <option value="italic">Itálica</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="bold">Negrita</option>
+                                        <option value="bolditalic">Negrita + Itálica</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="sfield-label">Tamaño (pt)</label>
+                                    <input type="number" id="pdfCaptionSize" min="6" max="12" value="8" class="sfield">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="sfield-label">Color</label>
+                                    <div class="flex items-center gap-3">
+                                        <input type="color" id="colorCaption" value="#6b7280" class="w-12 h-10 rounded-xl border border-slate-200 cursor-pointer p-1">
+                                        <input type="text" id="colorCaptionHex" value="#6b7280" oninput="syncColorE('colorCaption','colorCaptionHex')" class="sfield font-mono flex-1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- ÍNDICE -->
+                        <div class="rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-2 bg-slate-50 border-b border-slate-100"><p class="text-[11px] font-black text-slate-500 uppercase tracking-wide">Índice</p></div>
+                            <div class="p-4 grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="sfield-label">Fuente</label>
+                                    <select id="fontIndex" class="sfield">
+                                        <option value="helvetica">Helvetica</option>
+                                        <option value="times">Times New Roman</option>
+                                        <option value="courier">Courier</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="sfield-label">Estilo</label>
+                                    <select id="fontIndexStyle" class="sfield">
+                                        <option value="normal">Normal</option>
+                                        <option value="bold">Negrita</option>
+                                        <option value="italic">Itálica</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="sfield-label">Tamaño (pt)</label>
+                                    <input type="number" id="pdfIndexSize" min="7" max="14" value="9" class="sfield">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="sfield-label">Color</label>
+                                    <div class="flex items-center gap-3">
+                                        <input type="color" id="colorIndexE" value="#4f46e5" class="w-12 h-10 rounded-xl border border-slate-200 cursor-pointer p-1">
+                                        <input type="text" id="colorIndexEHex" value="#4f46e5" oninput="syncColorE('colorIndexE','colorIndexEHex')" class="sfield font-mono flex-1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Espaciado ──────────────────────────────────────── -->
+                    <div id="spanel-espaciado" class="settings-panel hidden space-y-5">
+                        <div class="rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-4 py-2 bg-slate-50 border-b border-slate-100"><p class="text-[11px] font-black text-slate-500 uppercase tracking-wide">Espaciado después de…</p></div>
+                            <div class="p-4 grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="sfield-label">Después de título (mm)</label>
+                                    <input type="number" id="spaceAfterTitle" min="0" max="30" step="0.5" value="10" class="sfield">
+                                    <p class="text-[10px] text-slate-400 mt-1">Espacio entre el título de sección y el primer bloque</p>
+                                </div>
+                                <div>
+                                    <label class="sfield-label">Después de figura (mm)</label>
+                                    <input type="number" id="spaceAfterFigure" min="0" max="30" step="0.5" value="6" class="sfield">
+                                    <p class="text-[10px] text-slate-400 mt-1">Espacio luego del pie de figura (foto, tabla, gráfico)</p>
+                                </div>
+                                <div>
+                                    <label class="sfield-label">Entre párrafos (mm)</label>
+                                    <input type="number" id="spaceAfterPara" min="0" max="20" step="0.5" value="4" class="sfield">
+                                    <p class="text-[10px] text-slate-400 mt-1">Espacio adicional entre bloques de texto</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-[11px] text-slate-500 leading-relaxed">
+                            Los valores son en milímetros aproximados en el PDF. Valores sugeridos: título 8–14 mm, figura 4–10 mm, entre párrafos 2–6 mm.
                         </div>
                     </div>
 
@@ -907,6 +1105,7 @@ function out(obj) {
         const { jsPDF } = window.jspdf;
         let sections = [];
         let companyLogo = null;
+        let coverPhoto = null;
         let currentEditingTable = null;
         let coverExtraFields = [];
 
@@ -939,6 +1138,19 @@ function out(obj) {
                     reader.onload = (ev) => {
                         companyLogo = ev.target.result;
                         document.getElementById('logoPreview').innerHTML = `<img src="${companyLogo}" class="max-w-full max-h-full object-contain">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            document.getElementById('coverPhotoInput').onchange = (e) => {
+                const file = e.target.files[0];
+                if(file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        coverPhoto = ev.target.result;
+                        document.getElementById('coverPhotoPreview').innerHTML = `<img src="${coverPhoto}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;">`;
+                        document.getElementById('coverPhotoRemoveBtn').classList.remove('hidden');
                     };
                     reader.readAsDataURL(file);
                 }
@@ -1239,6 +1451,11 @@ function out(obj) {
             return '';
         };
 
+        // Máxima dimensión para imágenes en el PDF (px). 900px es suficiente para impresión a 150 dpi
+        // en una página A4 con margen — reduce el tamaño del PDF y acelera la generación.
+        const PDF_IMG_MAX_PX  = 900;
+        const PDF_IMG_QUALITY = 0.60; // calidad JPEG 0–1 (0.60 = buena calidad, mucho menor tamaño)
+
         async function normalizeImage(dataUrl) {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -1247,20 +1464,18 @@ function out(obj) {
                     try {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
-                        canvas.width = img.width || 800;
-                        canvas.height = img.height || 600;
-                        ctx.drawImage(img, 0, 0);
-                        // Test for tainted canvas before reading
-                        const out = canvas.toDataURL('image/jpeg', 0.8);
+                        // Escalar al máximo permitido manteniendo relación de aspecto
+                        let w = img.width  || 800;
+                        let h = img.height || 600;
+                        if (w > PDF_IMG_MAX_PX) { h = Math.round(h * PDF_IMG_MAX_PX / w); w = PDF_IMG_MAX_PX; }
+                        if (h > PDF_IMG_MAX_PX) { w = Math.round(w * PDF_IMG_MAX_PX / h); h = PDF_IMG_MAX_PX; }
+                        canvas.width  = w;
+                        canvas.height = h;
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const out = canvas.toDataURL('image/jpeg', PDF_IMG_QUALITY);
                         if (!out || out === 'data:,') throw new Error('empty canvas');
-                        resolve({
-                            src: out,
-                            ratio: img.width / img.height,
-                            w: img.width,
-                            h: img.height
-                        });
+                        resolve({ src: out, ratio: w / h, w, h });
                     } catch(e) {
-                        // Canvas tainted or empty — return original dataUrl as-is
                         resolve({
                             src: dataUrl,
                             ratio: img.width && img.height ? img.width / img.height : 4/3,
@@ -1269,29 +1484,35 @@ function out(obj) {
                         });
                     }
                 };
-                img.onerror = () => {
-                    // Could not load image at all — return original dataUrl
-                    resolve({ src: dataUrl, ratio: 4/3, w: 800, h: 600 });
-                };
+                img.onerror = () => resolve({ src: dataUrl, ratio: 4/3, w: 800, h: 600 });
                 img.src = dataUrl;
             });
         }
 
         // Descarga una imagen de Drive y la guarda en cache.
-        // Las llamadas posteriores con el mismo driveId devuelven el resultado inmediatamente.
-        async function resolveDriveImage(driveId, size = 'w800') {
+        // Usa thumbnails w400 (suficiente para PDF) con timeout para no bloquear la generación.
+        async function resolveDriveImage(driveId) {
             if (driveImageCache[driveId]) return driveImageCache[driveId];
 
             const apiKey = localStorage.getItem('google_api_key');
+            // Preferimos thumbnail w400 — mucho más rápido que descargar el original.
+            // w800 solo si la API key está disponible y como segundo intento.
             const urls = [
+                `https://drive.google.com/thumbnail?id=${driveId}&sz=w400`,
                 apiKey ? `https://www.googleapis.com/drive/v3/files/${driveId}?alt=media&key=${apiKey}` : null,
-                `https://drive.google.com/thumbnail?id=${driveId}&sz=${size}`,
-                `https://drive.google.com/thumbnail?id=${driveId}&sz=w400`
+                `https://drive.google.com/thumbnail?id=${driveId}&sz=w200`,
             ].filter(Boolean);
+
+            // Helper: fetch con timeout para no quedar bloqueados
+            const fetchWithTimeout = (url, ms = 8000) => {
+                const ctrl = new AbortController();
+                const id = setTimeout(() => ctrl.abort(), ms);
+                return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(id));
+            };
 
             for (const url of urls) {
                 try {
-                    const res = await fetch(url);
+                    const res = await fetchWithTimeout(url, 8000);
                     if (!res.ok) continue;
                     const blob = await res.blob();
                     if (!blob || blob.size === 0) continue;
@@ -1299,12 +1520,27 @@ function out(obj) {
                     if (!src || src === 'data:application/octet-stream;base64,') continue;
                     const norm = await normalizeImage(src);
                     if (norm && norm.src) {
-                        driveImageCache[driveId] = norm; // guardar en cache
+                        driveImageCache[driveId] = norm;
                         return norm;
                     }
                 } catch(e) { continue; }
             }
-            return null; // todos los intentos fallaron
+            return null;
+        }
+
+        // Descarga imágenes de Drive en paralelo con límite de concurrencia para no saturar la API.
+        async function resolveImagesThrottled(driveIds, concurrency = 3) {
+            const results = {};
+            const queue = [...driveIds];
+            const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
+                while (queue.length) {
+                    const id = queue.shift();
+                    if (!id) break;
+                    results[id] = await resolveDriveImage(id);
+                }
+            });
+            await Promise.all(workers);
+            return results;
         }
 
         async function handleBlockImage(sId, bId, input) {
@@ -1602,18 +1838,32 @@ function out(obj) {
             const margin = parseFloat(pdfCfg('pdf_margin','25'));
             const projectHeader = pdfCfg('pdf_footer','') || document.getElementById('projectName').value || "REPORTE TÉCNICO";
             const safeBottomLimit = pageHeight - 25;
-            const bodySize    = parseFloat(pdfCfg('pdf_body_size','10'));
-            const lineHeight  = parseFloat(pdfCfg('pdf_line_height','5.5'));
-            const h1Size      = parseFloat(pdfCfg('pdf_h1_size','16'));
-            const h2Size      = parseFloat(pdfCfg('pdf_h2_size','13'));
+            const bodySize    = parseFloat(pdfCfg('pdf_body_size_e', pdfCfg('pdf_body_size','10')));
+            const lineHeight  = parseFloat(pdfCfg('pdf_lh_e', pdfCfg('pdf_line_height','5.5')));
+            const h1Size      = parseFloat(pdfCfg('pdf_h1_size_e', pdfCfg('pdf_h1_size','16')));
+            const h2Size      = parseFloat(pdfCfg('pdf_h2_size_e', pdfCfg('pdf_h2_size','13')));
+            const captionSize = parseFloat(pdfCfg('pdf_caption_size','8'));
+            const indexSize   = parseFloat(pdfCfg('pdf_index_size','9'));
             const showPageNum = pdfCfg('pdf_page_num','1') === '1';
             const doJustify   = pdfCfg('pdf_justify','1') === '1';
-            const cHeading    = hexToRgb(pdfCfg('color_heading','#4f46e5'));
-            const cBody       = hexToRgb(pdfCfg('color_body','#475569'));
+            const cHeading    = hexToRgb(pdfCfg('color_heading_e', pdfCfg('color_heading','#4f46e5')));
+            const cBody       = hexToRgb(pdfCfg('color_body_e', pdfCfg('color_body','#475569')));
+            const cCaption    = hexToRgb(pdfCfg('color_caption','#6b7280'));
             const cTableHead  = hexToRgb(pdfCfg('color_table_head','#4f46e5'));
-            const cIndex      = hexToRgb(pdfCfg('color_index','#4f46e5'));
+            const cIndex      = hexToRgb(pdfCfg('color_index_e', pdfCfg('color_index','#4f46e5')));
             const cCoverTitle = hexToRgb(pdfCfg('color_cover_title','#1e293b'));
             const cCoverSub   = hexToRgb(pdfCfg('color_cover_sub','#4f46e5'));
+            const fontH1      = pdfCfg('font_h1','helvetica');
+            const fontH1Style = pdfCfg('font_h1_style','bold');
+            const fontBody    = pdfCfg('font_body','helvetica');
+            const fontBodyStyle = pdfCfg('font_body_style','normal');
+            const fontCaption = pdfCfg('font_caption','helvetica');
+            const fontCaptionStyle = pdfCfg('font_caption_style','italic');
+            const fontIndex   = pdfCfg('font_index','helvetica');
+            const fontIndexStyle = pdfCfg('font_index_style','normal');
+            const spaceAfterTitle  = parseFloat(pdfCfg('space_after_title','10'));
+            const spaceAfterFigure = parseFloat(pdfCfg('space_after_figure','6'));
+            const spaceAfterPara   = parseFloat(pdfCfg('space_after_para','4'));
             
             let photoCounterGlobal = 1;
             let tableCounterGlobal = 1;
@@ -1688,14 +1938,14 @@ function out(obj) {
                     }
 
                     targetDoc.setFontSize(item.level === 1 ? h1Size : h2Size);
-                    targetDoc.setFont("helvetica", "bold");
+                    targetDoc.setFont(fontH1, fontH1Style);
                     targetDoc.setTextColor(...cHeading);
                     targetDoc.text(`${item.number} ${item.title}`, margin, currentY);
-                    currentY += 10;
+                    currentY += spaceAfterTitle;
 
                     for (const b of item.blocks) {
                         if (b.type === 'text') {
-                            targetDoc.setFont("helvetica", "normal"); 
+                            targetDoc.setFont(fontBody, fontBodyStyle); 
                             targetDoc.setFontSize(bodySize); 
                             targetDoc.setTextColor(...cBody);
                             
@@ -1706,7 +1956,7 @@ function out(obj) {
                                 if (currentY > safeBottomLimit) {
                                     targetDoc.addPage();
                                     if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
-                                    targetDoc.setFont("helvetica", "normal"); 
+                                    targetDoc.setFont(fontBody, fontBodyStyle); 
                                     targetDoc.setFontSize(bodySize); 
                                     targetDoc.setTextColor(...cBody);
                                     currentY = 30;
@@ -1719,7 +1969,7 @@ function out(obj) {
                                 }
                                 currentY += lineHeight; 
                             });
-                            currentY += 4;
+                            currentY += spaceAfterPara;
                         }
                         
                         if (b.type === 'table') {
@@ -1728,9 +1978,9 @@ function out(obj) {
                                 if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
                                 currentY = 30;
                             }
-                            targetDoc.setFontSize(8); 
-                            targetDoc.setFont("helvetica", "bold"); 
-                            targetDoc.setTextColor(100, 100, 100);
+                            targetDoc.setFontSize(captionSize); 
+                            targetDoc.setFont(fontCaption, fontCaptionStyle); 
+                            targetDoc.setTextColor(...cCaption);
                             const tableTitle = `Tabla ${tableCounterGlobal}. ${b.data.caption || "Ingresa título..."}`;
                             const titleLines = targetDoc.splitTextToSize(tableTitle, pageWidth - (margin * 2));
                             targetDoc.text(titleLines, margin, currentY);
@@ -1760,7 +2010,7 @@ function out(obj) {
                             // Resolve Drive images usando cache (solo descarga una vez por sesion)
                             const resolvedImages = await Promise.all(b.data.images.map(async img => {
                                 if (img.driveId && !isMeasuring) {
-                                    const cached = await resolveDriveImage(img.driveId, 'w800');
+                                    const cached = await resolveDriveImage(img.driveId);
                                     if (cached) return cached;
                                 }
                                 return img;
@@ -1786,6 +2036,7 @@ function out(obj) {
                                 const yOffset = (effectiveMaxH - img.drawH) / 2;
                                 if (!img.src) return; // skip images without resolved source
                                 try {
+                                    // normalizeImage siempre produce JPEG; solo PNG para imágenes locales que no pasaron por ella
                                     const fmt = img.src.startsWith('data:image/png') ? 'PNG' : 'JPEG';
                                     targetDoc.addImage(img.src, fmt, x, currentY + yOffset, img.drawW, img.drawH);
                                 } catch(err) {
@@ -1802,10 +2053,10 @@ function out(obj) {
 
                             currentY += effectiveMaxH + 4;
                             const fullCaption = `Fotografía ${photoCounterGlobal}. ${b.data.caption || "Ingresa título..."}`;
-                            targetDoc.setFontSize(8); targetDoc.setFont("helvetica", "italic"); targetDoc.setTextColor(150, 150, 150);
+                            targetDoc.setFontSize(captionSize); targetDoc.setFont(fontCaption, fontCaptionStyle); targetDoc.setTextColor(...cCaption);
                             const captionLines = targetDoc.splitTextToSize(fullCaption, totalWidth);
                             targetDoc.text(captionLines, pageWidth / 2, currentY, { align: 'center' });
-                            currentY += (captionLines.length * 4) + 6;
+                            currentY += (captionLines.length * 4) + spaceAfterFigure;
                             if(!isMeasuring) photoCounterGlobal++;
                         }
 
@@ -1856,13 +2107,49 @@ function out(obj) {
 
             const itemsPerIdxPage = 35; 
             const indexPagesCount = Math.ceil(flat.length / itemsPerIdxPage) || 1;
+
+            // ── PRE-DESCARGA DE IMÁGENES DRIVE ──────────────────────────────────────
+            // Recopilamos todos los driveIds del informe y los descargamos en paralelo
+            // (máx. 3 simultáneos) antes de empezar a renderizar el PDF.
+            // Así evitamos que Drive bloquee descargas seriales durante el layout.
+            const allDriveIds = new Set();
+            const collectDriveIds = (list) => {
+                list.forEach(s => {
+                    s.blocks.forEach(b => {
+                        if (b.type === 'image') b.data.images.forEach(img => { if (img.driveId) allDriveIds.add(img.driveId); });
+                    });
+                    collectDriveIds(s.children);
+                });
+            };
+            collectDriveIds(sections);
+            annexNoConformidades.forEach(item => { if (item.driveId) allDriveIds.add(item.driveId); });
+            annexFotografico.forEach(item => { if (item.driveId) allDriveIds.add(item.driveId); });
+
+            if (allDriveIds.size > 0) {
+                await resolveImagesThrottled([...allDriveIds], 3);
+            }
+            // ── FIN PRE-DESCARGA ─────────────────────────────────────────────────────
+
             const measureDoc = new jsPDF();
             await renderContent(measureDoc, true, 1 + indexPagesCount - 1); 
 
             // PORTADA
             if (companyLogo) try { const logoFmt = companyLogo.startsWith('data:image/png') ? 'PNG' : 'JPEG'; doc.addImage(companyLogo, logoFmt, margin, 20, 25, 25); } catch(e){}
+            // Fotografía grande de portada
+            if (coverPhoto) {
+                try {
+                    const cpFmt = coverPhoto.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                    const cpW = pageWidth - (margin * 2);
+                    const cpH = 100;
+                    doc.addImage(coverPhoto, cpFmt, margin, 110, cpW, cpH);
+                } catch(e){}
+            }
             doc.setFontSize(26); doc.setFont("helvetica", "bold"); doc.setTextColor(...cCoverTitle);
             doc.text(document.getElementById('reportTitle').value.toUpperCase(), margin, 100);
+
+            doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(...cCoverTitle);
+            doc.text('Instituto Costarricense de Electricidad', pageWidth / 2, 35, { align: 'center' });
+            
             doc.setFontSize(10); doc.setTextColor(...cCoverSub);
             doc.text(document.getElementById('projectName').value.toUpperCase(), margin, 90);
             
@@ -1885,7 +2172,7 @@ function out(obj) {
             flat.forEach((item) => {
                 if (iy > 270) { doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); iy = 30; }
                 const ind = (item.level-1)*6;
-                doc.setFontSize(9); doc.setTextColor(...cIndex);
+                doc.setFontSize(indexSize); doc.setFont(fontIndex, fontIndexStyle); doc.setTextColor(...cIndex);
                 doc.text(`${item.number} ${item.title}`, margin + ind, iy);
                 doc.setTextColor(148, 163, 184);
                 doc.text(item.page.toString(), pageWidth - margin, iy, { align: 'right' });
@@ -1911,7 +2198,7 @@ function out(obj) {
                     let fotoSrc = item.foto;
                     let fotoRatio = 4/3;
                     if (!fotoSrc && item.driveId) {
-                        const cached = await resolveDriveImage(item.driveId, 'w400');
+                        const cached = await resolveDriveImage(item.driveId);
                         if (cached) { fotoSrc = cached.src; fotoRatio = cached.ratio || 4/3; }
                     }
 
@@ -1987,7 +2274,7 @@ function out(obj) {
                     let fotoSrc = item.foto;
                     let fotoRatio = 4/3;
                     if (!fotoSrc && item.driveId) {
-                        const cached = await resolveDriveImage(item.driveId, 'w800');
+                        const cached = await resolveDriveImage(item.driveId);
                         if (cached) { fotoSrc = cached.src; fotoRatio = cached.ratio || 4/3; }
                     } else if (fotoSrc) {
                         // Para fotos locales intentar obtener ratio desde cache o calcular
@@ -2065,6 +2352,7 @@ function out(obj) {
             // PORTADA
             lines.push('<portada>');
             if (companyLogo) lines.push(`logo: "${companyLogo}"`);
+            if (coverPhoto) lines.push(`coverPhoto: "${coverPhoto}"`);
             lines.push(`titulo: "${document.getElementById('reportTitle').value}"`);
             lines.push(`proyecto: "${document.getElementById('projectName').value}"`);
             lines.push(`autor: "${document.getElementById('reportAuthor').value}"`);
@@ -2245,13 +2533,23 @@ function out(obj) {
                     companyLogo = logo;
                     document.getElementById('logoPreview').innerHTML = `<img src="${logo}" class="max-w-full max-h-full object-contain">`;
                 }
+                const cp = getVal('coverPhoto');
+                if (cp) {
+                    coverPhoto = cp;
+                    document.getElementById('coverPhotoPreview').innerHTML = `<img src="${cp}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;">`;
+                    document.getElementById('coverPhotoRemoveBtn').classList.remove('hidden');
+                } else {
+                    coverPhoto = null;
+                    document.getElementById('coverPhotoRemoveBtn').classList.add('hidden');
+                    document.getElementById('coverPhotoPreview').innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> Clic para añadir foto de portada`;
+                }
                 if (getVal('titulo')) document.getElementById('reportTitle').value = getVal('titulo');
                 if (getVal('proyecto')) document.getElementById('projectName').value = getVal('proyecto');
                 if (getVal('autor')) document.getElementById('reportAuthor').value = getVal('autor');
                 if (getVal('fecha')) document.getElementById('reportDate').value = getVal('fecha');
 
                 // Campos extra: cualquier clave que no sea las reservadas
-                const reserved = ['logo','titulo','proyecto','autor','fecha'];
+                const reserved = ['logo','coverPhoto','titulo','proyecto','autor','fecha'];
                 coverExtraFields = [];
                 inner.split('\n').forEach(l => {
                     const m = l.match(/^(\w[\w\s]*):\s*"([^"]*)"/);
@@ -2475,6 +2773,8 @@ function out(obj) {
             ia:          { title: 'IA — Cloudflare', desc: 'Configura el modelo y credenciales de Cloudflare Workers AI' },
             google:      { title: 'Google Drive (fotos)', desc: 'API Key y carpeta predeterminada para cargar fotos' },
             documento:   { title: 'Documento PDF', desc: 'Márgenes, tamaños de fuente y opciones de página' },
+            estilos:     { title: 'Estilos de texto', desc: 'Fuente, tamaño y color de títulos, cuerpo, pies de figura e índice' },
+            espaciado:   { title: 'Espaciado', desc: 'Espacio después de títulos, figuras y entre párrafos' },
             tipografia:  { title: 'Tipografía y Color', desc: 'Colores de títulos, cuerpo y elementos del PDF' },
             archivos:    { title: 'Archivos Drive', desc: 'Guarda y abre informes TXT directamente en Google Drive' },
             cors:        { title: 'CORS / Proxy', desc: 'Solución para llamadas desde archivo local (file://)' },
@@ -2522,6 +2822,22 @@ function out(obj) {
             }
         }
 
+        function syncColorE(colorId, hexId) {
+            const hex = document.getElementById(hexId).value;
+            if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+                document.getElementById(colorId).value = hex;
+            }
+        }
+
+        // ── Cover photo ───────────────────────────────────────────────────────────
+        function removeCoverPhoto() {
+            coverPhoto = null;
+            document.getElementById('coverPhotoPreview').innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                Clic para añadir foto de portada`;
+            document.getElementById('coverPhotoRemoveBtn').classList.add('hidden');
+        }
+
         function updateColorPreviews() {
             const heading = document.getElementById('colorHeading')?.value || '#4f46e5';
             const body    = document.getElementById('colorBody')?.value    || '#475569';
@@ -2542,6 +2858,14 @@ function out(obj) {
                     const hexEl = document.getElementById(id + 'Hex');
                     if (hexEl) hexEl.value = el.value;
                     updateColorPreviews();
+                });
+            });
+            // Estilos de texto color inputs
+            ['colorHeadingE','colorBodyE','colorCaption','colorIndexE'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', () => {
+                    const hexEl = document.getElementById(id + 'Hex');
+                    if (hexEl) hexEl.value = el.value;
                 });
             });
         });
@@ -2571,6 +2895,32 @@ function out(obj) {
             localStorage.setItem('color_index',       document.getElementById('colorIndex').value);
             localStorage.setItem('color_cover_title', document.getElementById('colorCoverTitle').value);
             localStorage.setItem('color_cover_sub',   document.getElementById('colorCoverSub').value);
+            // Estilos de texto — títulos
+            localStorage.setItem('font_h1',           document.getElementById('fontH1').value);
+            localStorage.setItem('font_h1_style',     document.getElementById('fontH1Style').value);
+            localStorage.setItem('pdf_h1_size_e',     document.getElementById('pdfH1SizeE').value);
+            localStorage.setItem('pdf_h2_size_e',     document.getElementById('pdfH2SizeE').value);
+            localStorage.setItem('color_heading_e',   document.getElementById('colorHeadingE').value);
+            // Estilos de texto — cuerpo
+            localStorage.setItem('font_body',         document.getElementById('fontBody').value);
+            localStorage.setItem('font_body_style',   document.getElementById('fontBodyStyle').value);
+            localStorage.setItem('pdf_body_size_e',   document.getElementById('pdfBodySizeE').value);
+            localStorage.setItem('pdf_lh_e',          document.getElementById('pdfLineHeightE').value);
+            localStorage.setItem('color_body_e',      document.getElementById('colorBodyE').value);
+            // Estilos de texto — pies de figura
+            localStorage.setItem('font_caption',      document.getElementById('fontCaption').value);
+            localStorage.setItem('font_caption_style',document.getElementById('fontCaptionStyle').value);
+            localStorage.setItem('pdf_caption_size',  document.getElementById('pdfCaptionSize').value);
+            localStorage.setItem('color_caption',     document.getElementById('colorCaption').value);
+            // Estilos de texto — índice
+            localStorage.setItem('font_index',        document.getElementById('fontIndex').value);
+            localStorage.setItem('font_index_style',  document.getElementById('fontIndexStyle').value);
+            localStorage.setItem('pdf_index_size',    document.getElementById('pdfIndexSize').value);
+            localStorage.setItem('color_index_e',     document.getElementById('colorIndexE').value);
+            // Espaciado
+            localStorage.setItem('space_after_title', document.getElementById('spaceAfterTitle').value);
+            localStorage.setItem('space_after_figure',document.getElementById('spaceAfterFigure').value);
+            localStorage.setItem('space_after_para',  document.getElementById('spaceAfterPara').value);
             // CORS
             localStorage.setItem('cf_worker_url',     document.getElementById('cfWorkerUrl').value.trim());
             // Archivos Drive
@@ -2621,6 +2971,7 @@ function out(obj) {
             lines.push('autor: "' + (document.getElementById('reportAuthor') ? document.getElementById('reportAuthor').value : '') + '"');
             lines.push('fecha: "' + (document.getElementById('reportDate') ? document.getElementById('reportDate').value : '') + '"');
             if (companyLogo) lines.push('logo: "' + companyLogo + '"');
+            if (coverPhoto) lines.push('coverPhoto: "' + coverPhoto + '"');
             coverExtraFields.forEach(function(f){ lines.push(f.label + ': "' + f.value + '"'); });
             lines.push('</portada>');
             lines.push('');
@@ -2934,6 +3285,38 @@ function out(obj) {
             setColor('colorCoverTitle', 'color_cover_title', '#1e293b');
             setColor('colorCoverSub',   'color_cover_sub',   '#4f46e5');
             updateColorPreviews();
+            // Estilos de texto — títulos
+            const setVal = (id, key, def) => { const el = document.getElementById(id); if(el) el.value = g(key, def); };
+            const setColorE = (id, key, def) => {
+                const v = g(key, def);
+                const el = document.getElementById(id); if(el) el.value = v;
+                const hex = document.getElementById(id+'Hex'); if(hex) hex.value = v;
+            };
+            setVal('fontH1',          'font_h1',          'helvetica');
+            setVal('fontH1Style',     'font_h1_style',    'bold');
+            setVal('pdfH1SizeE',      'pdf_h1_size_e',    '16');
+            setVal('pdfH2SizeE',      'pdf_h2_size_e',    '13');
+            setColorE('colorHeadingE','color_heading_e',  '#4f46e5');
+            // cuerpo
+            setVal('fontBody',        'font_body',        'helvetica');
+            setVal('fontBodyStyle',   'font_body_style',  'normal');
+            setVal('pdfBodySizeE',    'pdf_body_size_e',  '10');
+            setVal('pdfLineHeightE',  'pdf_lh_e',         '5.5');
+            setColorE('colorBodyE',   'color_body_e',     '#475569');
+            // pies de figura
+            setVal('fontCaption',     'font_caption',     'helvetica');
+            setVal('fontCaptionStyle','font_caption_style','italic');
+            setVal('pdfCaptionSize',  'pdf_caption_size', '8');
+            setColorE('colorCaption', 'color_caption',    '#6b7280');
+            // índice
+            setVal('fontIndex',       'font_index',       'helvetica');
+            setVal('fontIndexStyle',  'font_index_style', 'normal');
+            setVal('pdfIndexSize',    'pdf_index_size',   '9');
+            setColorE('colorIndexE',  'color_index_e',    '#4f46e5');
+            // espaciado
+            setVal('spaceAfterTitle', 'space_after_title','10');
+            setVal('spaceAfterFigure','space_after_figure','6');
+            setVal('spaceAfterPara',  'space_after_para', '4');
             // CORS
             document.getElementById('cfWorkerUrl').value = g('cf_worker_url','');
             // Archivos Drive
@@ -2964,6 +3347,11 @@ function out(obj) {
                 'pdf_h1_size','pdf_h2_size','pdf_footer','pdf_page_num','pdf_justify',
                 'color_heading','color_body','color_table_head','color_index',
                 'color_cover_title','color_cover_sub',
+                'font_h1','font_h1_style','pdf_h1_size_e','pdf_h2_size_e','color_heading_e',
+                'font_body','font_body_style','pdf_body_size_e','pdf_lh_e','color_body_e',
+                'font_caption','font_caption_style','pdf_caption_size','color_caption',
+                'font_index','font_index_style','pdf_index_size','color_index_e',
+                'space_after_title','space_after_figure','space_after_para',
                 'cf_worker_url',
                 'drive_save_folder_id','drive_file_name','drive_appscript_url',
                 'drive_autosave',

@@ -44,6 +44,21 @@
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         .ai-badge { background: linear-gradient(135deg,#6366f1,#8b5cf6); color:white; border-radius:8px; font-size:9px; font-weight:800; padding:2px 7px; letter-spacing:.05em; text-transform:uppercase; }
 
+        /* Collapse / expand */
+        .collapsible-body {
+            overflow: hidden;
+            transition: max-height 0.28s cubic-bezier(.4,0,.2,1), opacity 0.22s ease;
+            max-height: 2000px;
+            opacity: 1;
+        }
+        .collapsible-body.collapsed {
+            max-height: 0 !important;
+            opacity: 0;
+        }
+        .chevron-collapsed {
+            transform: rotate(-90deg);
+        }
+
         /* Settings panel styles */
         .settings-tab.active { background: white; color: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
         .sfield-label { display: block; font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
@@ -117,36 +132,92 @@
 
     <main class="max-w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div class="space-y-6">
-            <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-                <div class="flex justify-between items-start border-b border-slate-50 pb-6">
-                    <div class="flex-1 space-y-4">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Configuración General</label>
-                        <input type="text" id="projectName" placeholder="NOMBRE DEL PROYECTO" class="text-sm font-bold w-full border-none focus:ring-0 text-indigo-400 uppercase" value="Auditoría Infraestructura 2024">
-                        <input type="text" id="reportTitle" placeholder="TÍTULO DEL INFORME" class="text-3xl font-black w-full border-none focus:ring-0 outline-none uppercase" value="Informe de Estado Técnico">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden" id="coverCard">
+                <!-- Portada header collapsible -->
+                <div class="flex items-center justify-between px-8 py-4 cursor-pointer select-none" onclick="toggleCollapse('coverCard','coverBody')">
+                    <div class="flex items-center gap-3">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Portada</span>
                     </div>
-                    <div class="w-24 h-24 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center relative bg-slate-50">
-                        <input type="file" id="logoInput" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
-                        <div id="logoPreview" class="w-full h-full flex items-center justify-center p-2 text-center text-[8px] text-slate-400 uppercase font-bold">Logo</div>
+                    <svg id="coverCard-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" class="transition-transform duration-200"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div id="coverBody" class="collapsible-body px-8 pb-8 space-y-5">
+
+                <!-- Preview de portada estilo ICE -->
+                <div class="border border-slate-100 rounded-2xl bg-slate-50 p-6 space-y-4 text-center">
+
+                    <!-- Encabezado institución -->
+                    <div class="space-y-1">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1 text-left">Institución (línea 1)</div>
+                        <input type="text" id="coverInstitution1" placeholder="INSTITUTO COSTARRICENSE DE ELECTRICIDAD" class="w-full text-center text-xs font-bold outline-none bg-transparent border-b border-slate-200 focus:border-indigo-400 py-1 transition-all" value="INSTITUTO COSTARRICENSE DE ELECTRICIDAD">
                     </div>
-                </div>
-                
-                <div id="coverFieldsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Autor</label><input type="text" id="reportAuthor" class="w-full border-b border-slate-100 py-1 outline-none text-sm" value="Ing. Marcos Solís"></div>
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Fecha</label><input type="date" id="reportDate" class="w-full border-b border-slate-100 py-1 outline-none text-sm"></div>
-                </div>
-                <!-- Cover photo -->
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase block mb-2">Fotografía de portada (opcional)</label>
-                    <div class="relative border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50 overflow-hidden" style="min-height:80px;">
-                        <input type="file" id="coverPhotoInput" class="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*">
-                        <div id="coverPhotoPreview" class="w-full flex items-center justify-center py-4 text-[10px] text-slate-400 font-bold uppercase gap-2">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-                            Clic para añadir foto de portada
+                    <div class="space-y-1">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1 text-left">Institución (línea 2)</div>
+                        <input type="text" id="coverInstitution2" placeholder="DIRECCIÓN DE INFRAESTRUCTURA Y SERVICIOS ASOCIADOS (DISA)" class="w-full text-center text-xs font-bold outline-none bg-transparent border-b border-slate-200 focus:border-indigo-400 py-1 transition-all" value="DIRECCIÓN DE INFRAESTRUCTURA Y SERVICIOS ASOCIADOS (DISA)">
+                    </div>
+
+                    <!-- Logo -->
+                    <div class="flex flex-col items-center gap-1">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1 self-start">Logo</div>
+                        <div class="w-20 h-20 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center relative bg-white">
+                            <input type="file" id="logoInput" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">
+                            <div id="logoPreview" class="w-full h-full flex items-center justify-center p-2 text-center text-[8px] text-slate-400 uppercase font-bold">Logo</div>
                         </div>
                     </div>
-                    <button id="coverPhotoRemoveBtn" onclick="removeCoverPhoto()" class="hidden mt-1 text-[10px] text-rose-400 hover:text-rose-600 font-bold">✕ Quitar fotografía</button>
+
+                    <!-- Título del informe -->
+                    <div class="space-y-1">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1 text-left">Título del informe</div>
+                        <input type="text" id="reportTitle" placeholder="Informe Mensual 01" class="w-full text-center text-xl font-black outline-none bg-transparent border-b border-slate-200 focus:border-indigo-400 py-1 transition-all" value="Informe de Estado Técnico">
+                    </div>
+
+                    <!-- Subtítulo / proyecto -->
+                    <div class="space-y-1">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1 text-left">Subtítulo / Servicio</div>
+                        <input type="text" id="projectName" placeholder="Servicio de Supervisión PS Tecales" class="w-full text-center text-sm font-semibold outline-none bg-transparent border-b border-slate-200 focus:border-indigo-400 py-1 transition-all text-slate-600 underline decoration-red-500" value="Auditoría Infraestructura 2024">
+                    </div>
+
+                    <!-- Fotografía de portada -->
+                    <div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-2 text-left">Fotografía de portada (opcional)</div>
+                        <div class="relative border-2 border-dashed border-slate-200 rounded-2xl bg-white overflow-hidden" style="min-height:80px;">
+                            <input type="file" id="coverPhotoInput" class="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*">
+                            <div id="coverPhotoPreview" class="w-full flex items-center justify-center py-4 text-[10px] text-slate-400 font-bold uppercase gap-2">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                                Clic para añadir foto de portada
+                            </div>
+                        </div>
+                        <button id="coverPhotoRemoveBtn" onclick="removeCoverPhoto()" class="hidden mt-1 text-[10px] text-rose-400 hover:text-rose-600 font-bold">✕ Quitar fotografía</button>
+                    </div>
+
+                    <!-- Cliente -->
+                    <div class="space-y-1">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1 text-left">Cliente</div>
+                        <input type="text" id="coverCliente" placeholder="División Transmisión" class="w-full text-center text-sm font-semibold outline-none bg-transparent border-b border-slate-200 focus:border-indigo-400 py-1 transition-all" value="División Transmisión">
+                    </div>
+
+                    <!-- Equipo supervisor / autor -->
+                    <div class="space-y-1">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1 text-left">Realizado por (etiqueta grupo)</div>
+                        <input type="text" id="coverEquipoLabel" placeholder="Equipo Supervisor" class="w-full text-center text-sm font-bold outline-none bg-transparent border-b border-slate-200 focus:border-indigo-400 py-1 transition-all" value="Equipo Supervisor">
+                    </div>
+                    <div class="space-y-1">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1 text-left">Autor / miembro 1</div>
+                        <input type="text" id="reportAuthor" placeholder="Andrés Castillo Cascante" class="w-full text-center text-sm outline-none bg-transparent border-b border-slate-200 focus:border-indigo-400 py-1 transition-all" value="Ing. Marcos Solís">
+                    </div>
+
+                    <!-- Periodo / Fecha -->
+                    <div class="space-y-1">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1 text-left">Periodo (ej: 24/04/26 al 19/04/26)</div>
+                        <input type="text" id="reportDate" placeholder="24/04/26 al 19/04/26" class="w-full text-center text-sm font-bold outline-none bg-transparent border-b border-slate-200 focus:border-indigo-400 py-1 transition-all">
+                    </div>
+                </div>
+
+                <!-- Campos personalizados adicionales -->
+                <div id="coverFieldsContainer" class="space-y-3">
                 </div>
                 <button onclick="addCoverField()" class="text-[10px] font-bold text-indigo-500 hover:underline uppercase">+ Añadir campo personalizado</button>
+                </div><!-- /coverBody -->
             </div>
 
             <div id="sectionsContainer" class="space-y-4 nested-sortable" data-level="1"></div>
@@ -1128,11 +1199,51 @@ function out(obj) {
         let editingAnnexId = null;
 
         // ─── IMAGE CACHE (driveId -> {src, ratio, w, h}) ────────────────────────
+        // Persistido en IndexedDB para sobrevivir recargas de página.
+
+        const IDB_NAME = 'DriveImgCache';
+        const IDB_STORE = 'images';
+        let _idb = null;
+
+        function openIDB() {
+            if (_idb) return Promise.resolve(_idb);
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(IDB_NAME, 1);
+                req.onupgradeneeded = e => e.target.result.createObjectStore(IDB_STORE);
+                req.onsuccess = e => { _idb = e.target.result; resolve(_idb); };
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function idbGet(key) {
+            try {
+                const db = await openIDB();
+                return new Promise((resolve) => {
+                    const tx = db.transaction(IDB_STORE, 'readonly');
+                    const req = tx.objectStore(IDB_STORE).get(key);
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => resolve(null);
+                });
+            } catch(e) { return null; }
+        }
+
+        async function idbSet(key, value) {
+            try {
+                const db = await openIDB();
+                return new Promise((resolve) => {
+                    const tx = db.transaction(IDB_STORE, 'readwrite');
+                    tx.objectStore(IDB_STORE).put(value, key);
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => resolve();
+                });
+            } catch(e) {}
+        }
+
         // Evita re-descargar imagenes de Drive en cada generacion de PDF.
         const driveImageCache = {};
 
         window.onload = () => {
-            document.getElementById('reportDate').value = new Date().toISOString().split('T')[0];
+            // reportDate is now a free-text period field — no auto-init needed
             addSection();
             document.getElementById('addMainSectionBottom').onclick = () => addSection();
             document.getElementById('generatePdfBtn').onclick = () => generateDocument('download');
@@ -1184,9 +1295,7 @@ function out(obj) {
 
         function renderCoverFields() {
             const container = document.getElementById('coverFieldsContainer');
-            const base = Array.from(container.children).slice(0,2);
             container.innerHTML = '';
-            base.forEach(b => container.appendChild(b));
             coverExtraFields.forEach(f => {
                 const d = document.createElement('div');
                 d.className = 'bg-slate-50 p-3 rounded-2xl relative group';
@@ -1289,17 +1398,21 @@ function out(obj) {
                            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><circle cx="2" cy="2" r="1.5"/><circle cx="2" cy="6" r="1.5"/><circle cx="2" cy="10" r="1.5"/><circle cx="6" cy="2" r="1.5"/><circle cx="6" cy="6" r="1.5"/><circle cx="6" cy="10" r="1.5"/></svg>
                         </div>
                         <div class="flex-1 space-y-4">
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-2">
-                                <div class="flex items-center gap-3 flex-1">
+                            <div class="flex justify-between items-center border-b border-slate-50 pb-2 cursor-pointer" onclick="toggleSectionCollapse('sec_${s.id}')">
+                                <div class="flex items-center gap-3 flex-1" onclick="event.stopPropagation()">
                                     <span class="text-xs font-black text-indigo-400 bg-indigo-50 px-2 py-1 rounded-lg">${num}</span>
                                     <input type="text" value="${s.title}" oninput="findById(sections, '${s.id}').title = this.value" class="font-bold text-lg outline-none w-full bg-transparent">
                                 </div>
-                                <div class="flex gap-2">
+                                <div class="flex gap-2 items-center" onclick="event.stopPropagation()">
+                                    <button title="Colapsar / expandir" onclick="toggleSectionCollapse('sec_${s.id}')" class="w-8 h-8 rounded-full text-slate-300 hover:bg-slate-100 flex items-center justify-center transition-colors">
+                                        <svg id="chev_${s.id}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" class="transition-transform duration-200"><polyline points="6 9 12 15 18 9"/></svg>
+                                    </button>
                                     <button title="Salto de página antes" onclick="findById(sections,'${s.id}').forcePageBreak=!findById(sections,'${s.id}').forcePageBreak;render()" class="w-8 h-8 rounded-full flex items-center justify-center transition-colors ${s.forcePageBreak ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-300 hover:bg-slate-100'}">P</button>
                                     <button title="Añadir subsección" onclick="addSection('${s.id}', ${s.level+1})" class="w-8 h-8 rounded-full text-indigo-500 hover:bg-indigo-50 flex items-center justify-center transition-colors">+</button>
                                     <button title="Eliminar" onclick="removeS('${s.id}')" class="w-8 h-8 rounded-full text-rose-300 hover:bg-rose-50 flex items-center justify-center transition-colors">×</button>
                                 </div>
                             </div>
+                            <div id="sec_${s.id}" class="sec-body collapsible-body space-y-4">
                             <div class="blocks-sortable space-y-3">${blocksHtml}</div>
                             <div class="flex gap-4 pt-3 border-t border-slate-50">
                                 <button onclick="addBlock('${s.id}', 'text')" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-500 transition-colors flex items-center gap-1">
@@ -1316,6 +1429,7 @@ function out(obj) {
                                 </button>
                             </div>
                             <div class="nested-sortable space-y-4 mt-2" data-level="${s.level + 1}"></div>
+                            </div><!-- /sec-body -->
                         </div>`;
                     target.appendChild(d);
                     if (s.children.length > 0) loop(s.children, d.querySelector('.nested-sortable'), num + '.');
@@ -1497,8 +1611,16 @@ function out(obj) {
 
         // Descarga una imagen de Drive y la guarda en cache.
         // Usa el App Script como proxy para evitar errores CORS al acceder a Drive.
+        // El resultado se persiste en IndexedDB para no repetir la descarga al recargar.
         async function resolveDriveImage(driveId) {
             if (driveImageCache[driveId]) return driveImageCache[driveId];
+
+            // ── Revisar IndexedDB antes de descargar ──────────────────────────
+            const persisted = await idbGet(driveId);
+            if (persisted && persisted.src) {
+                driveImageCache[driveId] = persisted;
+                return persisted;
+            }
 
             const appScriptUrl = localStorage.getItem('drive_appscript_url') || '';
 
@@ -1524,6 +1646,7 @@ function out(obj) {
                             const norm = await normalizeImage(src);
                             if (norm && norm.src) {
                                 driveImageCache[driveId] = norm;
+                                idbSet(driveId, norm);
                                 return norm;
                             }
                         }
@@ -1550,6 +1673,7 @@ function out(obj) {
                     const norm = await normalizeImage(src);
                     if (norm && norm.src) {
                         driveImageCache[driveId] = norm;
+                        idbSet(driveId, norm);
                         return norm;
                     }
                 } catch(e) { continue; }
@@ -2162,47 +2286,121 @@ function out(obj) {
             const measureDoc = new jsPDF();
             await renderContent(measureDoc, true, 1 + indexPagesCount - 1); 
 
-            // PORTADA
-            if (companyLogo) try { const logoFmt = companyLogo.startsWith('data:image/png') ? 'PNG' : 'JPEG'; doc.addImage(companyLogo, logoFmt, margin, 20, 25, 25); } catch(e){}
-            // Fotografía grande de portada
+            // PORTADA — estilo ICE centrado
+            const cx = pageWidth / 2;
+            let coverY = 22;
+
+            // Línea 1 institución
+            const inst1Val = (document.getElementById('coverInstitution1') ? document.getElementById('coverInstitution1').value : 'INSTITUTO COSTARRICENSE DE ELECTRICIDAD');
+            doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(...cCoverTitle);
+            doc.text(inst1Val, cx, coverY, { align: 'center' });
+            coverY += 7;
+
+            // Línea 2 institución
+            const inst2Val = (document.getElementById('coverInstitution2') ? document.getElementById('coverInstitution2').value : '');
+            if (inst2Val) {
+                doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(...cCoverTitle);
+                doc.text(inst2Val, cx, coverY, { align: 'center' });
+                coverY += 7;
+            }
+
+            coverY += 4;
+
+            // Logo centrado
+            if (companyLogo) {
+                try {
+                    const logoFmt = companyLogo.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                    const logoSize = 22;
+                    doc.addImage(companyLogo, logoFmt, cx - logoSize/2, coverY, logoSize, logoSize);
+                    coverY += logoSize + 8;
+                } catch(e){ coverY += 8; }
+            } else {
+                coverY += 6;
+            }
+
+            // Título principal centrado
+            doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.setTextColor(...cCoverTitle);
+            const titleVal = document.getElementById('reportTitle').value;
+            const titleLines = doc.splitTextToSize(titleVal, pageWidth - (margin * 2));
+            titleLines.forEach(line => { doc.text(line, cx, coverY, { align: 'center' }); coverY += 10; });
+            coverY += 2;
+
+            // Subtítulo / servicio centrado (subrayado)
+            const subtitleVal = document.getElementById('projectName').value;
+            if (subtitleVal) {
+                doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(...cCoverTitle);
+                const sw = doc.getTextWidth(subtitleVal);
+                doc.text(subtitleVal, cx, coverY, { align: 'center' });
+                // subrayado rojo
+                doc.setDrawColor(220, 50, 50); doc.setLineWidth(0.5);
+                doc.line(cx - sw/2, coverY + 1, cx + sw/2, coverY + 1);
+                doc.setDrawColor(0); doc.setLineWidth(0.2);
+                coverY += 10;
+            }
+
+            // Foto de portada centrada
             if (coverPhoto) {
                 try {
                     const cpFmt = coverPhoto.startsWith('data:image/png') ? 'PNG' : 'JPEG';
                     const cpW = pageWidth - (margin * 2);
-                    const cpH = 100;
-                    doc.addImage(coverPhoto, cpFmt, margin, 110, cpW, cpH);
-                } catch(e){}
+                    const cpH = 85;
+                    doc.addImage(coverPhoto, cpFmt, margin, coverY, cpW, cpH);
+                    coverY += cpH + 10;
+                } catch(e){ coverY += 10; }
+            } else {
+                coverY += 10;
             }
-            doc.setFontSize(26); doc.setFont("helvetica", "bold"); doc.setTextColor(...cCoverTitle);
-            doc.text(document.getElementById('reportTitle').value.toUpperCase(), margin, 100);
 
-            doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(...cCoverTitle);
-            doc.text('Instituto Costarricense de Electricidad', pageWidth / 2, 35, { align: 'center' });
-            
-            doc.setFontSize(10); doc.setTextColor(...cCoverSub);
-            doc.text(document.getElementById('projectName').value.toUpperCase(), margin, 90);
-            
-            let cy = 230;
-            const df = (l, v) => { 
-                doc.setFont("helvetica", "bold"); doc.setTextColor(148, 163, 184); 
-                doc.text(`${l.toUpperCase()}:`, margin, cy); 
-                doc.setFont("helvetica", "normal"); doc.setTextColor(...cCoverTitle); 
-                doc.text(v, margin+35, cy); cy+=7; 
-            };
-            df("Autor", document.getElementById('reportAuthor').value);
-            df("Fecha", document.getElementById('reportDate').value);
-            coverExtraFields.forEach(f => df(f.label, f.value));
+            // Cliente centrado
+            const clienteVal = document.getElementById('coverCliente') ? document.getElementById('coverCliente').value : '';
+            if (clienteVal) {
+                doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(...cCoverTitle);
+                doc.text('Cliente: ' + clienteVal, cx, coverY, { align: 'center' });
+                coverY += 9;
+            }
+
+            coverY += 4;
+
+            // Realizado por (etiqueta grupo)
+            const equipoLabel = document.getElementById('coverEquipoLabel') ? document.getElementById('coverEquipoLabel').value : 'Equipo Supervisor';
+            doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(...cCoverTitle);
+            doc.text('Realizado por: (' + equipoLabel + ')', cx, coverY, { align: 'center' });
+            coverY += 7;
+
+            // Autor
+            const authorVal = document.getElementById('reportAuthor').value;
+            if (authorVal) {
+                doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(...cCoverTitle);
+                doc.text(authorVal, cx, coverY, { align: 'center' });
+                coverY += 7;
+            }
+
+            // Campos personalizados adicionales (centrados)
+            coverExtraFields.forEach(f => {
+                doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(...cCoverTitle);
+                doc.text(f.label + ': ' + f.value, cx, coverY, { align: 'center' });
+                coverY += 7;
+            });
+
+            coverY += 8;
+
+            // Periodo / Fecha centrado entre corchetes
+            const fechaVal = document.getElementById('reportDate').value;
+            if (fechaVal) {
+                doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(...cCoverTitle);
+                doc.text('[' + fechaVal + ']', cx, coverY, { align: 'center' });
+            }
 
             // ÍNDICE
             doc.addPage();
             addHeader(doc, 2);
-            doc.setFontSize(18); doc.setTextColor(...cCoverTitle); doc.text("ÍNDICE", margin, 30);
+            doc.setFontSize(18); doc.setTextColor(...cCoverTitle); doc.text("Tabla de Contenidos", margin, 30);
             let iy = 45;
             flat.forEach((item) => {
                 if (iy > 270) { doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); iy = 30; }
                 const ind = (item.level-1)*6;
                 doc.setFontSize(indexSize); doc.setFont(fontIndex, fontIndexStyle); doc.setTextColor(...cIndex);
-                doc.text(`${item.number} ${item.title}`, margin + ind, iy);
+                doc.text(`${item.number}. ${item.title}`, margin + ind, iy);
                 doc.setTextColor(148, 163, 184);
                 doc.text(item.page.toString(), pageWidth - margin, iy, { align: 'right' });
                 doc.link(margin + ind, iy - 4, pageWidth - (margin * 2), 6, { pageNumber: item.page });
@@ -2386,6 +2584,10 @@ function out(obj) {
             lines.push(`proyecto: "${document.getElementById('projectName').value}"`);
             lines.push(`autor: "${document.getElementById('reportAuthor').value}"`);
             lines.push(`fecha: "${document.getElementById('reportDate').value}"`);
+            const _ci1 = document.getElementById('coverInstitution1'); if(_ci1) lines.push(`institucion1: "${_ci1.value}"`);
+            const _ci2 = document.getElementById('coverInstitution2'); if(_ci2) lines.push(`institucion2: "${_ci2.value}"`);
+            const _cc = document.getElementById('coverCliente'); if(_cc) lines.push(`cliente: "${_cc.value}"`);
+            const _cel = document.getElementById('coverEquipoLabel'); if(_cel) lines.push(`equipo: "${_cel.value}"`);
             coverExtraFields.forEach(f => {
                 lines.push(`${f.label}: "${f.value}"`);
             });
@@ -2576,9 +2778,13 @@ function out(obj) {
                 if (getVal('proyecto')) document.getElementById('projectName').value = getVal('proyecto');
                 if (getVal('autor')) document.getElementById('reportAuthor').value = getVal('autor');
                 if (getVal('fecha')) document.getElementById('reportDate').value = getVal('fecha');
+                const _ri1 = document.getElementById('coverInstitution1'); if(_ri1 && getVal('institucion1')) _ri1.value = getVal('institucion1');
+                const _ri2 = document.getElementById('coverInstitution2'); if(_ri2 && getVal('institucion2')) _ri2.value = getVal('institucion2');
+                const _rc = document.getElementById('coverCliente'); if(_rc && getVal('cliente')) _rc.value = getVal('cliente');
+                const _rel = document.getElementById('coverEquipoLabel'); if(_rel && getVal('equipo')) _rel.value = getVal('equipo');
 
                 // Campos extra: cualquier clave que no sea las reservadas
-                const reserved = ['logo','coverPhoto','titulo','proyecto','autor','fecha'];
+                const reserved = ['logo','coverPhoto','titulo','proyecto','autor','fecha','institucion1','institucion2','cliente','equipo'];
                 coverExtraFields = [];
                 inner.split('\n').forEach(l => {
                     const m = l.match(/^(\w[\w\s]*):\s*"([^"]*)"/);
@@ -2999,6 +3205,10 @@ function out(obj) {
             lines.push('proyecto: "' + (document.getElementById('projectName') ? document.getElementById('projectName').value : '') + '"');
             lines.push('autor: "' + (document.getElementById('reportAuthor') ? document.getElementById('reportAuthor').value : '') + '"');
             lines.push('fecha: "' + (document.getElementById('reportDate') ? document.getElementById('reportDate').value : '') + '"');
+            const _ci1b = document.getElementById('coverInstitution1'); if(_ci1b) lines.push('institucion1: "' + _ci1b.value + '"');
+            const _ci2b = document.getElementById('coverInstitution2'); if(_ci2b) lines.push('institucion2: "' + _ci2b.value + '"');
+            const _ccb = document.getElementById('coverCliente'); if(_ccb) lines.push('cliente: "' + _ccb.value + '"');
+            const _celb = document.getElementById('coverEquipoLabel'); if(_celb) lines.push('equipo: "' + _celb.value + '"');
             if (companyLogo) lines.push('logo: "' + companyLogo + '"');
             if (coverPhoto) lines.push('coverPhoto: "' + coverPhoto + '"');
             coverExtraFields.forEach(function(f){ lines.push(f.label + ': "' + f.value + '"'); });
@@ -4305,6 +4515,25 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             } catch(e) {
                 listEl.innerHTML = '<p class="text-[11px] text-rose-500 text-center py-6 font-semibold">Error: ' + e.message + '</p>';
             }
+        }
+
+        // ── Collapse helpers ─────────────────────────────────────────────────
+        function toggleCollapse(cardId, bodyId) {
+            const body = document.getElementById(bodyId);
+            const chevron = document.getElementById(cardId + '-chevron');
+            if (!body) return;
+            const collapsed = body.classList.toggle('collapsed');
+            if (chevron) chevron.classList.toggle('chevron-collapsed', collapsed);
+        }
+
+        function toggleSectionCollapse(secBodyId) {
+            const body = document.getElementById(secBodyId);
+            if (!body) return;
+            const collapsed = body.classList.toggle('collapsed');
+            // secBodyId is "sec_<id>", chevron id is "chev_<id>"
+            const chevId = 'chev_' + secBodyId.replace('sec_', '');
+            const chevron = document.getElementById(chevId);
+            if (chevron) chevron.classList.toggle('chevron-collapsed', collapsed);
         }
     </script>
 </body>

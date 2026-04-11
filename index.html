@@ -1969,7 +1969,7 @@ function out(obj) {
                     targetDoc.setFontSize(item.level === 1 ? h1Size : h2Size);
                     targetDoc.setFont(fontH1, fontH1Style);
                     targetDoc.setTextColor(...cHeading);
-                    targetDoc.text(`${item.number} ${item.title}`, margin, currentY);
+                    targetDoc.text(`${item.number}. ${item.title}`, margin, currentY);
                     currentY += spaceAfterTitle;
 
                     for (const b of item.blocks) {

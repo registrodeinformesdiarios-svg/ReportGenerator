@@ -740,9 +740,14 @@
                                 Guardar informe en Drive
                             </p>
                             <div>
-                                <label class="sfield-label">URL del App Script</label>
+                                <label class="sfield-label">URL del App Script (Informes)</label>
                                 <input type="text" id="driveAppScriptUrl" placeholder="https://script.google.com/macros/s/AKfy.../exec" class="sfield font-mono">
                                 <p class="text-[10px] text-slate-400 mt-1">Ej: <code>https://script.google.com/macros/s/AKfycbx.../exec</code> — despliega el App Script como Web App.</p>
+                            </div>
+                            <div>
+                                <label class="sfield-label">URL del App Script de Gráficos</label>
+                                <input type="text" id="chartsAppScriptUrl" placeholder="https://script.google.com/macros/s/AKfy.../exec" class="sfield font-mono">
+                                <p class="text-[10px] text-slate-400 mt-1">App Script que gestiona la carpeta de archivos TXT de gráficos en Drive (GET ?action=list / ?action=download&id=…).</p>
                             </div>
                             <div>
                                 <label class="sfield-label">Nombre del archivo</label>
@@ -998,6 +1003,27 @@ function out(obj) {
                 <div class="flex gap-2">
                     <textarea id="chartTxtImport" rows="3" class="flex-1 border border-amber-200 rounded-xl px-3 py-2 text-xs font-mono outline-none resize-none" placeholder="Pega los datos CSV aquí..."></textarea>
                     <button onclick="chartEditor.importFromTxt()" class="bg-amber-500 text-white px-4 rounded-xl text-xs font-bold hover:bg-amber-600 transition-colors">Importar</button>
+                </div>
+            </div>
+            <!-- Drive chart link section -->
+            <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <svg width="13" height="13" viewBox="0 87.3 78" xmlns="http://www.w3.org/2000/svg" style="display:none"></svg>
+                        <p class="text-[10px] font-bold text-indigo-700 uppercase">Vincular con gráfico en Drive</p>
+                        <span id="chartDriveLinkBadge" class="hidden bg-indigo-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">Vinculado</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="chartDriveLoadBtn" onclick="chartEditor.loadDriveList()" class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 border border-indigo-200 bg-white px-3 py-1 rounded-lg flex items-center gap-1 transition-colors">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                            Ver archivos
+                        </button>
+                        <button id="chartDriveUnlinkBtn" onclick="chartEditor.unlinkDrive()" class="hidden text-[10px] font-bold text-rose-400 hover:text-rose-600 transition-colors">✕ Desvincular</button>
+                    </div>
+                </div>
+                <p id="chartDriveLinkStatus" class="text-[10px] text-indigo-500 mb-2 hidden"></p>
+                <div id="chartDriveFileList" class="hidden max-h-40 overflow-y-auto space-y-1 mt-2">
+                    <p class="text-[10px] text-slate-400 text-center py-3 animate-pulse" id="chartDriveLoadingMsg">Cargando archivos…</p>
                 </div>
             </div>
             <div class="flex gap-3 justify-end">
@@ -1885,6 +1911,21 @@ function out(obj) {
                 document.getElementById('chartTypeSelect').value = this.temp.chartType || 'bar';
                 document.getElementById('chartLabels').value = this.temp.labels.join(', ');
                 document.getElementById('chartTxtImport').value = '';
+                // Reset drive link UI
+                document.getElementById('chartDriveFileList').classList.add('hidden');
+                const badge = document.getElementById('chartDriveLinkBadge');
+                const statusEl = document.getElementById('chartDriveLinkStatus');
+                const unlinkBtn = document.getElementById('chartDriveUnlinkBtn');
+                if (this.temp.driveFileId) {
+                    badge.classList.remove('hidden');
+                    unlinkBtn.classList.remove('hidden');
+                    statusEl.textContent = '✓ Vinculado: ' + (this.temp.driveFileName || this.temp.driveFileId);
+                    statusEl.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                    unlinkBtn.classList.add('hidden');
+                    statusEl.classList.add('hidden');
+                }
                 this.drawDatasets();
                 document.getElementById('chartModal').style.display = 'flex';
             },
@@ -1921,6 +1962,115 @@ function out(obj) {
                 }
                 document.getElementById('chartLabels').value = this.temp.labels.join(', ');
                 this.drawDatasets();
+            },
+            async loadDriveList() {
+                const appScriptUrl = localStorage.getItem('charts_appscript_url') || '';
+                const listEl = document.getElementById('chartDriveFileList');
+                const loadingMsg = document.getElementById('chartDriveLoadingMsg');
+                listEl.classList.remove('hidden');
+                if (!appScriptUrl) {
+                    listEl.innerHTML = '<p class="text-[10px] text-amber-600 text-center py-2 font-semibold px-2">Configura la URL del App Script de Gráficos en Ajustes → Archivos Drive.</p>';
+                    return;
+                }
+                listEl.innerHTML = '<p class="text-[10px] text-slate-400 text-center py-3 animate-pulse" id="chartDriveLoadingMsg">Cargando archivos…</p>';
+                try {
+                    const resp = await fetch(appScriptUrl + '?action=list');
+                    const data = await resp.json();
+                    if (!Array.isArray(data) || data.length === 0) {
+                        listEl.innerHTML = '<p class="text-[10px] text-slate-400 text-center py-3">No hay archivos en la carpeta de gráficos.</p>';
+                        return;
+                    }
+                    listEl.innerHTML = data.map(f => {
+                        const safeName = f.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        const isLinked = this.temp.driveFileId === f.id;
+                        return `<div class="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-indigo-100 cursor-pointer transition-colors ${isLinked ? 'bg-indigo-100 border border-indigo-300' : 'border border-transparent'}" onclick="chartEditor.linkFile('${f.id}','${safeName}')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${isLinked ? '#4f46e5' : '#94a3b8'}" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            <span class="text-[11px] font-${isLinked ? 'bold text-indigo-700' : 'medium text-slate-700'} flex-1 truncate">${f.name}</span>
+                            ${isLinked ? '<span class="text-[9px] font-bold text-indigo-500 shrink-0">Vinculado ✓</span>' : '<span class="text-[9px] text-slate-400 shrink-0 opacity-0 group-hover:opacity-100">Vincular →</span>'}
+                        </div>`;
+                    }).join('');
+                } catch(e) {
+                    listEl.innerHTML = '<p class="text-[10px] text-rose-500 text-center py-2 font-semibold">Error: ' + e.message + '</p>';
+                }
+            },
+            async linkFile(fileId, fileName) {
+                const appScriptUrl = localStorage.getItem('charts_appscript_url') || '';
+                if (!appScriptUrl) return;
+                const statusEl = document.getElementById('chartDriveLinkStatus');
+                statusEl.textContent = 'Cargando datos del gráfico…';
+                statusEl.classList.remove('hidden');
+                try {
+                    const resp = await fetch(appScriptUrl + '?action=download&id=' + encodeURIComponent(fileId));
+                    const text = await resp.text();
+                    // Parse the grafico format
+                    const parsed = this._parseGraficoTxt(text, fileId);
+                    if (parsed) {
+                        this.temp.chartType = parsed.chartType;
+                        this.temp.labels = parsed.labels;
+                        this.temp.datasets = parsed.datasets;
+                        this.temp.driveFileId = fileId;
+                        this.temp.driveFileName = fileName;
+                        document.getElementById('chartTypeSelect').value = parsed.chartType;
+                        document.getElementById('chartLabels').value = parsed.labels.join(', ');
+                        this.drawDatasets();
+                        // Update UI
+                        document.getElementById('chartDriveLinkBadge').classList.remove('hidden');
+                        document.getElementById('chartDriveUnlinkBtn').classList.remove('hidden');
+                        statusEl.textContent = '✓ Vinculado: ' + fileName;
+                        // Refresh list
+                        this.loadDriveList();
+                    } else {
+                        statusEl.textContent = '✗ No se pudo leer el formato del archivo.';
+                    }
+                } catch(e) {
+                    statusEl.textContent = '✗ Error: ' + e.message;
+                }
+            },
+            unlinkDrive() {
+                delete this.temp.driveFileId;
+                delete this.temp.driveFileName;
+                document.getElementById('chartDriveLinkBadge').classList.add('hidden');
+                document.getElementById('chartDriveUnlinkBtn').classList.add('hidden');
+                const statusEl = document.getElementById('chartDriveLinkStatus');
+                statusEl.textContent = 'Vínculo eliminado.';
+                setTimeout(() => statusEl.classList.add('hidden'), 2000);
+                document.getElementById('chartDriveFileList').classList.add('hidden');
+            },
+            _parseGraficoTxt(text, fileId) {
+                // Supports format:
+                // <grafico id="gs1" nombre="" tipo="bar">
+                //   etiquetas: Ene | Feb | Mar
+                //   ---
+                //   Serie 1 | #6366f1 | 10 | 20 | 15
+                // </grafico>
+                try {
+                    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+                    // Find grafico tag
+                    const headerLine = lines.find(l => l.startsWith('<grafico'));
+                    const tipoMatch = headerLine && headerLine.match(/tipo="([^"]+)"/);
+                    const chartType = tipoMatch ? tipoMatch[1] : 'bar';
+                    const labelsLine = lines.find(l => l.toLowerCase().startsWith('etiquetas:'));
+                    const labels = labelsLine ? labelsLine.replace(/^etiquetas:\s*/i,'').split('|').map(s=>s.trim()) : [];
+                    const sepIdx = lines.findIndex(l => l === '---');
+                    const colors = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4'];
+                    const datasets = [];
+                    if (sepIdx >= 0) {
+                        for (let i = sepIdx+1; i < lines.length; i++) {
+                            const l = lines[i];
+                            if (l.startsWith('</grafico>')) break;
+                            const parts = l.split('|').map(s=>s.trim());
+                            if (parts.length < 2) continue;
+                            const label = parts[0];
+                            const maybeColor = parts[1];
+                            const isColor = /^#[0-9a-fA-F]{3,6}$/.test(maybeColor);
+                            const dataStart = isColor ? 2 : 1;
+                            const color = isColor ? maybeColor : colors[datasets.length % colors.length];
+                            const data = parts.slice(dataStart).map(x => parseFloat(x) || 0);
+                            datasets.push({ label, color, data });
+                        }
+                    }
+                    return { chartType, labels, datasets };
+                } catch(e) { return null; }
             },
             save() {
                 this.temp.chartType = document.getElementById('chartTypeSelect').value;
@@ -3352,6 +3502,8 @@ function out(obj) {
             if (fnEl) localStorage.setItem('drive_file_name', fnEl.value.trim());
             const asUrlEl = document.getElementById('driveAppScriptUrl');
             if (asUrlEl) localStorage.setItem('drive_appscript_url', asUrlEl.value.trim());
+            const chartsUrlEl = document.getElementById('chartsAppScriptUrl');
+            if (chartsUrlEl) localStorage.setItem('charts_appscript_url', chartsUrlEl.value.trim());
 
             updateCfNavBtn();
             const msg = document.getElementById('settingsSavedMsg');
@@ -3771,6 +3923,8 @@ function out(obj) {
             if (fnEl2) fnEl2.value = g('drive_file_name','');
             const asUrlEl2 = document.getElementById('driveAppScriptUrl');
             if (asUrlEl2) asUrlEl2.value = g('drive_appscript_url','');
+            const chartsUrlEl2 = document.getElementById('chartsAppScriptUrl');
+            if (chartsUrlEl2) chartsUrlEl2.value = g('charts_appscript_url','');
             const asEl2 = document.getElementById('driveAutoSave');
             if (asEl2) {
                 const wasEnabled = g('drive_autosave','0') === '1';
@@ -3799,7 +3953,7 @@ function out(obj) {
                 'space_after_title','space_after_figure','space_after_para',
                 'cf_worker_url',
                 'drive_save_folder_id','drive_file_name','drive_appscript_url',
-                'drive_autosave',
+                'drive_autosave','charts_appscript_url',
             ];
             const obj = {};
             keys.forEach(k => { const v = localStorage.getItem(k); if (v !== null) obj[k] = v; });

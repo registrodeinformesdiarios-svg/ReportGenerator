@@ -59,6 +59,110 @@
             transform: rotate(-90deg);
         }
 
+        /* Section index panel */
+        #sectionIndexPanel {
+            display: none;
+        }
+        #sectionIndexPanel.visible { display: block; }
+        #sectionIndexInner {
+            position: fixed;
+            top: 80px;
+            width: 260px;
+            height: calc(100vh - 100px);
+            overflow-y: auto;
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 16px 12px;
+            scrollbar-width: thin;
+            scrollbar-color: #e2e8f0 transparent;
+        }
+        .idx-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background .12s;
+            user-select: none;
+        }
+        .idx-item:hover { background: #f1f5f9; }
+        .idx-item.idx-active { background: #eef2ff; }
+        .idx-drag-handle {
+            cursor: grab;
+            color: #cbd5e1;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+        .idx-drag-handle:active { cursor: grabbing; }
+        .idx-num {
+            font-size: 9px;
+            font-weight: 800;
+            color: #a5b4fc;
+            background: #eef2ff;
+            border-radius: 6px;
+            padding: 1px 5px;
+            flex-shrink: 0;
+        }
+        .idx-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+        .idx-item.idx-sub .idx-title { color: #94a3b8; font-weight: 500; }
+        .idx-item.idx-sub { padding-left: 22px; }
+        .idx-item.idx-sub2 { padding-left: 36px; }
+        #sectionIndexSortable { min-height: 20px; }
+
+        /* Drive loading overlay */
+        #driveLoadingOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(3px);
+            align-items: center;
+            justify-content: center;
+        }
+        #driveLoadingOverlay.active { display: flex; }
+        .drive-loading-box {
+            background: white;
+            border-radius: 24px;
+            padding: 32px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            box-shadow: 0 25px 60px rgba(0,0,0,.18);
+            min-width: 260px;
+        }
+        .drive-loading-bar-track {
+            width: 200px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .drive-loading-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border-radius: 99px;
+            animation: driveBarAnim 1.6s ease-in-out infinite;
+        }
+        @keyframes driveBarAnim {
+            0%   { width: 0%;   margin-left: 0%; }
+            50%  { width: 60%;  margin-left: 20%; }
+            100% { width: 0%;   margin-left: 100%; }
+        }
+
         /* Settings panel styles */
         .settings-tab.active { background: white; color: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
         .sfield-label { display: block; font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
@@ -123,6 +227,10 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                     Generar con IA
                 </button>
+                <button onclick="togglePreviewPanel()" id="togglePreviewBtn" title="Ocultar/mostrar vista previa" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl font-medium transition-all text-sm flex items-center gap-2">
+                    <svg id="togglePreviewIcon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+                    Ocultar vista previa
+                </button>
                 <button onclick="updatePreview()" class="bg-slate-800 hover:bg-black text-white px-5 py-2 rounded-xl font-medium transition-all text-sm">
                     Actualizar Vista Previa
                 </button>
@@ -133,8 +241,8 @@
         </div>
     </nav>
 
-    <main class="max-w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div class="space-y-6">
+    <main id="mainGrid" class="max-w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="space-y-6" id="editorColumn">
             <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden" id="coverCard">
                 <!-- Portada header collapsible -->
                 <div class="flex items-center justify-between px-8 py-4 cursor-pointer select-none" onclick="toggleCollapse('coverCard','coverBody')">
@@ -279,13 +387,20 @@
             </div>
         </div>
 
-        <div class="hidden lg:block">
+        <div id="previewPanel" class="hidden lg:block">
             <div id="pdfPreviewContainer" class="bg-slate-200 rounded-3xl overflow-hidden border border-slate-300 flex items-center justify-center">
                 <div id="previewPlaceholder" class="text-slate-500 flex flex-col items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="opacity-20"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
                     <p class="text-sm font-medium">Vista previa no generada</p>
                 </div>
                 <iframe id="pdfIframe" class="w-full h-full hidden"></iframe>
+            </div>
+            <!-- Section index — shown instead of preview when preview is hidden -->
+            <div id="sectionIndexPanel" class="hidden">
+                <div id="sectionIndexInner">
+                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-3">Índice de secciones</p>
+                    <div id="sectionIndexSortable"></div>
+                </div>
             </div>
         </div>
     </main>
@@ -1576,6 +1691,10 @@ function out(obj) {
             };
             loop(sections, container);
             initSorting();
+            // Keep index in sync if visible
+            if (document.getElementById('sectionIndexPanel').classList.contains('visible')) {
+                renderSectionIndex();
+            }
         }
 
         const renderBlock = (sId, b, photoIndex, tableIndex) => {
@@ -3177,7 +3296,17 @@ function out(obj) {
             // ── SECCIONES ──
             // Parsear líneas de sección del bloque limpio (entre portada y las tablas/fotos)
             sections = [];
-            const secLines = clean.split('\n');
+            // Pre-procesar: colapsar bloques <t>...</t> y <vN>...</vN> que abarcan múltiples líneas
+            // en una sola línea, para que el parser línea-por-línea los detecte correctamente.
+            const collapseMultiline = (src) => {
+                // Collapse <t>...</t>
+                src = src.replace(/<t>([\s\S]*?)<\/t>/g, (m, inner) => '<t>' + inner.replace(/\n/g, '\\n') + '</t>');
+                // Collapse <vN>...</vN>
+                src = src.replace(/<(v\d+)>([\s\S]*?)<\/\1>/g, (m, tag, inner) => '<' + tag + '>' + inner.replace(/\n/g, '\\n') + '</' + tag + '>');
+                return src;
+            };
+            const cleanCollapsed = collapseMultiline(clean);
+            const secLines = cleanCollapsed.split('\n');
             const stack = []; // [{section, depth}]
             let currentTvBlock = null; // state for multi-line <tv> parsing
 
@@ -3227,14 +3356,15 @@ function out(obj) {
                         return;
                     }
                     const vm = line.match(/^<v(\d+)>([\s\S]*)<\/v\1>$/);
-                    if (vm) currentTvBlock.versions[parseInt(vm[1])] = vm[2];
+                    if (vm) currentTvBlock.versions[parseInt(vm[1])] = vm[2].replace(/\\n/g, '\n');
                     return;
                 }
 
                 // Texto <t>...</t>
                 const textMatch = line.match(/^<t>([\s\S]*)<\/t>$/);
                 if (textMatch) {
-                    currentSec.blocks.push({ id: Math.random().toString(36).substr(2,9), type: 'text', data: { content: textMatch[1] } });
+                    const content = textMatch[1].replace(/\\n/g, '\n');
+                    currentSec.blocks.push({ id: Math.random().toString(36).substr(2,9), type: 'text', data: { content } });
                     return;
                 }
 
@@ -4064,8 +4194,8 @@ function out(obj) {
             const folderId     = localStorage.getItem('drive_save_folder_id');
             const fileName     = localStorage.getItem('drive_file_name');
             if (appScriptUrl && folderId && fileName) {
-                showAutoSaveToast('Cargando informe desde Drive…');
                 (async () => {
+                    showDriveLoadingOverlay(fileName + '.txt');
                     try {
                         // Build the expected filename with today's date
                         const now = new Date();
@@ -4101,6 +4231,8 @@ function out(obj) {
                         showAutoSaveToast('✓ Cargado: ' + match.name);
                     } catch(e) {
                         // Fail silently — don't disturb the user on load errors
+                    } finally {
+                        hideDriveLoadingOverlay();
                     }
                 })();
             }
@@ -4875,12 +5007,24 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             }
         }
 
+        function showDriveLoadingOverlay(fileName) {
+            const overlay = document.getElementById('driveLoadingOverlay');
+            const fileEl = document.getElementById('driveLoadingFile');
+            if (overlay) overlay.classList.add('active');
+            if (fileEl) fileEl.textContent = fileName || '';
+        }
+
+        function hideDriveLoadingOverlay() {
+            const overlay = document.getElementById('driveLoadingOverlay');
+            if (overlay) overlay.classList.remove('active');
+        }
+
         async function navDriveOpenFile(fileId, fileName) {
             if (!confirm('Abrir "' + fileName + '"?\nEsto reemplazará el informe actual.')) return;
             const appScriptUrl = localStorage.getItem('drive_appscript_url') || '';
             if (!appScriptUrl) { alert('Configura la URL del App Script primero.'); return; }
-            const listEl = document.getElementById('driveOpenList');
-            listEl.innerHTML = '<p class="text-[11px] text-slate-400 text-center py-8 animate-pulse">Abriendo ' + fileName + '…</p>';
+            closeModal('driveOpenModal');
+            showDriveLoadingOverlay(fileName);
             try {
                 const resp = await fetch(appScriptUrl, {
                     method: 'POST',
@@ -4889,7 +5033,6 @@ Por favor, reescribe y mejora el texto de esa sección.`;
                 });
                 const data = await resp.json();
                 if (!data.ok) throw new Error(data.error || 'Error desconocido');
-                closeModal('driveOpenModal');
                 importTxt(data.content);
                 // Save base name (strip leading date prefix YYYYMMDD_ and .txt extension)
                 let baseName = fileName.replace(/\.txt$/i, '');
@@ -4900,7 +5043,9 @@ Por favor, reescribe y mejora el texto de esa sección.`;
                 updateDriveActiveFileName();
                 showAutoSaveToast('Abierto: ' + fileName);
             } catch(e) {
-                listEl.innerHTML = '<p class="text-[11px] text-rose-500 text-center py-6 font-semibold">Error: ' + e.message + '</p>';
+                showAutoSaveToast('Error al abrir: ' + e.message);
+            } finally {
+                hideDriveLoadingOverlay();
             }
         }
 
@@ -5183,6 +5328,115 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             doc.save(`${yy}${mm}${dd}_${safeTitle}.pdf`);
         }
 
+        function togglePreviewPanel() {
+            const panel = document.getElementById('previewPanel');
+            const grid = document.getElementById('mainGrid');
+            const btn = document.getElementById('togglePreviewBtn');
+            const pdfContainer = document.getElementById('pdfPreviewContainer');
+            const indexPanel = document.getElementById('sectionIndexPanel');
+            const previewVisible = pdfContainer.style.display !== 'none';
+
+            if (previewVisible) {
+                // Ocultar preview — mostrar índice en columna derecha
+                pdfContainer.style.display = 'none';
+                indexPanel.classList.add('visible');
+                grid.style.gridTemplateColumns = '1fr 280px';
+                renderSectionIndex();
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg> Mostrar vista previa';
+                btn.title = 'Mostrar vista previa';
+            } else {
+                // Mostrar preview — ocultar índice
+                pdfContainer.style.display = '';
+                indexPanel.classList.remove('visible');
+                grid.style.gridTemplateColumns = '';
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg> Ocultar vista previa';
+                btn.title = 'Ocultar vista previa';
+            }
+            // Recrear charts para que tomen el nuevo ancho del contenedor
+            requestAnimationFrame(() => {
+                document.querySelectorAll('canvas').forEach(canvas => {
+                    const chart = canvas._chartInstance;
+                    if (!chart) return;
+                    const cfg = { type: chart.config.type, data: JSON.parse(JSON.stringify(chart.config.data)), options: chart.config.options };
+                    chart.destroy();
+                    canvas._chartInstance = new Chart(canvas, cfg);
+                });
+            });
+        }
+
+        function renderSectionIndex() {
+            const container = document.getElementById('sectionIndexSortable');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const flat = [];
+            const flatten = (list, depth) => {
+                list.forEach((s, i) => {
+                    flat.push({ s, depth });
+                    flatten(s.children, depth + 1);
+                });
+            };
+            flatten(sections, 0);
+
+            // Build numbered labels same as render()
+            const nums = {};
+            const buildNums = (list, prefix) => {
+                list.forEach((s, i) => {
+                    const n = prefix + (i + 1);
+                    nums[s.id] = n;
+                    buildNums(s.children, n + '.');
+                });
+            };
+            buildNums(sections, '');
+
+            flat.forEach(({ s, depth }) => {
+                const row = document.createElement('div');
+                row.setAttribute('data-id', s.id);
+                row.className = 'idx-item' + (depth === 1 ? ' idx-sub' : depth >= 2 ? ' idx-sub2' : '');
+                row.innerHTML = `
+                    <span class="idx-drag-handle" title="Arrastrar">
+                        <svg width="8" height="12" viewBox="0 0 8 12" fill="currentColor"><circle cx="1.5" cy="1.5" r="1.5"/><circle cx="1.5" cy="6" r="1.5"/><circle cx="1.5" cy="10.5" r="1.5"/><circle cx="6.5" cy="1.5" r="1.5"/><circle cx="6.5" cy="6" r="1.5"/><circle cx="6.5" cy="10.5" r="1.5"/></svg>
+                    </span>
+                    <span class="idx-num">${nums[s.id]}</span>
+                    <span class="idx-title" title="${s.title}">${s.title || 'Sin título'}</span>
+                `;
+                // Click → scroll page to section
+                row.addEventListener('click', (e) => {
+                    if (e.target.closest('.idx-drag-handle')) return;
+                    const el = document.querySelector(`[data-id="${s.id}"]`);
+                    if (el) {
+                        const top = el.getBoundingClientRect().top + window.scrollY - 90;
+                        window.scrollTo({ top, behavior: 'smooth' });
+                    }
+                    document.querySelectorAll('.idx-item').forEach(r => r.classList.remove('idx-active'));
+                    row.classList.add('idx-active');
+                });
+                container.appendChild(row);
+            });
+
+            // Sortable on the flat list — only top-level drag for simplicity
+            if (window.Sortable) {
+                if (container._sortable) container._sortable.destroy();
+                container._sortable = Sortable.create(container, {
+                    handle: '.idx-drag-handle',
+                    animation: 150,
+                    onEnd(evt) {
+                        // Rebuild sections order based on new flat order in index
+                        const newOrder = [...container.querySelectorAll('[data-id]')].map(el => el.getAttribute('data-id'));
+                        // Only reorder top-level sections (depth 0)
+                        const topIds = sections.map(s => s.id);
+                        const moved = newOrder.filter(id => topIds.includes(id));
+                        if (moved.length === topIds.length) {
+                            const map = Object.fromEntries(sections.map(s => [s.id, s]));
+                            sections = moved.map(id => map[id]);
+                            render();
+                            renderSectionIndex();
+                        }
+                    }
+                });
+            }
+        }
+
         // ── Collapse helpers ─────────────────────────────────────────────────
         function toggleCollapse(cardId, bodyId) {
             const body = document.getElementById(bodyId);
@@ -5202,5 +5456,26 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             if (chevron) chevron.classList.toggle('chevron-collapsed', collapsed);
         }
     </script>
+
+    <!-- Drive loading overlay -->
+    <div id="driveLoadingOverlay">
+        <div class="drive-loading-box">
+            <svg width="28" height="26" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+                <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+                <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/>
+                <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/>
+                <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+                <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+                <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 27h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+            </svg>
+            <div style="text-align:center">
+                <p id="driveLoadingLabel" style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:4px;">Descargando desde Drive…</p>
+                <p id="driveLoadingFile" style="font-size:11px;color:#94a3b8;font-family:monospace;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></p>
+            </div>
+            <div class="drive-loading-bar-track">
+                <div class="drive-loading-bar-fill"></div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

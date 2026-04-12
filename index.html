@@ -230,24 +230,48 @@
                     <div class="flex-1 border-t border-slate-100"></div>
                 </div>
                 <div class="flex gap-3">
-                    <button onclick="openAnnexModal('nc')" class="flex-1 flex items-center gap-3 bg-white border border-amber-200 hover:border-amber-400 rounded-2xl p-4 text-left transition-all group shadow-sm">
-                        <div class="w-9 h-9 rounded-xl bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center transition-colors">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <div class="flex-1 flex flex-col gap-1">
+                        <button onclick="openAnnexModal('nc')" class="flex items-center gap-3 bg-white border border-amber-200 hover:border-amber-400 rounded-2xl p-4 text-left transition-all group shadow-sm w-full">
+                            <div class="w-9 h-9 rounded-xl bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center transition-colors shrink-0">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold text-amber-700">No Conformidades</p>
+                                <p id="ncCount" class="text-[10px] text-slate-400">0 registros</p>
+                            </div>
+                        </button>
+                        <div class="flex gap-1">
+                            <button onclick="openAnnexPreview('nc')" class="flex-1 flex items-center justify-center gap-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 rounded-xl py-1.5 text-[10px] font-bold transition-colors">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                Vista previa
+                            </button>
+                            <button onclick="downloadAnnexPdf('nc')" class="flex-1 flex items-center justify-center gap-1 bg-amber-500 hover:bg-amber-600 text-white rounded-xl py-1.5 text-[10px] font-bold transition-colors shadow-sm">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Descargar PDF
+                            </button>
                         </div>
-                        <div>
-                            <p class="text-xs font-bold text-amber-700">No Conformidades</p>
-                            <p id="ncCount" class="text-[10px] text-slate-400">0 registros</p>
+                    </div>
+                    <div class="flex-1 flex flex-col gap-1">
+                        <button onclick="openAnnexModal('af')" class="flex items-center gap-3 bg-white border border-sky-200 hover:border-sky-400 rounded-2xl p-4 text-left transition-all group shadow-sm w-full">
+                            <div class="w-9 h-9 rounded-xl bg-sky-100 group-hover:bg-sky-200 flex items-center justify-center transition-colors shrink-0">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold text-sky-700">Anexo Fotográfico</p>
+                                <p id="afCount" class="text-[10px] text-slate-400">0 fotografías</p>
+                            </div>
+                        </button>
+                        <div class="flex gap-1">
+                            <button onclick="openAnnexPreview('af')" class="flex-1 flex items-center justify-center gap-1 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 rounded-xl py-1.5 text-[10px] font-bold transition-colors">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                Vista previa
+                            </button>
+                            <button onclick="downloadAnnexPdf('af')" class="flex-1 flex items-center justify-center gap-1 bg-sky-500 hover:bg-sky-600 text-white rounded-xl py-1.5 text-[10px] font-bold transition-colors shadow-sm">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Descargar PDF
+                            </button>
                         </div>
-                    </button>
-                    <button onclick="openAnnexModal('af')" class="flex-1 flex items-center gap-3 bg-white border border-sky-200 hover:border-sky-400 rounded-2xl p-4 text-left transition-all group shadow-sm">
-                        <div class="w-9 h-9 rounded-xl bg-sky-100 group-hover:bg-sky-200 flex items-center justify-center transition-colors">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-sky-700">Anexo Fotográfico</p>
-                            <p id="afCount" class="text-[10px] text-slate-400">0 fotografías</p>
-                        </div>
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1009,7 +1033,6 @@ function out(obj) {
             <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-4">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
-                        <svg width="13" height="13" viewBox="0 87.3 78" xmlns="http://www.w3.org/2000/svg" style="display:none"></svg>
                         <p class="text-[10px] font-bold text-indigo-700 uppercase">Vincular con gráfico en Drive</p>
                         <span id="chartDriveLinkBadge" class="hidden bg-indigo-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">Vinculado</span>
                     </div>
@@ -1055,6 +1078,31 @@ function out(obj) {
             </div>
             <div class="p-4 border-t border-slate-100 flex justify-end">
                 <button onclick="closeModal('annexModal')" class="bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md text-sm">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Annex Preview Modal -->
+    <div id="annexPreviewModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-[108] backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl max-w-4xl w-full shadow-2xl flex flex-col max-h-[92vh]">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <div id="annexPreviewIcon" class="w-9 h-9 rounded-xl flex items-center justify-center"></div>
+                    <div>
+                        <h3 id="annexPreviewTitle" class="text-base font-bold">Vista previa del Anexo</h3>
+                        <p id="annexPreviewSubtitle" class="text-[10px] text-slate-400"></p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="annexPreviewDownloadBtn" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl font-bold text-sm transition-colors shadow-md">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Descargar PDF
+                    </button>
+                    <button onclick="closeModal('annexPreviewModal')" class="text-slate-300 hover:text-slate-600 text-xl font-bold ml-2">✕</button>
+                </div>
+            </div>
+            <div id="annexPreviewBody" class="flex-1 overflow-y-auto p-6 bg-slate-50">
+                <p class="text-slate-400 text-sm text-center mt-8">Generando vista previa…</p>
             </div>
         </div>
     </div>
@@ -1911,7 +1959,6 @@ function out(obj) {
                 document.getElementById('chartTypeSelect').value = this.temp.chartType || 'bar';
                 document.getElementById('chartLabels').value = this.temp.labels.join(', ');
                 document.getElementById('chartTxtImport').value = '';
-                // Reset drive link UI
                 document.getElementById('chartDriveFileList').classList.add('hidden');
                 const badge = document.getElementById('chartDriveLinkBadge');
                 const statusEl = document.getElementById('chartDriveLinkStatus');
@@ -1966,13 +2013,12 @@ function out(obj) {
             async loadDriveList() {
                 const appScriptUrl = localStorage.getItem('charts_appscript_url') || '';
                 const listEl = document.getElementById('chartDriveFileList');
-                const loadingMsg = document.getElementById('chartDriveLoadingMsg');
                 listEl.classList.remove('hidden');
                 if (!appScriptUrl) {
                     listEl.innerHTML = '<p class="text-[10px] text-amber-600 text-center py-2 font-semibold px-2">Configura la URL del App Script de Gráficos en Ajustes → Archivos Drive.</p>';
                     return;
                 }
-                listEl.innerHTML = '<p class="text-[10px] text-slate-400 text-center py-3 animate-pulse" id="chartDriveLoadingMsg">Cargando archivos…</p>';
+                listEl.innerHTML = '<p class="text-[10px] text-slate-400 text-center py-3 animate-pulse">Cargando archivos…</p>';
                 try {
                     const resp = await fetch(appScriptUrl + '?action=list');
                     const data = await resp.json();
@@ -1986,7 +2032,7 @@ function out(obj) {
                         return `<div class="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-indigo-100 cursor-pointer transition-colors ${isLinked ? 'bg-indigo-100 border border-indigo-300' : 'border border-transparent'}" onclick="chartEditor.linkFile('${f.id}','${safeName}')">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${isLinked ? '#4f46e5' : '#94a3b8'}" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                             <span class="text-[11px] font-${isLinked ? 'bold text-indigo-700' : 'medium text-slate-700'} flex-1 truncate">${f.name}</span>
-                            ${isLinked ? '<span class="text-[9px] font-bold text-indigo-500 shrink-0">Vinculado ✓</span>' : '<span class="text-[9px] text-slate-400 shrink-0 opacity-0 group-hover:opacity-100">Vincular →</span>'}
+                            ${isLinked ? '<span class="text-[9px] font-bold text-indigo-500 shrink-0">Vinculado ✓</span>' : ''}
                         </div>`;
                     }).join('');
                 } catch(e) {
@@ -2002,8 +2048,7 @@ function out(obj) {
                 try {
                     const resp = await fetch(appScriptUrl + '?action=download&id=' + encodeURIComponent(fileId));
                     const text = await resp.text();
-                    // Parse the grafico format
-                    const parsed = this._parseGraficoTxt(text, fileId);
+                    const parsed = this._parseGraficoTxt(text);
                     if (parsed) {
                         this.temp.chartType = parsed.chartType;
                         this.temp.labels = parsed.labels;
@@ -2013,11 +2058,9 @@ function out(obj) {
                         document.getElementById('chartTypeSelect').value = parsed.chartType;
                         document.getElementById('chartLabels').value = parsed.labels.join(', ');
                         this.drawDatasets();
-                        // Update UI
                         document.getElementById('chartDriveLinkBadge').classList.remove('hidden');
                         document.getElementById('chartDriveUnlinkBtn').classList.remove('hidden');
                         statusEl.textContent = '✓ Vinculado: ' + fileName;
-                        // Refresh list
                         this.loadDriveList();
                     } else {
                         statusEl.textContent = '✗ No se pudo leer el formato del archivo.';
@@ -2036,16 +2079,9 @@ function out(obj) {
                 setTimeout(() => statusEl.classList.add('hidden'), 2000);
                 document.getElementById('chartDriveFileList').classList.add('hidden');
             },
-            _parseGraficoTxt(text, fileId) {
-                // Supports format:
-                // <grafico id="gs1" nombre="" tipo="bar">
-                //   etiquetas: Ene | Feb | Mar
-                //   ---
-                //   Serie 1 | #6366f1 | 10 | 20 | 15
-                // </grafico>
+            _parseGraficoTxt(text) {
                 try {
                     const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-                    // Find grafico tag
                     const headerLine = lines.find(l => l.startsWith('<grafico'));
                     const tipoMatch = headerLine && headerLine.match(/tipo="([^"]+)"/);
                     const chartType = tipoMatch ? tipoMatch[1] : 'bar';
@@ -4893,6 +4929,285 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             } catch(e) {
                 listEl.innerHTML = '<p class="text-[11px] text-rose-500 text-center py-6 font-semibold">Error: ' + e.message + '</p>';
             }
+        }
+
+        // ── Annex standalone preview & PDF ───────────────────────────────────────
+
+        function openAnnexPreview(type) {
+            const items = type === 'nc' ? annexNoConformidades : annexFotografico;
+            const isNC = type === 'nc';
+            const modal = document.getElementById('annexPreviewModal');
+            const title = document.getElementById('annexPreviewTitle');
+            const subtitle = document.getElementById('annexPreviewSubtitle');
+            const icon = document.getElementById('annexPreviewIcon');
+            const dlBtn = document.getElementById('annexPreviewDownloadBtn');
+
+            title.textContent = isNC ? 'No Conformidades' : 'Anexo Fotográfico';
+            subtitle.textContent = items.length + (isNC ? ' registro(s)' : ' fotografía(s)');
+            icon.innerHTML = isNC
+                ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
+                : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`;
+            icon.className = 'w-9 h-9 rounded-xl flex items-center justify-center ' + (isNC ? 'bg-amber-100' : 'bg-sky-100');
+
+            dlBtn.onclick = () => downloadAnnexPdf(type);
+
+            modal.style.display = 'flex';
+            renderAnnexPreviewBody(type, items);
+        }
+
+        function renderAnnexPreviewBody(type, items) {
+            const body = document.getElementById('annexPreviewBody');
+            const isNC = type === 'nc';
+            const projectName = document.getElementById('projectName') ? document.getElementById('projectName').value : '';
+            const institution1 = document.getElementById('coverInstitution1') ? document.getElementById('coverInstitution1').value : '';
+
+            if (items.length === 0) {
+                body.innerHTML = `<div class="flex flex-col items-center justify-center py-20 text-slate-400">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-3 opacity-30"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <p class="text-sm font-medium">Sin registros en este anexo</p>
+                    <p class="text-xs mt-1">Agrega entradas desde el editor de anexos</p>
+                </div>`;
+                return;
+            }
+
+            const headerHtml = `
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 mb-5 shadow-sm">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">${institution1}</p>
+                    <h1 class="text-xl font-black text-slate-800 mb-1">${isNC ? 'ANEXO: NO CONFORMIDADES' : 'ANEXO FOTOGRÁFICO'}</h1>
+                    ${projectName ? `<p class="text-sm text-indigo-600 font-semibold">${projectName}</p>` : ''}
+                    <p class="text-[10px] text-slate-400 mt-2">${items.length} ${isNC ? 'registro(s)' : 'fotografía(s)'} · Generado ${new Date().toLocaleDateString('es-CR', {day:'2-digit',month:'long',year:'numeric'})}</p>
+                </div>`;
+
+            let contentHtml = '';
+
+            if (isNC) {
+                contentHtml = items.map((item, i) => {
+                    const fotoSrc = item.driveId
+                        ? `https://drive.google.com/thumbnail?id=${item.driveId}&sz=w400`
+                        : item.foto || null;
+                    return `
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-4">
+                        <div class="px-5 py-3 bg-amber-50 border-b border-amber-100 flex items-center gap-3">
+                            <span class="text-xs font-black text-amber-700 bg-amber-200 px-2.5 py-1 rounded-lg">NC-${String(i+1).padStart(3,'0')}</span>
+                            <span class="text-xs font-semibold text-slate-600">${item.fecha || 'Sin fecha'}</span>
+                        </div>
+                        <div class="flex gap-4 p-5">
+                            ${fotoSrc ? `<div class="w-40 shrink-0 rounded-xl overflow-hidden border border-slate-100 bg-slate-50" style="aspect-ratio:4/3"><img src="${fotoSrc}" class="w-full h-full object-cover"${item.driveId ? '' : ''}></div>` : `<div class="w-40 shrink-0 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center" style="aspect-ratio:4/3"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></div>`}
+                            <div class="flex-1">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Descripción</p>
+                                <p class="text-sm text-slate-700 leading-relaxed">${item.descripcion || '<span class="text-slate-300 italic">Sin descripción</span>'}</p>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            } else {
+                // Grid 2 columns
+                const rows = [];
+                for (let i = 0; i < items.length; i += 2) {
+                    const pair = [items[i], items[i+1]].filter(Boolean);
+                    rows.push(`<div class="grid grid-cols-2 gap-4 mb-4">${pair.map((item, j) => {
+                        const idx = i + j;
+                        const fotoSrc = item.driveId
+                            ? `https://drive.google.com/thumbnail?id=${item.driveId}&sz=w400`
+                            : item.foto || null;
+                        return `
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="w-full bg-slate-50 border-b border-slate-100" style="aspect-ratio:16/9">
+                                ${fotoSrc ? `<img src="${fotoSrc}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></div>`}
+                            </div>
+                            <div class="p-3">
+                                <p class="text-[10px] font-bold text-sky-600">Foto ${idx+1} — ${item.fecha || ''}</p>
+                                ${item.descripcion ? `<p class="text-[11px] text-slate-600 mt-1 leading-snug line-clamp-3">${item.descripcion}</p>` : ''}
+                            </div>
+                        </div>`;
+                    }).join('')}</div>`);
+                }
+                contentHtml = rows.join('');
+            }
+
+            body.innerHTML = headerHtml + contentHtml;
+        }
+
+        async function downloadAnnexPdf(type) {
+            const items = type === 'nc' ? annexNoConformidades : annexFotografico;
+            const isNC = type === 'nc';
+
+            if (items.length === 0) {
+                alert('No hay registros en este anexo para exportar.');
+                return;
+            }
+
+            // Show spinner feedback on button
+            const dlBtn = document.getElementById('annexPreviewDownloadBtn');
+            const origHTML = dlBtn ? dlBtn.innerHTML : '';
+            if (dlBtn) {
+                dlBtn.disabled = true;
+                dlBtn.innerHTML = `<svg class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Generando…`;
+            }
+
+            try {
+                await generateAnnexOnlyPdf(type);
+            } finally {
+                if (dlBtn) { dlBtn.disabled = false; dlBtn.innerHTML = origHTML; }
+            }
+        }
+
+        async function generateAnnexOnlyPdf(type) {
+            const isNC = type === 'nc';
+            const items = isNC ? annexNoConformidades : annexFotografico;
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: pdfCfg('pdf_page_size','a4'), compress: true });
+            const pageWidth  = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = parseFloat(pdfCfg('pdf_margin','25'));
+            const safeBottomLimit = pageHeight - 25;
+            const cHeading   = hexToRgb(pdfCfg('color_heading_e', pdfCfg('color_heading','#4f46e5')));
+            const cBody      = hexToRgb(pdfCfg('color_body_e', pdfCfg('color_body','#475569')));
+            const projectHeader = pdfCfg('pdf_footer','') || (document.getElementById('projectName') ? document.getElementById('projectName').value : 'REPORTE TÉCNICO');
+            const institution1 = document.getElementById('coverInstitution1') ? document.getElementById('coverInstitution1').value : '';
+            const institution2 = document.getElementById('coverInstitution2') ? document.getElementById('coverInstitution2').value : '';
+            const projectName  = document.getElementById('projectName') ? document.getElementById('projectName').value : '';
+            const showPageNum  = pdfCfg('pdf_page_num','1') === '1';
+
+            const addAnnexHeader = (d, pNum) => {
+                d.setFont("helvetica","normal"); d.setFontSize(8); d.setTextColor(160,160,160);
+                d.text(projectHeader.toUpperCase(), margin, 12);
+                if (showPageNum) d.text(`PÁGINA ${pNum}`, pageWidth - margin, 12, { align: 'right' });
+                d.setDrawColor(245,245,245); d.line(margin, 14, pageWidth - margin, 14);
+                d.setTextColor(...cBody);
+            };
+
+            // ── Portada del anexo ─────────────────────────────────────────────
+            let y = margin;
+            if (institution1) {
+                doc.setFontSize(9); doc.setFont("helvetica","bold"); doc.setTextColor(100,100,100);
+                doc.text(institution1.toUpperCase(), pageWidth/2, y, { align: 'center' }); y += 6;
+            }
+            if (institution2) {
+                doc.setFontSize(8); doc.setFont("helvetica","normal"); doc.setTextColor(130,130,130);
+                doc.text(institution2, pageWidth/2, y, { align: 'center' }); y += 10;
+            }
+            doc.setDrawColor(...cHeading); doc.setLineWidth(0.8);
+            doc.line(margin, y, pageWidth - margin, y); y += 10;
+
+            doc.setFontSize(22); doc.setFont("helvetica","bold"); doc.setTextColor(...cHeading);
+            const annexTitle = isNC ? 'ANEXO: NO CONFORMIDADES' : 'ANEXO FOTOGRÁFICO';
+            doc.text(annexTitle, pageWidth/2, y, { align: 'center' }); y += 12;
+
+            if (projectName) {
+                doc.setFontSize(12); doc.setFont("helvetica","normal"); doc.setTextColor(...cBody);
+                doc.text(projectName, pageWidth/2, y, { align: 'center' }); y += 8;
+            }
+            doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(160,160,160);
+            const today = new Date().toLocaleDateString('es-CR',{day:'2-digit',month:'long',year:'numeric'});
+            doc.text(`${items.length} ${isNC ? 'registro(s)' : 'fotografía(s)'} · ${today}`, pageWidth/2, y, { align: 'center' }); y += 6;
+            doc.setDrawColor(...cHeading); doc.setLineWidth(0.4);
+            doc.line(margin, y, pageWidth - margin, y);
+
+            // ── Contenido ─────────────────────────────────────────────────────
+            if (isNC) {
+                // ── No Conformidades ──
+                doc.addPage(); addAnnexHeader(doc, doc.internal.getNumberOfPages());
+                let ay = 30;
+                doc.setFontSize(16); doc.setFont("helvetica","bold"); doc.setTextColor(...cHeading);
+                doc.text("REGISTRO DE NO CONFORMIDADES", margin, ay); ay += 14;
+
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    let fotoSrc = item.foto;
+                    let fotoRatio = 4/3;
+                    if (!fotoSrc && item.driveId) {
+                        const cached = await resolveDriveImage(item.driveId);
+                        if (cached) { fotoSrc = cached.src; fotoRatio = cached.ratio || 4/3; }
+                    }
+                    const imgColW = 65;
+                    const imgColH = Math.round(imgColW / fotoRatio);
+                    const textColW = pageWidth - margin * 2 - imgColW - 6;
+                    const descLines = doc.splitTextToSize(item.descripcion || '', textColW);
+                    const textH = 6 + 6 + 5 + descLines.length * 5;
+                    const blockH = Math.max(textH, imgColH) + 14;
+                    if (ay + blockH > safeBottomLimit) {
+                        doc.addPage(); addAnnexHeader(doc, doc.internal.getNumberOfPages()); ay = 30;
+                    }
+                    const blockStartY = ay;
+                    doc.setFontSize(11); doc.setFont("helvetica","bold"); doc.setTextColor(217,119,6);
+                    doc.text(`NC-${String(i+1).padStart(3,'0')}`, margin, ay); ay += 7;
+                    doc.setFontSize(9); doc.setFont("helvetica","bold"); doc.setTextColor(100,100,100);
+                    doc.text('Fecha de detección: ', margin, ay);
+                    doc.setFont("helvetica","normal"); doc.setTextColor(30,41,59);
+                    doc.text(item.fecha || '-', margin + 40, ay); ay += 7;
+                    doc.setFont("helvetica","bold"); doc.setTextColor(100,100,100);
+                    doc.text("Descripción:", margin, ay); ay += 5;
+                    doc.setFont("helvetica","normal"); doc.setTextColor(71,85,105);
+                    descLines.forEach(dl => { doc.text(dl, margin, ay); ay += 5; });
+                    if (fotoSrc) {
+                        try {
+                            const fmt = fotoSrc.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                            doc.addImage(fotoSrc, fmt, pageWidth - margin - imgColW, blockStartY, imgColW, imgColH);
+                        } catch(e) {}
+                    }
+                    const endY = blockStartY + Math.max(ay - blockStartY, imgColH) + 8;
+                    ay = endY;
+                    doc.setDrawColor(240,240,240); doc.line(margin, ay, pageWidth - margin, ay); ay += 6;
+                }
+            } else {
+                // ── Anexo Fotográfico ──
+                doc.addPage(); addAnnexHeader(doc, doc.internal.getNumberOfPages());
+                let fy = 30;
+                doc.setFontSize(16); doc.setFont("helvetica","bold"); doc.setTextColor(...cHeading);
+                doc.text("REGISTRO FOTOGRÁFICO", margin, fy); fy += 14;
+                const totalW = pageWidth - margin * 2;
+                const imgW = (totalW - 8) / 2;
+                const captionH = 14;
+                let col = 0; let rowMaxH = 0;
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    let fotoSrc = item.foto; let fotoRatio = 4/3;
+                    if (!fotoSrc && item.driveId) {
+                        const cached = await resolveDriveImage(item.driveId);
+                        if (cached) { fotoSrc = cached.src; fotoRatio = cached.ratio || 4/3; }
+                    }
+                    const imgH = Math.min(imgW / fotoRatio, 80);
+                    const blockH = imgH + captionH;
+                    if (fy + blockH > safeBottomLimit) {
+                        doc.addPage(); addAnnexHeader(doc, doc.internal.getNumberOfPages()); fy = 30; col = 0; rowMaxH = 0;
+                    }
+                    const x = margin + col * (imgW + 8);
+                    try {
+                        if (fotoSrc) {
+                            const fmt = fotoSrc.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                            doc.addImage(fotoSrc, fmt, x, fy, imgW, imgH);
+                        } else {
+                            doc.setDrawColor(200,200,200); doc.setFillColor(245,245,245);
+                            doc.rect(x, fy, imgW, imgH, 'FD');
+                            doc.setFontSize(7); doc.setTextColor(150,150,150);
+                            doc.text('Imagen no disponible', x + imgW/2, fy + imgH/2, { align: 'center' });
+                        }
+                    } catch(e) {}
+                    doc.setFontSize(8); doc.setFont("helvetica","bold"); doc.setTextColor(79,70,229);
+                    doc.text(`Foto ${i+1} — ${item.fecha || ''}`, x, fy + imgH + 5);
+                    if (item.descripcion) {
+                        doc.setFont("helvetica","normal"); doc.setTextColor(71,85,105);
+                        const capLines = doc.splitTextToSize(item.descripcion, imgW);
+                        capLines.slice(0,2).forEach((cl, ci) => doc.text(cl, x, fy + imgH + 9 + ci*4));
+                    }
+                    if (blockH > rowMaxH) rowMaxH = blockH;
+                    col++;
+                    if (col >= 2) { fy += rowMaxH + 6; col = 0; rowMaxH = 0; }
+                }
+                if (col > 0) fy += rowMaxH + 6;
+            }
+
+            // Add page numbers to all pages
+            const totalPages = doc.internal.getNumberOfPages();
+            for (let p = 2; p <= totalPages; p++) {
+                doc.setPage(p);
+                doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(200,200,200);
+                doc.text(`${p - 1} / ${totalPages - 1}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+            }
+
+            const safeTitle = (isNC ? 'NC' : 'AnexoFoto') + '_' + (projectName || 'informe').replace(/\s+/g,'_');
+            const today2 = new Date(); const yy = today2.getFullYear(); const mm = String(today2.getMonth()+1).padStart(2,'0'); const dd = String(today2.getDate()).padStart(2,'0');
+            doc.save(`${yy}${mm}${dd}_${safeTitle}.pdf`);
         }
 
         // ── Collapse helpers ─────────────────────────────────────────────────

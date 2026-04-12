@@ -77,6 +77,8 @@
             </h1>
             <div class="flex gap-3">
                 <!-- Drive buttons group -->
+                <div class="flex flex-col items-center gap-0">
+                <p id="driveActiveFileName" class="text-[9px] text-slate-400 font-mono text-center truncate max-w-[260px] hidden"></p>
                 <div class="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1">
                     <!-- Google Drive logo -->
                     <div class="flex items-center gap-1 pr-2 border-r border-slate-200 shrink-0" title="Google Drive">
@@ -103,6 +105,7 @@
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                         Abrir
                     </button>
+                </div>
                 </div>
                 <input type="file" id="importTxtInput" accept=".txt" class="hidden">
                 <button onclick="document.getElementById('importTxtInput').click()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-5 py-2 rounded-xl font-medium transition-all text-sm flex items-center gap-2">
@@ -1438,6 +1441,59 @@ function out(obj) {
             render();
         }
 
+        // Add a new section immediately after a given section id (same level, same parent)
+        function addSectionAfter(afterId) {
+            const id = Math.random().toString(36).substr(2, 9);
+            const insertInto = (list) => {
+                for (let i = 0; i < list.length; i++) {
+                    if (list[i].id === afterId) {
+                        const level = list[i].level;
+                        list.splice(i + 1, 0, { id, title: level === 1 ? 'Nueva Sección' : 'Subsección', level, blocks: [], children: [], forcePageBreak: false });
+                        return true;
+                    }
+                    if (insertInto(list[i].children)) return true;
+                }
+                return false;
+            };
+            insertInto(sections);
+            render();
+        }
+
+        // Move a block up or down within its section, or to adjacent section if at boundary
+        function moveBlock(sId, bId, dir) {
+            const sec = findById(sections, sId);
+            if (!sec) return;
+            const idx = sec.blocks.findIndex(b => b.id === bId);
+            if (idx === -1) return;
+
+            if (dir === -1 && idx === 0) {
+                // Move to end of previous section (flat order)
+                const flat = [];
+                const flattenSecs = (list) => list.forEach(s => { flat.push(s); flattenSecs(s.children); });
+                flattenSecs(sections);
+                const sIdx = flat.findIndex(s => s.id === sId);
+                if (sIdx <= 0) return;
+                const prevSec = flat[sIdx - 1];
+                const [block] = sec.blocks.splice(0, 1);
+                prevSec.blocks.push(block);
+            } else if (dir === 1 && idx === sec.blocks.length - 1) {
+                // Move to start of next section (flat order)
+                const flat = [];
+                const flattenSecs = (list) => list.forEach(s => { flat.push(s); flattenSecs(s.children); });
+                flattenSecs(sections);
+                const sIdx = flat.findIndex(s => s.id === sId);
+                if (sIdx >= flat.length - 1) return;
+                const nextSec = flat[sIdx + 1];
+                const [block] = sec.blocks.splice(sec.blocks.length - 1, 1);
+                nextSec.blocks.unshift(block);
+            } else {
+                const newIdx = idx + dir;
+                if (newIdx < 0 || newIdx >= sec.blocks.length) return;
+                [sec.blocks[idx], sec.blocks[newIdx]] = [sec.blocks[newIdx], sec.blocks[idx]];
+            }
+            render();
+        }
+
         function findById(list, id) {
             for (let item of list) {
                 if (item.id === id) return item;
@@ -1505,6 +1561,12 @@ function out(obj) {
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/><line x1="12" y1="3" x2="12" y2="21"/></svg> Figura
                                 </button>
                             </div>
+                            <div class="pt-2">
+                                <button onclick="addSectionAfter('${s.id}')" class="w-full text-[10px] font-bold text-slate-300 hover:text-indigo-500 hover:bg-indigo-50 border border-dashed border-slate-200 hover:border-indigo-300 rounded-xl py-2 transition-all flex items-center justify-center gap-1.5">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    Nueva sección aquí
+                                </button>
+                            </div>
                             <div class="nested-sortable space-y-4 mt-2" data-level="${s.level + 1}"></div>
                             </div><!-- /sec-body -->
                         </div>`;
@@ -1528,7 +1590,11 @@ function out(obj) {
                 return `
                 <div data-block-id="${b.id}" class="group relative bg-slate-50 p-4 rounded-2xl border border-transparent hover:border-slate-200 transition-all">
                     ${handle}
-                    <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold">×</button>
+                    <div class="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="moveBlock('${sId}','${b.id}',-1)" title="Mover arriba" class="w-5 h-5 rounded bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px] font-bold">↑</button>
+                        <button onclick="moveBlock('${sId}','${b.id}',1)" title="Mover abajo" class="w-5 h-5 rounded bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px] font-bold">↓</button>
+                        <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="w-5 h-5 rounded bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center text-sm font-bold">×</button>
+                    </div>
                     <textarea id="ta_${b.id}" oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.content=this.value;syncVersionText('${b.id}',this.value)" 
                         class="w-full bg-transparent text-sm outline-none resizable-textarea pr-6" 
                         placeholder="Escribe aquí el contenido...">${b.data.content}</textarea>
@@ -1552,7 +1618,11 @@ function out(obj) {
             if (b.type === 'table') return `
                 <div data-block-id="${b.id}" class="group relative bg-indigo-50/20 p-4 rounded-2xl border border-indigo-100 space-y-3">
                     ${handle}
-                    <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold">×</button>
+                    <div class="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="moveBlock('${sId}','${b.id}',-1)" title="Mover arriba" class="w-5 h-5 rounded bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px] font-bold">↑</button>
+                        <button onclick="moveBlock('${sId}','${b.id}',1)" title="Mover abajo" class="w-5 h-5 rounded bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px] font-bold">↓</button>
+                        <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="w-5 h-5 rounded bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center text-sm font-bold">×</button>
+                    </div>
                     <div class="flex gap-2 items-center bg-white p-2 rounded-xl border border-slate-100">
                         <span class="text-[10px] font-bold text-indigo-500 whitespace-nowrap">Tabla ${tableIndex}.</span>
                         <input type="text" placeholder="Ingresa titulo..." value="${b.data.caption || ''}" oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.caption=this.value" class="w-full bg-transparent text-[10px] font-bold outline-none border-none p-0">
@@ -1583,7 +1653,11 @@ function out(obj) {
                 return `
                 <div data-block-id="${b.id}" class="group relative bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200 space-y-4">
                     ${handle}
-                    <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold">×</button>
+                    <div class="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="moveBlock('${sId}','${b.id}',-1)" title="Mover arriba" class="w-5 h-5 rounded bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px] font-bold">↑</button>
+                        <button onclick="moveBlock('${sId}','${b.id}',1)" title="Mover abajo" class="w-5 h-5 rounded bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px] font-bold">↓</button>
+                        <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="w-5 h-5 rounded bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center text-sm font-bold">×</button>
+                    </div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] font-bold text-slate-400 uppercase">Figuras (Máx 3)</span>
                         <div class="flex gap-2">
@@ -1615,7 +1689,11 @@ function out(obj) {
                 return `
                 <div data-block-id="${b.id}" class="group relative bg-teal-50/30 p-4 rounded-2xl border border-dashed border-teal-200 space-y-4">
                     ${handle}
-                    <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold">×</button>
+                    <div class="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="moveBlock('${sId}','${b.id}',-1)" title="Mover arriba" class="w-5 h-5 rounded bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px] font-bold">↑</button>
+                        <button onclick="moveBlock('${sId}','${b.id}',1)" title="Mover abajo" class="w-5 h-5 rounded bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px] font-bold">↓</button>
+                        <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="w-5 h-5 rounded bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center text-sm font-bold">×</button>
+                    </div>
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] font-bold text-teal-500 uppercase">Figura (1 imagen)</span>
                         <div class="flex gap-2">
@@ -1663,7 +1741,11 @@ function out(obj) {
                 return `
                 <div data-block-id="${b.id}" class="group relative bg-slate-50 p-4 rounded-2xl border border-purple-100 space-y-3">
                     ${handle}
-                    <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold">×</button>
+                    <div class="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="moveBlock('${sId}','${b.id}',-1)" title="Mover arriba" class="w-5 h-5 rounded bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px] font-bold">↑</button>
+                        <button onclick="moveBlock('${sId}','${b.id}',1)" title="Mover abajo" class="w-5 h-5 rounded bg-slate-100 hover:bg-indigo-100 text-slate-400 hover:text-indigo-600 flex items-center justify-center text-[10px] font-bold">↓</button>
+                        <button onclick="removeBlock('${sId}','${b.id}')" title="Eliminar bloque" class="w-5 h-5 rounded bg-rose-50 text-rose-300 hover:bg-rose-100 hover:text-rose-500 flex items-center justify-center text-sm font-bold">×</button>
+                    </div>
                     <div class="flex gap-2 items-center bg-white p-2 rounded-xl border border-slate-100">
                         <span class="text-[10px] font-bold text-purple-500 whitespace-nowrap">Gráfico ${tableIndex}.</span>
                         <input type="text" placeholder="Título del gráfico..." value="${b.data.caption || ''}" oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.caption=this.value" class="w-full bg-transparent text-[10px] font-bold outline-none border-none p-0">
@@ -2336,7 +2418,7 @@ function out(obj) {
                 }
 
                 for (const item of flat) {
-                    if (!first && (item.level === 1 || item.forcePageBreak)) {
+                    if (!first && item.forcePageBreak) {
                         targetDoc.addPage();
                         if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
                         currentY = 30;
@@ -2738,156 +2820,6 @@ function out(obj) {
 
             // CONTENIDO FINAL
             await renderContent(doc, false);
-
-            // ── ANEXO: NO CONFORMIDADES ──────────────────────────────────────────
-            if (annexNoConformidades.length > 0) {
-                doc.addPage();
-                addHeader(doc, doc.internal.getNumberOfPages());
-                let ay = 30;
-                doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(...cHeading);
-                doc.text("ANEXO: NO CONFORMIDADES", margin, ay); ay += 14;
-
-                for (let i = 0; i < annexNoConformidades.length; i++) {
-                    const item = annexNoConformidades[i];
-
-                    // Resolver foto primero para conocer su ratio
-                    let fotoSrc = item.foto;
-                    let fotoRatio = 4/3;
-                    if (!fotoSrc && item.driveId) {
-                        const cached = await resolveDriveImage(item.driveId);
-                        if (cached) { fotoSrc = cached.src; fotoRatio = cached.ratio || 4/3; }
-                    }
-
-                    // Calcular espacio que ocupa esta NC
-                    const imgColW = 65;
-                    const imgColH = Math.round(imgColW / fotoRatio);
-                    const textColW = pageWidth - margin * 2 - imgColW - 6;
-                    const descLines = doc.splitTextToSize(item.descripcion || '', textColW);
-                    // altura mínima: título + fecha + "Descripción:" + líneas de texto
-                    const textH = 6 + 6 + 5 + descLines.length * 5;
-                    const blockH = Math.max(textH, imgColH) + 14; // +margen inferior
-
-                    if (ay + blockH > safeBottomLimit) {
-                        doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); ay = 30;
-                    }
-
-                    const blockStartY = ay;
-
-                    // Número NC
-                    doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(217, 119, 6);
-                    doc.text(`NC-${String(i+1).padStart(3,'0')}`, margin, ay); ay += 7;
-
-                    // Fecha
-                    doc.setFontSize(9); doc.setFont("helvetica", "bold"); doc.setTextColor(100,100,100);
-                    doc.text(`Fecha de detección: `, margin, ay);
-                    doc.setFont("helvetica", "normal"); doc.setTextColor(30,41,59);
-                    doc.text(item.fecha || '-', margin + 40, ay); ay += 7;
-
-                    // Descripción (columna izquierda)
-                    doc.setFont("helvetica", "bold"); doc.setTextColor(100,100,100);
-                    doc.text("Descripción:", margin, ay); ay += 5;
-                    doc.setFont("helvetica", "normal"); doc.setTextColor(71,85,105);
-                    descLines.forEach(dl => { doc.text(dl, margin, ay); ay += 5; });
-
-                    // Foto (columna derecha, alineada desde blockStartY)
-                    if (fotoSrc) {
-                        try {
-                            const fmt = fotoSrc.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-                            const imgX = pageWidth - margin - imgColW;
-                            doc.addImage(fotoSrc, fmt, imgX, blockStartY, imgColW, imgColH);
-                        } catch(e) {}
-                    }
-
-                    // Avanzar al final del bloque más alto (texto o imagen)
-                    const endY = blockStartY + Math.max(ay - blockStartY, imgColH) + 8;
-                    ay = endY;
-
-                    // Línea divisoria
-                    doc.setDrawColor(240,240,240);
-                    doc.line(margin, ay, pageWidth - margin, ay);
-                    ay += 6;
-                }
-            }
-
-            // ── ANEXO FOTOGRÁFICO ────────────────────────────────────────────────
-            if (annexFotografico.length > 0) {
-                doc.addPage();
-                addHeader(doc, doc.internal.getNumberOfPages());
-                let fy = 30;
-                doc.setFontSize(16); doc.setFont("helvetica", "bold"); doc.setTextColor(...cHeading);
-                doc.text("ANEXO FOTOGRÁFICO", margin, fy); fy += 14;
-
-                const totalW = pageWidth - margin * 2;
-                const imgW = (totalW - 8) / 2; // 2 columnas con gap de 8
-                const captionH = 14; // espacio para caption bajo cada foto
-                let col = 0;
-                let rowMaxH = 0; // altura máxima de la fila actual
-
-                for (let i = 0; i < annexFotografico.length; i++) {
-                    const item = annexFotografico[i];
-
-                    // Resolver foto y obtener ratio real
-                    let fotoSrc = item.foto;
-                    let fotoRatio = 4/3;
-                    if (!fotoSrc && item.driveId) {
-                        const cached = await resolveDriveImage(item.driveId);
-                        if (cached) { fotoSrc = cached.src; fotoRatio = cached.ratio || 4/3; }
-                    } else if (fotoSrc) {
-                        // Para fotos locales intentar obtener ratio desde cache o calcular
-                        const key = item.id || i;
-                        if (driveImageCache[key]) {
-                            fotoRatio = driveImageCache[key].ratio || 4/3;
-                        }
-                    }
-
-                    // Calcular altura respetando ratio real, máximo 80mm
-                    const imgH = Math.min(imgW / fotoRatio, 80);
-                    const blockH = imgH + captionH;
-
-                    // Verificar salto de página (usar altura de esta imagen)
-                    if (fy + blockH > safeBottomLimit) {
-                        doc.addPage(); addHeader(doc, doc.internal.getNumberOfPages()); fy = 30; col = 0; rowMaxH = 0;
-                    }
-
-                    const x = margin + col * (imgW + 8);
-
-                    // Dibujar imagen o placeholder
-                    try {
-                        if (fotoSrc) {
-                            const fmt = fotoSrc.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-                            doc.addImage(fotoSrc, fmt, x, fy, imgW, imgH);
-                        } else {
-                            doc.setDrawColor(200,200,200); doc.setFillColor(245,245,245);
-                            doc.rect(x, fy, imgW, imgH, 'FD');
-                            doc.setFontSize(7); doc.setTextColor(150,150,150);
-                            doc.text('Imagen no disponible', x + imgW/2, fy + imgH/2, { align: 'center' });
-                        }
-                    } catch(e) {}
-
-                    // Caption
-                    doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(79,70,229);
-                    doc.text(`Foto ${i+1} — ${item.fecha || ''}`, x, fy + imgH + 5);
-                    if (item.descripcion) {
-                        doc.setFont("helvetica", "normal"); doc.setTextColor(71,85,105);
-                        const capLines = doc.splitTextToSize(item.descripcion, imgW);
-                        capLines.slice(0,2).forEach((cl, ci) => doc.text(cl, x, fy + imgH + 9 + ci*4));
-                    }
-
-                    // Rastrear la altura máxima de esta fila
-                    if (blockH > rowMaxH) rowMaxH = blockH;
-
-                    col++;
-                    if (col >= 2) {
-                        fy += rowMaxH + 6;
-                        col = 0;
-                        rowMaxH = 0;
-                    }
-                }
-                // Si quedó una foto en la columna izquierda sin cerrar fila
-                if (col > 0) {
-                    fy += rowMaxH + 6;
-                }
-            }
 
             if (mode === 'download') { 
                 doc.save(`${projectHeader.replace(/\s+/g, '_')}_Informe.pdf`); 
@@ -3541,6 +3473,7 @@ function out(obj) {
             const chartsUrlEl = document.getElementById('chartsAppScriptUrl');
             if (chartsUrlEl) localStorage.setItem('charts_appscript_url', chartsUrlEl.value.trim());
 
+            updateDriveActiveFileName();
             updateCfNavBtn();
             const msg = document.getElementById('settingsSavedMsg');
             msg.classList.remove('hidden');
@@ -3571,6 +3504,18 @@ function out(obj) {
         function updateDriveFilePreview() {
             const el = document.getElementById('driveFilePreview');
             if (el) el.textContent = '→ ' + getDriveFileName();
+        }
+
+        function updateDriveActiveFileName() {
+            const stored = localStorage.getItem('drive_file_name') || '';
+            const label = document.getElementById('driveActiveFileName');
+            if (!label) return;
+            if (stored) {
+                label.textContent = '📄 ' + stored + '.txt';
+                label.classList.remove('hidden');
+            } else {
+                label.classList.add('hidden');
+            }
         }
 
         function getTxtContent() {
@@ -3969,6 +3914,7 @@ function out(obj) {
                 if (statusEl2) statusEl2.classList.toggle('hidden', !wasEnabled);
             }
             updateDriveFilePreview();
+            updateDriveActiveFileName();
         }
 
         // Keep old alias for DOMContentLoaded init
@@ -4120,11 +4066,14 @@ function out(obj) {
                         });
                         const data = await resp.json();
                         if (!data.ok || !data.files || data.files.length === 0) return;
-                        // Prefer today's file, otherwise most recent matching name prefix
+                        // Sort files by modifiedTime descending (most recent first)
+                        const sorted = data.files.slice().sort((a, b) => new Date(b.modifiedTime) - new Date(a.modifiedTime));
                         const prefix = fileName.toLowerCase();
-                        let match = data.files.find(f => f.name === fullName);
-                        if (!match) match = data.files.find(f => f.name.toLowerCase().includes(prefix));
-                        if (!match) match = data.files[0]; // most recent in folder
+                        // Find most recent file whose name (stripped of date prefix) matches stored base name
+                        const stripBase = n => n.replace(/\.txt$/i,'').replace(/^\d{8}_/,'').toLowerCase();
+                        let match = sorted.find(f => stripBase(f.name) === prefix);
+                        if (!match) match = sorted.find(f => f.name === fullName);
+                        if (!match) return; // don't load an unrelated file
                         const readResp = await fetch(appScriptUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain' },
@@ -4133,6 +4082,7 @@ function out(obj) {
                         const readData = await readResp.json();
                         if (!readData.ok) return;
                         importTxt(readData.content);
+                        updateDriveActiveFileName();
                         showAutoSaveToast('✓ Cargado: ' + match.name);
                     } catch(e) {
                         // Fail silently — don't disturb the user on load errors
@@ -4851,6 +4801,7 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             localStorage.setItem('drive_file_name', name);
             const fnEl = document.getElementById('driveFileName');
             if (fnEl) fnEl.value = name;
+            updateDriveActiveFileName();
             const statusEl = document.getElementById('saveAsStatus');
             statusEl.textContent = 'Guardando…';
             statusEl.className = 'text-[11px] text-center font-bold mt-3 text-slate-500';
@@ -4925,6 +4876,13 @@ Por favor, reescribe y mejora el texto de esa sección.`;
                 if (!data.ok) throw new Error(data.error || 'Error desconocido');
                 closeModal('driveOpenModal');
                 importTxt(data.content);
+                // Save base name (strip leading date prefix YYYYMMDD_ and .txt extension)
+                let baseName = fileName.replace(/\.txt$/i, '');
+                baseName = baseName.replace(/^\d{8}_/, '');
+                localStorage.setItem('drive_file_name', baseName);
+                const fnEl = document.getElementById('driveFileName');
+                if (fnEl) fnEl.value = baseName;
+                updateDriveActiveFileName();
                 showAutoSaveToast('Abierto: ' + fileName);
             } catch(e) {
                 listEl.innerHTML = '<p class="text-[11px] text-rose-500 text-center py-6 font-semibold">Error: ' + e.message + '</p>';

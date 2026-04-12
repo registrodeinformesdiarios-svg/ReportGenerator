@@ -2475,19 +2475,25 @@ function out(obj) {
                         }
                         
                         if (b.type === 'table') {
-                            if (currentY > safeBottomLimit - 20) {
+                            const totalWidth = pageWidth - (margin * 2);
+                            // Measure real table height using a temporary doc
+                            const tmpDoc = new jsPDF({ unit: 'mm', format: targetDoc.internal.pageSize.getWidth() > 200 ? 'a4' : 'letter' });
+                            tmpDoc.autoTable({
+                                startY: 0,
+                                head: [b.data.headers],
+                                body: b.data.rows,
+                                margin: { left: margin, right: margin, bottom: 0 },
+                                styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak' },
+                                headStyles: { fillColor: cTableHead, fontStyle: 'bold' },
+                            });
+                            const realTableH = tmpDoc.lastAutoTable.finalY;
+                            const pageUsable = safeBottomLimit - 30;
+                            // If table fits on a full page but not in remaining space → page break
+                            if (realTableH <= pageUsable && currentY + realTableH > safeBottomLimit) {
                                 targetDoc.addPage();
                                 if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
                                 currentY = 30;
                             }
-                            targetDoc.setFontSize(captionSize); 
-                            targetDoc.setFont(fontCaption, fontCaptionStyle); 
-                            targetDoc.setTextColor(...cCaption);
-                            const tableTitle = `Tabla ${tableCounterGlobal}. ${b.data.caption || "Ingresa título..."}`;
-                            const titleLines = targetDoc.splitTextToSize(tableTitle, pageWidth - (margin * 2));
-                            targetDoc.text(titleLines, margin, currentY);
-                            currentY += (titleLines.length * 4) + 2;
-
                             targetDoc.autoTable({
                                 startY: currentY, 
                                 head: [b.data.headers], 
@@ -2497,7 +2503,15 @@ function out(obj) {
                                 headStyles: { fillColor: cTableHead, fontStyle: 'bold' },
                                 didDrawPage: (data) => { if(!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages()); }
                             });
-                            currentY = targetDoc.lastAutoTable.finalY + 10;
+                            currentY = targetDoc.lastAutoTable.finalY + 3;
+                            // Caption below table, centered
+                            const tableTitle = `Tabla ${tableCounterGlobal}. ${b.data.caption || "Ingresa título..."}`;
+                            targetDoc.setFontSize(captionSize); 
+                            targetDoc.setFont(fontCaption, fontCaptionStyle); 
+                            targetDoc.setTextColor(...cCaption);
+                            const titleLines = targetDoc.splitTextToSize(tableTitle, totalWidth);
+                            targetDoc.text(titleLines, pageWidth / 2, currentY, { align: 'center' });
+                            currentY += (titleLines.length * 4) + spaceAfterFigure;
                             if(!isMeasuring) tableCounterGlobal++;
                         }
                         
@@ -2526,7 +2540,7 @@ function out(obj) {
                                 return { ...img, drawW: w, drawH: h };
                             });
 
-                            if (currentY + effectiveMaxH > safeBottomLimit - 10) {
+                            if (currentY + effectiveMaxH + 10 > safeBottomLimit) {
                                 targetDoc.addPage();
                                 if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
                                 currentY = 30;
@@ -2576,7 +2590,7 @@ function out(obj) {
                             if (fh > figMaxH) { fh = figMaxH; fw = fh * (resolvedImg.ratio || 4/3); }
                             if (fw > totalWidth) { fw = totalWidth; fh = fw / (resolvedImg.ratio || 4/3); }
 
-                            if (currentY + fh > safeBottomLimit - 10) {
+                            if (currentY + fh + 10 > safeBottomLimit) {
                                 targetDoc.addPage();
                                 if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
                                 currentY = 30;
@@ -2607,16 +2621,13 @@ function out(obj) {
                         }
 
                         if (b.type === 'chart' && b.data.labels && b.data.datasets) {
-                            // Render chart to canvas offscreen, then add as image
-                            if (currentY > safeBottomLimit - 30) {
+                            const chartH = 60;
+                            const totalWidth = pageWidth - (margin * 2);
+                            if (currentY + chartH + 10 > safeBottomLimit) {
                                 targetDoc.addPage();
                                 if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
                                 currentY = 30;
                             }
-                            const chartTitle = `Gráfico ${tableCounterGlobal}. ${b.data.caption || "Sin título"}`;
-                            targetDoc.setFontSize(8); targetDoc.setFont("helvetica", "bold"); targetDoc.setTextColor(100, 100, 100);
-                            targetDoc.text(chartTitle, margin, currentY);
-                            currentY += 6;
 
                             if (!isMeasuring) {
                                 try {
@@ -2636,14 +2647,18 @@ function out(obj) {
                                     });
                                     const imgData = offCanvas.toDataURL('image/png');
                                     offChart.destroy();
-                                    const chartH = 60;
-                                    const chartW = pageWidth - (margin * 2);
-                                    targetDoc.addImage(imgData, 'PNG', margin, currentY, chartW, chartH);
-                                    currentY += chartH + 6;
+                                    targetDoc.addImage(imgData, 'PNG', margin, currentY, totalWidth, chartH);
+                                    currentY += chartH + 3;
+                                    // Caption below chart, centered
+                                    const chartTitle = `Gráfico ${tableCounterGlobal}. ${b.data.caption || "Sin título"}`;
+                                    targetDoc.setFontSize(captionSize); targetDoc.setFont(fontCaption, fontCaptionStyle); targetDoc.setTextColor(...cCaption);
+                                    const chartCaptionLines = targetDoc.splitTextToSize(chartTitle, totalWidth);
+                                    targetDoc.text(chartCaptionLines, pageWidth / 2, currentY, { align: 'center' });
+                                    currentY += (chartCaptionLines.length * 4) + spaceAfterFigure;
                                     tableCounterGlobal++;
                                 } catch(e) { currentY += 6; }
                             } else {
-                                currentY += 66;
+                                currentY += chartH + 10;
                                 tableCounterGlobal++;
                             }
                         }

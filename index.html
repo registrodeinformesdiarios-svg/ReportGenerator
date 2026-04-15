@@ -1691,6 +1691,19 @@ function out(obj) {
             };
             loop(sections, container);
             initSorting();
+            // Restore collapse states from sections data
+            const restoreCollapse = (list) => {
+                list.forEach(s => {
+                    if (s._colapsado) {
+                        const body = document.getElementById('sec_' + s.id);
+                        const chev = document.getElementById('chev_' + s.id);
+                        if (body) body.classList.add('collapsed');
+                        if (chev) chev.classList.add('chevron-collapsed');
+                    }
+                    restoreCollapse(s.children);
+                });
+            };
+            restoreCollapse(sections);
             // Keep index in sync if visible
             if (document.getElementById('sectionIndexPanel').classList.contains('visible')) {
                 renderSectionIndex();
@@ -1734,7 +1747,54 @@ function out(obj) {
                 </div>`;
             }
             
-            if (b.type === 'table') return `
+            if (b.type === 'table') {
+                // Build visual table HTML with merged cells (colspan for horizontal, rowspan for vertical)
+                const buildMergedTableHtml = (headers, rows) => {
+                    // --- Header row: merge contiguous same-value cells horizontally ---
+                    let headHtml = '<tr>';
+                    let hi = 0;
+                    while (hi < headers.length) {
+                        let span = 1;
+                        while (hi + span < headers.length && headers[hi + span] === headers[hi] && headers[hi] !== '') span++;
+                        headHtml += `<th colspan="${span}" style="background:#4f46e5;color:white;font-size:9px;font-weight:700;padding:4px 8px;border:1px solid #3730a3;text-align:center;white-space:nowrap;">${headers[hi]}</th>`;
+                        hi += span;
+                    }
+                    headHtml += '</tr>';
+
+                    // --- Body rows: merge contiguous same-value cells vertically per column ---
+                    // Build a skip matrix (cells that are covered by a rowspan above)
+                    const numRows = rows.length;
+                    const numCols = headers.length;
+                    const skip = Array.from({length: numRows}, () => new Array(numCols).fill(false));
+                    const rowspans = Array.from({length: numRows}, () => new Array(numCols).fill(1));
+                    for (let ci = 0; ci < numCols; ci++) {
+                        let ri = 0;
+                        while (ri < numRows) {
+                            const val = (rows[ri][ci] !== undefined ? rows[ri][ci] : '');
+                            if (val === '') { ri++; continue; }
+                            let span = 1;
+                            while (ri + span < numRows && (rows[ri + span][ci] !== undefined ? rows[ri + span][ci] : '') === val) span++;
+                            rowspans[ri][ci] = span;
+                            for (let k = 1; k < span; k++) skip[ri + k][ci] = true;
+                            ri += span;
+                        }
+                    }
+                    let bodyHtml = '';
+                    for (let ri = 0; ri < numRows; ri++) {
+                        bodyHtml += '<tr>';
+                        for (let ci = 0; ci < numCols; ci++) {
+                            if (skip[ri][ci]) continue;
+                            const val = rows[ri][ci] !== undefined ? rows[ri][ci] : '';
+                            const rs = rowspans[ri][ci];
+                            const bg = ri % 2 === 0 ? '#f8fafc' : 'white';
+                            bodyHtml += `<td rowspan="${rs}" style="background:${bg};font-size:9px;padding:3px 7px;border:1px solid #e2e8f0;text-align:center;vertical-align:middle;">${val}</td>`;
+                        }
+                        bodyHtml += '</tr>';
+                    }
+                    return `<table style="width:100%;border-collapse:collapse;table-layout:auto;">${headHtml}${bodyHtml}</table>`;
+                };
+                const tablePreviewHtml = buildMergedTableHtml(b.data.headers || [], b.data.rows || []);
+                return `
                 <div data-block-id="${b.id}" class="group relative bg-indigo-50/20 p-4 rounded-2xl border border-indigo-100 space-y-3">
                     ${handle}
                     <div class="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1746,11 +1806,12 @@ function out(obj) {
                         <span class="text-[10px] font-bold text-indigo-500 whitespace-nowrap">Tabla ${tableIndex}.</span>
                         <input type="text" placeholder="Ingresa titulo..." value="${b.data.caption || ''}" oninput="findById(sections,'${sId}').blocks.find(x=>x.id==='${b.id}').data.caption=this.value" class="w-full bg-transparent text-[10px] font-bold outline-none border-none p-0">
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-slate-400 uppercase">Contenido de Tabla</span>
+                    <div class="overflow-x-auto rounded-xl border border-indigo-100">${tablePreviewHtml}</div>
+                    <div class="flex justify-end">
                         <button onclick="tableEditor.open('${sId}','${b.id}')" class="text-xs font-bold bg-white text-indigo-600 px-4 py-2 rounded-xl border shadow-sm hover:shadow-md transition-shadow">EDITAR CELDAS</button>
                     </div>
                 </div>`;
+            }
 
             if (b.type === 'image') {
                 const imagesHtml = b.data.images.map((img, idx) => {
@@ -2595,33 +2656,110 @@ function out(obj) {
                         
                         if (b.type === 'table') {
                             const totalWidth = pageWidth - (margin * 2);
+                            const headers = b.data.headers || [];
+                            const rows = b.data.rows || [];
+                            const numCols = headers.length;
+                            const numRows = rows.length;
+
+                            // ── Build merge maps (same logic as web preview) ──
+                            // Header: horizontal merges
+                            const headSpans = []; // [{col, span}]
+                            { let hi = 0; while (hi < numCols) { let span = 1; while (hi+span < numCols && headers[hi+span] === headers[hi] && headers[hi] !== '') span++; headSpans.push({col:hi, span}); hi += span; } }
+
+                            // Body: vertical merges per column
+                            const skipCell = Array.from({length: numRows}, () => new Array(numCols).fill(false));
+                            const rowspans = Array.from({length: numRows}, () => new Array(numCols).fill(1));
+                            for (let ci = 0; ci < numCols; ci++) {
+                                let ri = 0;
+                                while (ri < numRows) {
+                                    const val = rows[ri][ci] !== undefined ? rows[ri][ci] : '';
+                                    if (val === '') { ri++; continue; }
+                                    let span = 1;
+                                    while (ri+span < numRows && (rows[ri+span][ci] !== undefined ? rows[ri+span][ci] : '') === val) span++;
+                                    rowspans[ri][ci] = span;
+                                    for (let k = 1; k < span; k++) skipCell[ri+k][ci] = true;
+                                    ri += span;
+                                }
+                            }
+                            // Body: horizontal merges per row
+                            const colspans = Array.from({length: numRows}, () => new Array(numCols).fill(1));
+                            const skipCellH = Array.from({length: numRows}, () => new Array(numCols).fill(false));
+                            for (let ri = 0; ri < numRows; ri++) {
+                                let ci = 0;
+                                while (ci < numCols) {
+                                    if (skipCell[ri][ci]) { ci++; continue; }
+                                    const val = rows[ri][ci] !== undefined ? rows[ri][ci] : '';
+                                    if (val === '') { ci++; continue; }
+                                    let span = 1;
+                                    while (ci+span < numCols && !skipCell[ri][ci+span] && (rows[ri][ci+span] !== undefined ? rows[ri][ci+span] : '') === val) span++;
+                                    colspans[ri][ci] = span;
+                                    for (let k = 1; k < span; k++) skipCellH[ri][ci+k] = true;
+                                    ci += span;
+                                }
+                            }
+
+                            // Detect if table has any actual merges
+                            const hasMerges = headSpans.some(hs => hs.span > 1)
+                                || rowspans.some(row => row.some(rs => rs > 1))
+                                || colspans.some(row => row.some(cs => cs > 1));
+
+                            let autoTableOpts;
+                            if (!hasMerges) {
+                                // ── Simple table: original autoTable without merge logic ──
+                                autoTableOpts = {
+                                    startY: currentY,
+                                    head: [headers],
+                                    body: rows,
+                                    margin: { left: margin, right: margin, bottom: 25 },
+                                    styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak' },
+                                    headStyles: { fillColor: cTableHead, fontStyle: 'bold' },
+                                    didDrawPage: (data) => { if(!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages()); }
+                                };
+                            } else {
+                                // ── Merged table: colspan/rowspan cells with explicit borders ──
+                                const borderColor = [180, 180, 180];
+                                const borderWidth = 0.3;
+
+                                const headRow = headers.map((h, ci) => {
+                                    const hs = headSpans.find(x => x.col === ci);
+                                    if (!hs) return null;
+                                    return { content: h, colSpan: hs.span, styles: { halign: 'center', fillColor: cTableHead, textColor: [255,255,255], fontStyle: 'bold', lineColor: borderColor, lineWidth: borderWidth } };
+                                }).filter(c => c !== null);
+
+                                const bodyRows = rows.map((row, ri) =>
+                                    row.map((cell, ci) => {
+                                        if (skipCell[ri][ci] || skipCellH[ri][ci]) return null;
+                                        const rs = rowspans[ri][ci];
+                                        const cs = colspans[ri][ci];
+                                        const bg = ri % 2 === 0 ? [248, 250, 252] : [255, 255, 255];
+                                        return { content: cell, rowSpan: rs, colSpan: cs, styles: { halign: 'center', valign: 'middle', fillColor: bg, lineColor: borderColor, lineWidth: borderWidth } };
+                                    }).filter(c => c !== null)
+                                );
+
+                                autoTableOpts = {
+                                    startY: currentY,
+                                    head: [headRow],
+                                    body: bodyRows,
+                                    margin: { left: margin, right: margin, bottom: 25 },
+                                    styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak', lineColor: borderColor, lineWidth: borderWidth },
+                                    headStyles: { fillColor: cTableHead, fontStyle: 'bold', lineColor: borderColor, lineWidth: borderWidth },
+                                    theme: 'grid',
+                                    didDrawPage: (data) => { if(!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages()); }
+                                };
+                            }
+
                             // Measure real table height using a temporary doc
                             const tmpDoc = new jsPDF({ unit: 'mm', format: targetDoc.internal.pageSize.getWidth() > 200 ? 'a4' : 'letter' });
-                            tmpDoc.autoTable({
-                                startY: 0,
-                                head: [b.data.headers],
-                                body: b.data.rows,
-                                margin: { left: margin, right: margin, bottom: 0 },
-                                styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak' },
-                                headStyles: { fillColor: cTableHead, fontStyle: 'bold' },
-                            });
+                            tmpDoc.autoTable({ ...autoTableOpts, startY: 0, didDrawPage: null });
                             const realTableH = tmpDoc.lastAutoTable.finalY;
                             const pageUsable = safeBottomLimit - 30;
-                            // If table fits on a full page but not in remaining space → page break
                             if (realTableH <= pageUsable && currentY + realTableH > safeBottomLimit) {
                                 targetDoc.addPage();
                                 if (!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages());
                                 currentY = 30;
+                                autoTableOpts.startY = currentY;
                             }
-                            targetDoc.autoTable({
-                                startY: currentY, 
-                                head: [b.data.headers], 
-                                body: b.data.rows,
-                                margin: { left: margin, right: margin, bottom: 25 }, 
-                                styles: { fontSize: 8, cellPadding: 3, overflow: 'linebreak' },
-                                headStyles: { fillColor: cTableHead, fontStyle: 'bold' },
-                                didDrawPage: (data) => { if(!isMeasuring) addHeader(targetDoc, targetDoc.internal.getNumberOfPages()); }
-                            });
+                            targetDoc.autoTable(autoTableOpts);
                             currentY = targetDoc.lastAutoTable.finalY + 3;
                             // Caption below table, centered
                             const tableTitle = `Tabla ${tableCounterGlobal}. ${b.data.caption || "Ingresa título..."}`;
@@ -2973,6 +3111,9 @@ function out(obj) {
 
             // PORTADA
             lines.push('<portada>');
+            // Collapse state
+            const _coverBodyEl = document.getElementById('coverBody');
+            if (_coverBodyEl && _coverBodyEl.classList.contains('collapsed')) lines.push(`collapsed: "true"`);
             if (companyLogo) lines.push(`logo: "${companyLogo}"`);
             if (coverPhoto) lines.push(`coverPhoto: "${coverPhoto}"`);
             lines.push(`titulo: "${document.getElementById('reportTitle').value}"`);
@@ -3023,7 +3164,9 @@ function out(obj) {
             lines.push('//-------------------------------------------------');
             const writeSection = (s, depth) => {
                 const prefix = '#'.repeat(depth > 0 ? depth : 0);
-                lines.push(`${prefix}<seccion nombre="${s.title}"${s.forcePageBreak ? ' salto="true"' : ''}>`);
+                const secBodyEl = document.getElementById('sec_' + s.id);
+                const isCollapsed = secBodyEl && secBodyEl.classList.contains('collapsed');
+                lines.push(`${prefix}<seccion nombre="${s.title}"${s.forcePageBreak ? ' salto="true"' : ''}${isCollapsed ? ' colapsado="true"' : ''}>`);
                 s.blocks.forEach(b => {
                     if (b.type === 'text') {
                         lines.push(`<t>${b.data.content}</t>`);
@@ -3211,6 +3354,21 @@ function out(obj) {
                     }
                 });
                 renderCoverFields();
+
+                // Restore portada collapse state
+                const _coverCollapsed = getVal('collapsed');
+                const _coverBodyImp = document.getElementById('coverBody');
+                const _coverChevImp = document.getElementById('coverCard-chevron');
+                if (_coverBodyImp) {
+                    if (_coverCollapsed === 'true') {
+                        _coverBodyImp.classList.add('collapsed');
+                        if (_coverChevImp) _coverChevImp.classList.add('chevron-collapsed');
+                    } else {
+                        _coverBodyImp.classList.remove('collapsed');
+                        if (_coverChevImp) _coverChevImp.classList.remove('chevron-collapsed');
+                    }
+                }
+
             }
 
             // ── GRÁFICOS (diccionario id→data) ──
@@ -3323,8 +3481,9 @@ function out(obj) {
                     const depth = secMatch[1].length; // 0=principal, 1=sub, etc
                     const title = secMatch[3];
                     const salto = secMatch[4] && secMatch[4].includes('salto="true"');
+                    const colapsado = secMatch[4] && secMatch[4].includes('colapsado="true"');
                     const level = depth + 1;
-                    const newSec = { id: Math.random().toString(36).substr(2,9), title, level, blocks: [], children: [], forcePageBreak: salto };
+                    const newSec = { id: Math.random().toString(36).substr(2,9), title, level, blocks: [], children: [], forcePageBreak: salto, _colapsado: colapsado };
                     
                     // Encontrar padre en stack
                     while (stack.length && stack[stack.length-1].depth >= depth) stack.pop();
@@ -3416,6 +3575,20 @@ function out(obj) {
 
             updateAnnexCounts();
             render();
+
+            // Restore section collapse states after render
+            const applyCollapseStates = (list) => {
+                list.forEach(s => {
+                    if (s._colapsado) {
+                        const body = document.getElementById('sec_' + s.id);
+                        const chev = document.getElementById('chev_' + s.id);
+                        if (body) body.classList.add('collapsed');
+                        if (chev) chev.classList.add('chevron-collapsed');
+                    }
+                    applyCollapseStates(s.children);
+                });
+            };
+            applyCollapseStates(sections);
         }
 
         // Listener para el input de importación
@@ -5454,6 +5627,10 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             const chevId = 'chev_' + secBodyId.replace('sec_', '');
             const chevron = document.getElementById(chevId);
             if (chevron) chevron.classList.toggle('chevron-collapsed', collapsed);
+            // Persist collapse state in sections data object
+            const sId = secBodyId.replace('sec_', '');
+            const sec = findById(sections, sId);
+            if (sec) sec._colapsado = collapsed;
         }
     </script>
 

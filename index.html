@@ -2408,17 +2408,40 @@ function out(obj) {
                     ? `https://drive.google.com/thumbnail?id=${item.driveId}&sz=w80`
                     : item.foto || null;
                 return `
-                <div onclick="selectAnnexItem('${item.id}')" class="flex items-center gap-2 p-3 rounded-xl cursor-pointer transition-all ${editingAnnexId === item.id ? 'bg-indigo-50 border border-indigo-200' : 'hover:bg-slate-50 border border-transparent'}">
-                    <div class="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                <div data-annex-id="${item.id}" class="flex items-center gap-2 p-3 rounded-xl transition-all ${editingAnnexId === item.id ? 'bg-indigo-50 border border-indigo-200' : 'hover:bg-slate-50 border border-transparent'}">
+                    <span class="annex-drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 shrink-0 flex items-center" title="Arrastrar para reordenar">
+                        <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor"><circle cx="2" cy="2" r="1.5"/><circle cx="2" cy="7" r="1.5"/><circle cx="2" cy="12" r="1.5"/><circle cx="8" cy="2" r="1.5"/><circle cx="8" cy="7" r="1.5"/><circle cx="8" cy="12" r="1.5"/></svg>
+                    </span>
+                    <div onclick="selectAnnexItem('${item.id}')" class="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0 cursor-pointer">
                         ${thumbSrc ? `<img src="${thumbSrc}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-slate-300 text-lg">📷</div>`}
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-xs font-bold text-slate-700 truncate">${item.descripcion || 'Sin descripción'}</p>
+                    <div onclick="selectAnnexItem('${item.id}')" class="flex-1 min-w-0 cursor-pointer">
+                        <p class="text-xs font-bold text-slate-700 truncate">${item.descripcion || 'Sin descripcion'}</p>
                         <p class="text-[10px] text-slate-400">${item.fecha || 'Sin fecha'}${item.driveId ? ' · Drive' : ''}</p>
                     </div>
-                    <button onclick="event.stopPropagation();removeAnnexItem('${item.id}')" class="text-rose-300 hover:text-rose-500 font-bold text-sm shrink-0">×</button>
+                    <button onclick="event.stopPropagation();removeAnnexItem('${item.id}')" class="text-rose-300 hover:text-rose-500 font-bold text-sm shrink-0">x</button>
                 </div>`;
             }).join('');
+
+            // Inicializar Sortable para reordenar
+            if (window.Sortable) {
+                if (list._annexSortable) list._annexSortable.destroy();
+                list._annexSortable = Sortable.create(list, {
+                    handle: '.annex-drag-handle',
+                    animation: 150,
+                    ghostClass: 'bg-indigo-50',
+                    onEnd() {
+                        const newOrder = [...list.querySelectorAll('[data-annex-id]')].map(el => el.getAttribute('data-annex-id'));
+                        if (editingAnnexType === 'nc') {
+                            const map = Object.fromEntries(annexNoConformidades.map(x => [x.id, x]));
+                            annexNoConformidades = newOrder.map(id => map[id]).filter(Boolean);
+                        } else {
+                            const map = Object.fromEntries(annexFotografico.map(x => [x.id, x]));
+                            annexFotografico = newOrder.map(id => map[id]).filter(Boolean);
+                        }
+                    }
+                });
+            }
         }
 
         function selectAnnexItem(id) {
@@ -4739,7 +4762,9 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             _openDrivePickerModal();
         }
 
-        // ── Open picker for an annex item (single photo) ──────────────────────────
+        // ── Open picker for an annex item ────────────────────────────────────────
+        // Para NC: selección única (igual que antes)
+        // Para Anexo Fotográfico: selección múltiple (agrega varias fotos de una vez)
         function openDrivePickerForAnnex(annexItemId) {
             const apiKey = localStorage.getItem('google_api_key');
             if (!apiKey) {
@@ -4751,11 +4776,16 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             driveTargetSId   = null;
             driveTargetBId   = null;
             driveSelected    = new Set();
-            // Update footer hint for single-select mode
             _openDrivePickerModal();
             document.getElementById('driveSelectedCount').textContent = '0';
-            // Change insert button label to reflect single selection
-            document.querySelector('#drivePickerModal .bg-emerald-600:last-child').textContent = 'Usar foto seleccionada';
+            const btn = document.querySelector('#drivePickerModal .bg-emerald-600:last-child');
+            if (editingAnnexType === 'af') {
+                // Multi-select mode for Anexo Fotográfico
+                if (btn) btn.textContent = 'Cargar fotos';
+            } else {
+                // Single-select mode for NC
+                if (btn) btn.textContent = 'Usar foto seleccionada';
+            }
         }
 
         function _openDrivePickerModal() {
@@ -4828,7 +4858,7 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             const secSel  = document.getElementById('driveTemaSec');
             mainSel.innerHTML = '<option value="">— Todos —</option>';
             secSel.innerHTML  = '<option value="">— Todos —</option>';
-            if (!disc) return;
+            if (!disc) { filterDrivePhotos(); return; }
             try {
                 const topics = await loadTopics(disc);
                 topics.forEach(t => {
@@ -4862,16 +4892,36 @@ Por favor, reescribe y mejora el texto de esa sección.`;
 
         // ── Filter and render photos ──────────────────────────────────────────────
         function filterDrivePhotos() {
+            const disc       = document.getElementById('driveDisciplina').value;
             const principal  = document.getElementById('driveTemaPrincipal').value.toLowerCase().trim();
             const secundario = document.getElementById('driveTemaSec').value.toLowerCase().trim();
             const desde      = document.getElementById('driveFechaDesde').value.replace(/-/g,'');
             const hasta      = document.getElementById('driveFechaHasta').value.replace(/-/g,'');
 
+            // Build a flat list of all topic labels for the selected discipline (for discipline-level filtering)
+            const discTopicLabels = disc && driveTopics[disc]
+                ? new Set(driveTopics[disc].flatMap(t => [t.label.toLowerCase(), ...t.subs.map(s => s.toLowerCase())]))
+                : null;
+
             driveFiltered = driveAllFiles.filter(f => {
+                // Discipline filter: if a discipline is selected and topics are loaded,
+                // only show photos whose temaPrincipal matches a known topic of that discipline.
+                if (disc && discTopicLabels && discTopicLabels.size > 0) {
+                    const tp = (f.temaPrincipal || '').toLowerCase().trim();
+                    if (!tp) {
+                        // No principal info — exclude when discipline is selected
+                        return false;
+                    }
+                    // Check if temaPrincipal matches any label of this discipline
+                    const matchesDisc = [...discTopicLabels].some(label =>
+                        label.includes(tp) || tp.includes(label)
+                    );
+                    if (!matchesDisc) return false;
+                }
+
                 // Principal: match against temaPrincipal in filename (partial, case-insensitive)
-                // Also match files without temaPrincipal when no filter is set
                 if (principal) {
-                    if (!f.temaPrincipal) return false; // has no principal info → exclude when filtering by principal
+                    if (!f.temaPrincipal) return false;
                     if (!f.temaPrincipal.toLowerCase().includes(principal) &&
                         !principal.includes(f.temaPrincipal.toLowerCase())) return false;
                 }
@@ -4944,10 +4994,11 @@ Por favor, reescribe y mejora el texto de esa sección.`;
         }
 
         function toggleDrivePhoto(fileId) {
-            if (driveAnnexMode || driveTargetFigureSId) {
-                // Single selection for annex or figure
+            if (driveTargetFigureSId || (driveAnnexMode && editingAnnexType === 'nc')) {
+                // Single selection for figure blocks and NC annex
                 driveSelected = driveSelected.has(fileId) ? new Set() : new Set([fileId]);
             } else {
+                // Multi-selection for image blocks and AF annex
                 if (driveSelected.has(fileId)) driveSelected.delete(fileId);
                 else driveSelected.add(fileId);
             }
@@ -4984,9 +5035,54 @@ Por favor, reescribe y mejora el texto de esa sección.`;
 
             // ── ANNEX MODE: store driveId reference for annex item ───────────────
             if (driveAnnexMode) {
+                statusTx.textContent = 'Guardando referencia...';
+
+                if (editingAnnexType === 'af' && driveSelected.size > 1) {
+                    // Multi-select mode for Anexo Fotográfico:
+                    // Update the existing item (driveAnnexItemId) with the first photo,
+                    // then create new items for the rest.
+                    const selectedIds = [...driveSelected];
+
+                    // Update the first (existing) item
+                    const firstId = selectedIds[0];
+                    const firstInfo = driveAllFiles.find(f => f.id === firstId);
+                    const existingItem = annexFotografico.find(x => x.id === driveAnnexItemId);
+                    if (existingItem) {
+                        existingItem.foto    = null;
+                        existingItem.driveId = firstId;
+                        if (!existingItem.fecha && firstInfo?.fecha) existingItem.fecha = formatFecha(firstInfo.fecha);
+                        if (!existingItem.descripcion && firstInfo?.temaSecundario) existingItem.descripcion = firstInfo.temaSecundario;
+                    }
+
+                    // Create new items for the remaining photos
+                    for (let i = 1; i < selectedIds.length; i++) {
+                        const fid = selectedIds[i];
+                        const finfo = driveAllFiles.find(f => f.id === fid);
+                        const newItem = {
+                            id: Math.random().toString(36).substr(2, 9),
+                            foto: null,
+                            driveId: fid,
+                            fecha: finfo?.fecha ? formatFecha(finfo.fecha) : (new Date().toISOString().split('T')[0]),
+                            descripcion: finfo?.temaSecundario || ''
+                        };
+                        annexFotografico.push(newItem);
+                    }
+
+                    statusEl.classList.add('hidden');
+                    closeModal('drivePickerModal');
+                    renderAnnexList();
+                    // Select last inserted item
+                    const lastItem = annexFotografico[annexFotografico.length - 1];
+                    editingAnnexId = lastItem.id;
+                    renderAnnexList();
+                    renderAnnexForm(lastItem);
+                    updateAnnexCounts();
+                    return;
+                }
+
+                // Single-select (NC or AF with 1 photo)
                 const fileId   = [...driveSelected][0];
                 const fileInfo = driveAllFiles.find(f => f.id === fileId);
-                statusTx.textContent = 'Guardando referencia...';
 
                 const items = editingAnnexType === 'nc' ? annexNoConformidades : annexFotografico;
                 const item  = items.find(x => x.id === driveAnnexItemId);

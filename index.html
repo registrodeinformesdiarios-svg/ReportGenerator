@@ -1184,8 +1184,18 @@ function out(obj) {
             <div class="flex flex-1 overflow-hidden">
                 <!-- List -->
                 <div class="w-72 border-r border-slate-100 flex flex-col">
-                    <div class="p-4 border-b border-slate-50">
+                    <div class="p-3 border-b border-slate-50 flex flex-col gap-2">
                         <button onclick="addAnnexItem()" class="w-full bg-indigo-600 text-white py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors">+ Agregar</button>
+                        <div class="flex gap-1">
+                            <button onclick="sortAnnexByDate('desc')" title="Mas nuevo primero" class="flex-1 flex items-center justify-center gap-1 text-[10px] font-bold text-slate-500 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 py-1.5 rounded-lg transition-all">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 4h13M3 8h9M3 12h5M17 12v8M14 17l3 3 3-3"/></svg>
+                                Nuevo a Viejo
+                            </button>
+                            <button onclick="sortAnnexByDate('asc')" title="Mas viejo primero" class="flex-1 flex items-center justify-center gap-1 text-[10px] font-bold text-slate-500 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 py-1.5 rounded-lg transition-all">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 4h13M3 8h9M3 12h5M17 20V12M14 15l3-3 3 3"/></svg>
+                                Viejo a Nuevo
+                            </button>
+                        </div>
                     </div>
                     <div id="annexList" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
                 </div>
@@ -2469,6 +2479,20 @@ function out(obj) {
             if (editingAnnexId === id) { editingAnnexId = null; renderAnnexForm(null); }
             renderAnnexList();
             updateAnnexCounts();
+        }
+
+        function sortAnnexByDate(order) {
+            const cmp = (a, b) => {
+                const fa = (a.fecha || '').replace(/-/g, '');
+                const fb = (b.fecha || '').replace(/-/g, '');
+                if (!fa && !fb) return 0;
+                if (!fa) return 1;
+                if (!fb) return -1;
+                return order === 'asc' ? fa.localeCompare(fb) : fb.localeCompare(fa);
+            };
+            if (editingAnnexType === 'nc') annexNoConformidades.sort(cmp);
+            else annexFotografico.sort(cmp);
+            renderAnnexList();
         }
 
         function renderAnnexForm(item) {
@@ -4781,7 +4805,7 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             const btn = document.querySelector('#drivePickerModal .bg-emerald-600:last-child');
             if (editingAnnexType === 'af') {
                 // Multi-select mode for Anexo Fotográfico
-                if (btn) btn.textContent = 'Cargar fotos';
+                if (btn) btn.textContent = 'Insertar seleccionadas';
             } else {
                 // Single-select mode for NC
                 if (btn) btn.textContent = 'Usar foto seleccionada';

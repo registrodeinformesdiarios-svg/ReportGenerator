@@ -3135,6 +3135,14 @@ function out(obj) {
                 veri: usable * 0.063
             };
 
+            // Devuelve el estado de una fila de la tabla, tolerando filas partidas (row.index = -1)
+            const estadoDeFila = (row, idx) => {
+                const it = items[idx];
+                if (it) return pendEstado(it.estado);
+                const label = row && row.raw ? row.raw[5] : null;
+                return PEND_ESTADOS.find(e => e.label === label) || null;
+            };
+
             const bodyRows = items.map((it, i) => {
                 const desc = (it.titulo || '—') + (it.obs ? '\n' + it.obs : '') + ((it.fotos || []).length ? `\n(ver fotografías: P-${String(i + 1).padStart(3, '0')})` : '');
                 return [
@@ -3169,19 +3177,19 @@ function out(obj) {
                     7: { cellWidth: w.veri }
                 },
                 didParseCell: (data) => {
-                    if (data.section === 'body' && data.column.index === 5) {
-                        const it = items[data.row.index];
-                        data.cell.styles.textColor = hexToRgb(pendEstado(it.estado).color);
-                    }
-                    if (data.section === 'body' && data.column.index === 1) {
-                        const it = items[data.row.index];
-                        if (it.estado === 'cerrado') data.cell.styles.textColor = [130, 140, 150];
-                    }
+                    if (data.section !== 'body') return;
+                    // Ojo: en filas partidas entre páginas autoTable envía row.index = -1,
+                    // por eso el estado se lee del contenido crudo de la fila.
+                    const est = estadoDeFila(data.row, data.row.index);
+                    if (!est) return;
+                    if (data.column.index === 5) data.cell.styles.textColor = hexToRgb(est.color);
+                    if (data.column.index === 1 && est.k === 'cerrado') data.cell.styles.textColor = [130, 140, 150];
                 },
                 didDrawCell: (data) => {
-                    // Casillas de verificación en campo
-                    if (data.section === 'body' && (data.column.index === 6 || data.column.index === 7)) {
+                    // Casillas de verificación en campo (solo en la fila original, no en su continuación)
+                    if (data.section === 'body' && data.row.index >= 0 && (data.column.index === 6 || data.column.index === 7)) {
                         const it = items[data.row.index];
+                        if (!it) return;
                         const size = 3.4;
                         const cx = data.cell.x + data.cell.width / 2 - size / 2;
                         const cy = data.cell.y + 2.2;
@@ -6296,6 +6304,9 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             try {
                 if (type === 'pd') await generatePendientesPdf();
                 else await generateAnnexOnlyPdf(type);
+            } catch (err) {
+                console.error(err);
+                alert('No se pudo generar el PDF:\n\n' + (err && err.message ? err.message : err));
             } finally {
                 if (dlBtn) { dlBtn.disabled = false; dlBtn.innerHTML = origHTML; }
             }

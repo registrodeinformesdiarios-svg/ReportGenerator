@@ -3238,7 +3238,11 @@ function out(obj) {
 
                 for (const { it, i } of conFotos) {
                     // Encabezado del pendiente
-                    const tituloLines = doc.splitTextToSize(it.titulo || '', totalW - 24);
+                    // Importante: fijar la tipografía ANTES de medir, si no el ajuste de
+                    // línea se calcula con la fuente que quedó del pie de foto anterior (7 pt)
+                    // y el texto se desborda al dibujarse a 8.5 pt.
+                    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+                    const tituloLines = doc.splitTextToSize(it.titulo || '', totalW - 26);
                     const headH = 8 + tituloLines.length * 4.2;
                     if (py + headH + 58 > safeBottomLimit) { doc.addPage(); addHead(doc); py = 28; }
 
@@ -3246,7 +3250,7 @@ function out(obj) {
                     doc.rect(margin, py - 4.5, totalW, headH, 'F');
                     doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...hexToRgb('#6d28d9'));
                     doc.text('P-' + String(i + 1).padStart(3, '0'), margin + 2, py);
-                    doc.setFont('helvetica', 'normal'); doc.setTextColor(70, 70, 80); doc.setFontSize(8.5);
+                    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(70, 70, 80);
                     tituloLines.forEach((l, li) => doc.text(l, margin + 20, py + li * 4.2));
                     py += headH + 2;
 

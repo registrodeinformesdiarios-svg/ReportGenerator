@@ -340,7 +340,7 @@
                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Anexos Especiales</span>
                     <div class="flex-1 border-t border-slate-100"></div>
                 </div>
-                <div class="flex gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div class="flex-1 flex flex-col gap-1">
                         <button onclick="openAnnexModal('nc')" class="flex items-center gap-3 bg-white border border-amber-200 hover:border-amber-400 rounded-2xl p-4 text-left transition-all group shadow-sm w-full">
                             <div class="w-9 h-9 rounded-xl bg-amber-100 group-hover:bg-amber-200 flex items-center justify-center transition-colors shrink-0">
@@ -378,6 +378,27 @@
                                 Vista previa
                             </button>
                             <button onclick="downloadAnnexPdf('af')" class="flex-1 flex items-center justify-center gap-1 bg-sky-500 hover:bg-sky-600 text-white rounded-xl py-1.5 text-[10px] font-bold transition-colors shadow-sm">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Descargar PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex-1 flex flex-col gap-1">
+                        <button onclick="openPendModal()" class="flex items-center gap-3 bg-white border border-violet-200 hover:border-violet-400 rounded-2xl p-4 text-left transition-all group shadow-sm w-full">
+                            <div class="w-9 h-9 rounded-xl bg-violet-100 group-hover:bg-violet-200 flex items-center justify-center transition-colors shrink-0">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold text-violet-700">Lista de Pendientes</p>
+                                <p id="pdCount" class="text-[10px] text-slate-400">0 pendientes</p>
+                            </div>
+                        </button>
+                        <div class="flex gap-1">
+                            <button onclick="openAnnexPreview('pd')" class="flex-1 flex items-center justify-center gap-1 bg-violet-50 hover:bg-violet-100 border border-violet-200 text-violet-700 rounded-xl py-1.5 text-[10px] font-bold transition-colors">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                Vista previa
+                            </button>
+                            <button onclick="downloadAnnexPdf('pd')" class="flex-1 flex items-center justify-center gap-1 bg-violet-500 hover:bg-violet-600 text-white rounded-xl py-1.5 text-[10px] font-bold transition-colors shadow-sm">
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                 Descargar PDF
                             </button>
@@ -1210,6 +1231,71 @@ function out(obj) {
         </div>
     </div>
 
+    <!-- Lista de Pendientes Modal -->
+    <div id="pendModal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-[100] backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl max-w-6xl w-full shadow-2xl flex flex-col max-h-[92vh]">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800">Lista de Pendientes</h3>
+                        <p id="pendModalSub" class="text-[11px] text-slate-400">0 pendientes</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('pendModal')" class="text-slate-300 hover:text-slate-600 text-xl font-bold">✕</button>
+            </div>
+
+            <div class="flex flex-1 overflow-hidden">
+                <!-- Lista -->
+                <div class="w-80 border-r border-slate-100 flex flex-col shrink-0">
+                    <div class="p-3 border-b border-slate-50 flex flex-col gap-2">
+                        <button onclick="addPendItem()" class="w-full bg-violet-600 text-white py-2 rounded-xl text-sm font-bold hover:bg-violet-700 transition-colors">+ Agregar pendiente</button>
+                        <button onclick="syncPendFromNC()" class="w-full flex items-center justify-center gap-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 py-2 rounded-xl text-[11px] font-bold transition-colors">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                            Traer No Conformidades
+                        </button>
+                        <button onclick="openPendBulk()" class="w-full flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 rounded-xl text-[11px] font-bold transition-colors">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                            Pegar lista rápida
+                        </button>
+                        <div class="flex gap-1">
+                            <button onclick="sortPend('estado')" class="flex-1 text-[10px] font-bold text-slate-500 hover:text-violet-600 bg-slate-100 hover:bg-violet-50 border border-slate-200 py-1.5 rounded-lg transition-all">Por estado</button>
+                            <button onclick="sortPend('disciplina')" class="flex-1 text-[10px] font-bold text-slate-500 hover:text-violet-600 bg-slate-100 hover:bg-violet-50 border border-slate-200 py-1.5 rounded-lg transition-all">Por disciplina</button>
+                        </div>
+                    </div>
+                    <div id="pendList" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                </div>
+                <!-- Formulario -->
+                <div id="pendForm" class="flex-1 p-6 overflow-y-auto">
+                    <p class="text-slate-400 text-sm text-center mt-8">Selecciona o crea un pendiente</p>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-100 flex justify-between items-center gap-3">
+                <div class="flex gap-2">
+                    <button onclick="openAnnexPreview('pd')" class="bg-violet-50 hover:bg-violet-100 border border-violet-200 text-violet-700 px-5 py-2.5 rounded-xl font-bold text-sm transition-colors">Vista previa</button>
+                    <button onclick="downloadAnnexPdf('pd')" class="bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-md">Descargar PDF</button>
+                </div>
+                <button onclick="closeModal('pendModal')" class="px-6 py-2.5 text-slate-400 font-bold text-sm rounded-xl hover:bg-slate-50">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pegado rápido de pendientes -->
+    <div id="pendBulkModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-[112] backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl p-6">
+            <h3 class="text-lg font-bold text-slate-800 mb-1">Pegar lista rápida</h3>
+            <p class="text-xs text-slate-400 mb-4">Una línea = un pendiente. Se ignoran guiones y numeración inicial. Opcional: usa <code class="bg-slate-100 px-1 rounded">texto | disciplina | responsable</code>.</p>
+            <textarea id="pendBulkText" rows="10" placeholder="- Abrir drenajes de cajas&#10;- Tornillos inferiores en tapas de tableros | Electromecánica | Cuadrilla A&#10;- Informe de topografía | Documentación" class="w-full border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-violet-400 text-sm resize-none font-mono"></textarea>
+            <div class="flex justify-end gap-2 mt-4">
+                <button onclick="closeModal('pendBulkModal')" class="px-5 py-2.5 text-slate-400 font-bold text-sm rounded-xl hover:bg-slate-50">Cancelar</button>
+                <button onclick="runPendBulk()" class="bg-violet-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-violet-700 transition-all shadow-md">Crear pendientes</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Annex Preview Modal -->
     <div id="annexPreviewModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-[108] backdrop-blur-sm p-4">
         <div class="bg-white rounded-3xl max-w-4xl w-full shadow-2xl flex flex-col max-h-[92vh]">
@@ -1399,6 +1485,18 @@ function out(obj) {
         let annexFotografico = [];     // [{id, foto, descripcion, fecha}]
         let editingAnnexType = null;
         let editingAnnexId = null;
+
+        // ─── LISTA DE PENDIENTES ────────────────────────────────────────────────
+        // [{id, titulo, disciplina, responsable, fecha, estado, obs, ncRef, fotos:[{driveId|foto, pie}]}]
+        let annexPendientes = [];
+        let editingPendId = null;
+        const PEND_ESTADOS = [
+            { k: 'pendiente', label: 'Pendiente', color: '#dc2626', bg: 'bg-rose-100',    tx: 'text-rose-700' },
+            { k: 'proceso',   label: 'En proceso', color: '#d97706', bg: 'bg-amber-100',  tx: 'text-amber-700' },
+            { k: 'corregido', label: 'Corregido',  color: '#2563eb', bg: 'bg-blue-100',   tx: 'text-blue-700' },
+            { k: 'cerrado',   label: 'Cerrado',    color: '#059669', bg: 'bg-emerald-100', tx: 'text-emerald-700' }
+        ];
+        const pendEstado = k => PEND_ESTADOS.find(e => e.k === k) || PEND_ESTADOS[0];
 
         // ─── IMAGE CACHE (driveId -> {src, ratio, w, h}) ────────────────────────
         // Persistido en IndexedDB para sobrevivir recargas de página.
@@ -2394,6 +2492,7 @@ function out(obj) {
             const afEl = document.getElementById('afCount');
             if (ncEl) ncEl.textContent = `${annexNoConformidades.length} registro${annexNoConformidades.length !== 1 ? 's' : ''}`;
             if (afEl) afEl.textContent = `${annexFotografico.length} fotografía${annexFotografico.length !== 1 ? 's' : ''}`;
+            if (typeof updatePendCounts === 'function') updatePendCounts();
         }
 
         function openAnnexModal(type) {
@@ -2558,6 +2657,643 @@ function out(obj) {
                 if (item) { item.foto = processed.src; renderAnnexList(); renderAnnexForm(item); updateAnnexCounts(); }
             };
             reader.readAsDataURL(file);
+        }
+
+        // ═══ LISTA DE PENDIENTES ═════════════════════════════════════════════════
+        let drivePendMode = false;
+        let drivePendItemId = null;
+
+        const DISCIPLINAS_PEND = ['Electromecánica', 'Civil / Estructural', 'Control y Protección', 'Documentación', 'Acabados', 'Seguridad', 'Otro'];
+
+        function newPendItem(over) {
+            return Object.assign({
+                id: Math.random().toString(36).substr(2, 9),
+                titulo: '',
+                disciplina: '',
+                responsable: '',
+                fecha: '',
+                estado: 'pendiente',
+                obs: '',
+                ncRef: '',
+                fotos: []
+            }, over || {});
+        }
+
+        function updatePendCounts() {
+            const abiertos = annexPendientes.filter(p => p.estado !== 'cerrado').length;
+            const el = document.getElementById('pdCount');
+            if (el) el.textContent = `${annexPendientes.length} pendiente${annexPendientes.length !== 1 ? 's' : ''}${annexPendientes.length ? ` · ${abiertos} abierto${abiertos !== 1 ? 's' : ''}` : ''}`;
+            const sub = document.getElementById('pendModalSub');
+            if (sub) sub.textContent = `${annexPendientes.length} registro(s) · ${abiertos} sin cerrar · ${annexPendientes.reduce((a, p) => a + (p.fotos || []).length, 0)} fotografía(s)`;
+        }
+
+        function openPendModal() {
+            editingPendId = null;
+            renderPendList();
+            renderPendForm(null);
+            updatePendCounts();
+            document.getElementById('pendModal').style.display = 'flex';
+        }
+
+        function pendThumb(f, size) {
+            if (!f) return null;
+            return f.driveId ? `https://drive.google.com/thumbnail?id=${f.driveId}&sz=w${size || 200}` : (f.foto || null);
+        }
+
+        function renderPendList() {
+            const list = document.getElementById('pendList');
+            if (!list) return;
+            if (annexPendientes.length === 0) {
+                list.innerHTML = `<p class="text-[11px] text-slate-400 text-center mt-4 px-2">Sin pendientes aún.<br>Usa "+ Agregar", "Traer No Conformidades" o "Pegar lista rápida".</p>`;
+                return;
+            }
+            list.innerHTML = annexPendientes.map((it, i) => {
+                const e = pendEstado(it.estado);
+                const th = pendThumb((it.fotos || [])[0], 80);
+                return `
+                <div data-pend-id="${it.id}" class="flex items-center gap-2 p-2.5 rounded-xl transition-all ${editingPendId === it.id ? 'bg-violet-50 border border-violet-200' : 'hover:bg-slate-50 border border-transparent'}">
+                    <span class="pend-drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 shrink-0 flex items-center" title="Arrastrar para reordenar">
+                        <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor"><circle cx="2" cy="2" r="1.5"/><circle cx="2" cy="7" r="1.5"/><circle cx="2" cy="12" r="1.5"/><circle cx="8" cy="2" r="1.5"/><circle cx="8" cy="7" r="1.5"/><circle cx="8" cy="12" r="1.5"/></svg>
+                    </span>
+                    <div onclick="selectPendItem('${it.id}')" class="w-9 h-9 rounded-lg overflow-hidden bg-slate-100 shrink-0 cursor-pointer relative">
+                        ${th ? `<img src="${th}" class="w-full h-full object-cover">` : `<div class="w-full h-full flex items-center justify-center text-slate-300 text-[10px] font-bold">${String(i + 1).padStart(2, '0')}</div>`}
+                        ${(it.fotos || []).length > 1 ? `<span class="absolute bottom-0 right-0 bg-slate-900/70 text-white text-[8px] font-bold px-1 rounded-tl">${it.fotos.length}</span>` : ''}
+                    </div>
+                    <div onclick="selectPendItem('${it.id}')" class="flex-1 min-w-0 cursor-pointer">
+                        <p class="text-[11px] font-bold text-slate-700 leading-tight line-clamp-2">${it.titulo || 'Sin descripción'}</p>
+                        <p class="text-[9px] text-slate-400 mt-0.5">${it.disciplina || 'Sin disciplina'}${it.ncRef ? ' · desde NC' : ''}</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-1 shrink-0">
+                        <button onclick="event.stopPropagation();cyclePendEstado('${it.id}')" title="Clic para cambiar estado" class="${e.bg} ${e.tx} text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wide">${e.label}</button>
+                        <button onclick="event.stopPropagation();removePendItem('${it.id}')" class="text-rose-300 hover:text-rose-500 font-bold text-xs">x</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            if (window.Sortable) {
+                if (list._pendSortable) list._pendSortable.destroy();
+                list._pendSortable = Sortable.create(list, {
+                    handle: '.pend-drag-handle',
+                    animation: 150,
+                    ghostClass: 'bg-violet-50',
+                    onEnd() {
+                        const order = [...list.querySelectorAll('[data-pend-id]')].map(el => el.getAttribute('data-pend-id'));
+                        const map = Object.fromEntries(annexPendientes.map(x => [x.id, x]));
+                        annexPendientes = order.map(id => map[id]).filter(Boolean);
+                    }
+                });
+            }
+        }
+
+        function cyclePendEstado(id) {
+            const it = annexPendientes.find(x => x.id === id);
+            if (!it) return;
+            const i = PEND_ESTADOS.findIndex(e => e.k === it.estado);
+            it.estado = PEND_ESTADOS[(i + 1) % PEND_ESTADOS.length].k;
+            renderPendList();
+            if (editingPendId === id) renderPendForm(it);
+            updatePendCounts();
+        }
+
+        function selectPendItem(id) {
+            editingPendId = id;
+            const it = annexPendientes.find(x => x.id === id);
+            renderPendList();
+            renderPendForm(it);
+        }
+
+        function addPendItem() {
+            const it = newPendItem();
+            annexPendientes.push(it);
+            editingPendId = it.id;
+            renderPendList();
+            renderPendForm(it);
+            updatePendCounts();
+        }
+
+        function removePendItem(id) {
+            annexPendientes = annexPendientes.filter(x => x.id !== id);
+            if (editingPendId === id) { editingPendId = null; renderPendForm(null); }
+            renderPendList();
+            updatePendCounts();
+        }
+
+        function sortPend(mode) {
+            if (mode === 'estado') {
+                const rank = k => PEND_ESTADOS.findIndex(e => e.k === k);
+                annexPendientes.sort((a, b) => rank(a.estado) - rank(b.estado));
+            } else if (mode === 'disciplina') {
+                annexPendientes.sort((a, b) => (a.disciplina || 'zzz').localeCompare(b.disciplina || 'zzz'));
+            }
+            renderPendList();
+        }
+
+        function renderPendForm(item) {
+            const form = document.getElementById('pendForm');
+            if (!form) return;
+            if (!item) { form.innerHTML = `<p class="text-slate-400 text-sm text-center mt-8">Selecciona o crea un pendiente</p>`; return; }
+            const idx = annexPendientes.findIndex(x => x.id === item.id) + 1;
+            const fotos = item.fotos || [];
+            form.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-violet-100 text-violet-700 text-[11px] font-black px-2.5 py-1 rounded-lg">P-${String(idx).padStart(3, '0')}</span>
+                        ${item.ncRef ? `<span class="bg-amber-100 text-amber-700 text-[9px] font-bold px-2 py-1 rounded-lg uppercase">Vinculado a No Conformidad</span>` : ''}
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Descripción del pendiente</label>
+                        <textarea rows="2" oninput="updatePendField('${item.id}','titulo',this.value)" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-400 resize-none" placeholder="Ej: Sello de espuma de poliuretano en canalización de control">${item.titulo || ''}</textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Disciplina</label>
+                            <input list="pendDisciplinasList" value="${(item.disciplina || '').replace(/"/g, '&quot;')}" oninput="updatePendField('${item.id}','disciplina',this.value)" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-400" placeholder="Electromecánica">
+                            <datalist id="pendDisciplinasList">${DISCIPLINAS_PEND.map(d => `<option value="${d}">`).join('')}</datalist>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Responsable</label>
+                            <input value="${(item.responsable || '').replace(/"/g, '&quot;')}" oninput="updatePendField('${item.id}','responsable',this.value)" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-400" placeholder="Equipo Ejecutor">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Fecha compromiso</label>
+                            <input type="date" value="${item.fecha || ''}" oninput="updatePendField('${item.id}','fecha',this.value)" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-400">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Estado</label>
+                            <select onchange="updatePendField('${item.id}','estado',this.value);renderPendList();updatePendCounts();" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-400 bg-white">
+                                ${PEND_ESTADOS.map(e => `<option value="${e.k}" ${item.estado === e.k ? 'selected' : ''}>${e.label}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Observaciones / criterio de cierre</label>
+                        <textarea rows="2" oninput="updatePendField('${item.id}','obs',this.value)" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-400 resize-none" placeholder="Evidencia requerida, referencia a protocolo, etc.">${item.obs || ''}</textarea>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase">Fotografías (${fotos.length})</label>
+                            <div class="flex gap-2">
+                                <input type="file" id="pendImgInput_${item.id}" class="hidden" accept="image/*" multiple onchange="loadPendImages('${item.id}', this)">
+                                <label for="pendImgInput_${item.id}" class="text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-xl cursor-pointer transition-colors">+ Subir archivos</label>
+                                <button onclick="openDrivePickerForPend('${item.id}')" class="text-[10px] font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-xl transition-colors">Desde Drive</button>
+                            </div>
+                        </div>
+                        ${fotos.length === 0
+                            ? `<div class="w-full py-8 border-2 border-dashed border-slate-200 rounded-2xl text-center text-slate-300 text-xs">Sin fotografías. Puedes agregar varias por pendiente.</div>`
+                            : `<div class="grid grid-cols-3 gap-2">${fotos.map((f, i) => {
+                                const src = pendThumb(f, 300);
+                                return `
+                                <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                                    <div class="w-full bg-slate-100 relative" style="aspect-ratio:4/3">
+                                        ${src ? `<img src="${src}" class="w-full h-full object-cover">` : ''}
+                                        ${f.driveId ? `<span class="absolute top-1 left-1 bg-emerald-500 text-white text-[8px] font-bold px-1.5 rounded-full">Drive</span>` : ''}
+                                        <button onclick="removePendFoto('${item.id}',${i})" class="absolute top-1 right-1 bg-white/90 hover:bg-rose-500 hover:text-white text-rose-500 w-5 h-5 rounded-full text-[10px] font-black leading-none">×</button>
+                                    </div>
+                                    <div class="flex">
+                                        <button onclick="movePendFoto('${item.id}',${i},-1)" class="flex-1 text-[10px] text-slate-400 hover:text-violet-600 py-1">◀</button>
+                                        <button onclick="movePendFoto('${item.id}',${i},1)" class="flex-1 text-[10px] text-slate-400 hover:text-violet-600 py-1">▶</button>
+                                    </div>
+                                    <input value="${(f.pie || '').replace(/"/g, '&quot;')}" oninput="updatePendFoto('${item.id}',${i},this.value)" placeholder="Pie de foto" class="w-full text-[10px] px-2 py-1.5 border-t border-slate-100 outline-none focus:bg-violet-50">
+                                </div>`;
+                            }).join('')}</div>`}
+                    </div>
+                </div>`;
+        }
+
+        function updatePendField(id, field, value) {
+            const it = annexPendientes.find(x => x.id === id);
+            if (it) { it[field] = value; if (field === 'titulo') renderPendList(); }
+        }
+
+        function updatePendFoto(id, idx, pie) {
+            const it = annexPendientes.find(x => x.id === id);
+            if (it && it.fotos[idx]) it.fotos[idx].pie = pie;
+        }
+
+        function removePendFoto(id, idx) {
+            const it = annexPendientes.find(x => x.id === id);
+            if (!it) return;
+            it.fotos.splice(idx, 1);
+            renderPendForm(it); renderPendList(); updatePendCounts();
+        }
+
+        function movePendFoto(id, idx, dir) {
+            const it = annexPendientes.find(x => x.id === id);
+            if (!it) return;
+            const to = idx + dir;
+            if (to < 0 || to >= it.fotos.length) return;
+            const [f] = it.fotos.splice(idx, 1);
+            it.fotos.splice(to, 0, f);
+            renderPendForm(it);
+        }
+
+        async function loadPendImages(id, input) {
+            const it = annexPendientes.find(x => x.id === id);
+            if (!it || !input.files.length) return;
+            for (const file of [...input.files]) {
+                const dataUrl = await new Promise(res => {
+                    const r = new FileReader();
+                    r.onload = e => res(e.target.result);
+                    r.readAsDataURL(file);
+                });
+                const processed = await normalizeImage(dataUrl);
+                it.fotos.push({ foto: processed.src, ratio: processed.ratio || 4 / 3, pie: '' });
+                renderPendForm(it);
+            }
+            input.value = '';
+            renderPendList(); updatePendCounts();
+        }
+
+        function openDrivePickerForPend(itemId) {
+            const apiKey = localStorage.getItem('google_api_key');
+            if (!apiKey) { alert('Configura tu Google API Key en el botón ⚙ de configuración.'); return; }
+            drivePendMode = true;
+            drivePendItemId = itemId;
+            driveAnnexMode = false;
+            driveAnnexItemId = null;
+            driveTargetSId = null;
+            driveTargetBId = null;
+            driveTargetFigureSId = null;
+            driveSelected = new Set();
+            _openDrivePickerModal();
+            const btn = document.querySelector('#drivePickerModal .bg-emerald-600:last-child');
+            if (btn) btn.textContent = 'Insertar seleccionadas';
+        }
+
+        // ── Traer las No Conformidades como pendientes (sin duplicar) ────────────
+        function syncPendFromNC() {
+            if (annexNoConformidades.length === 0) { alert('No hay No Conformidades registradas.'); return; }
+            let nuevos = 0, actualizados = 0;
+            annexNoConformidades.forEach((nc, i) => {
+                const existente = annexPendientes.find(p => p.ncRef === nc.id);
+                const fotoNC = nc.driveId ? { driveId: nc.driveId, pie: `NC-${String(i + 1).padStart(3, '0')}` }
+                                          : (nc.foto ? { foto: nc.foto, pie: `NC-${String(i + 1).padStart(3, '0')}` } : null);
+                if (existente) {
+                    existente.titulo = existente.titulo || nc.descripcion || '';
+                    if (fotoNC && !(existente.fotos || []).some(f => (f.driveId && f.driveId === fotoNC.driveId) || (f.foto && f.foto === fotoNC.foto))) {
+                        existente.fotos.push(fotoNC);
+                    }
+                    actualizados++;
+                } else {
+                    annexPendientes.push(newPendItem({
+                        titulo: nc.descripcion || `No conformidad NC-${String(i + 1).padStart(3, '0')}`,
+                        disciplina: '',
+                        responsable: 'Equipo Ejecutor',
+                        obs: `Origen: NC-${String(i + 1).padStart(3, '0')}${nc.fecha ? ' · detectada ' + nc.fecha : ''}`,
+                        ncRef: nc.id,
+                        fotos: fotoNC ? [fotoNC] : []
+                    }));
+                    nuevos++;
+                }
+            });
+            renderPendList(); updatePendCounts();
+            if (editingPendId) { const it = annexPendientes.find(x => x.id === editingPendId); if (it) renderPendForm(it); }
+            alert(`No Conformidades sincronizadas.\n\nNuevos pendientes: ${nuevos}\nYa existentes (actualizados): ${actualizados}`);
+        }
+
+        // ── Pegado rápido ───────────────────────────────────────────────────────
+        function openPendBulk() {
+            document.getElementById('pendBulkText').value = '';
+            document.getElementById('pendBulkModal').style.display = 'flex';
+        }
+
+        function runPendBulk() {
+            const txt = document.getElementById('pendBulkText').value || '';
+            const lineas = txt.split('\n').map(l => l.replace(/^\s*[-*•·]\s*/, '').replace(/^\s*\d+[.)]\s*/, '').trim()).filter(Boolean);
+            if (!lineas.length) { closeModal('pendBulkModal'); return; }
+            lineas.forEach(l => {
+                const partes = l.split('|').map(p => p.trim());
+                annexPendientes.push(newPendItem({
+                    titulo: partes[0] || '',
+                    disciplina: partes[1] || '',
+                    responsable: partes[2] || ''
+                }));
+            });
+            closeModal('pendBulkModal');
+            renderPendList(); updatePendCounts();
+            alert(`${lineas.length} pendiente(s) creado(s).`);
+        }
+
+        // ── Vista previa HTML ───────────────────────────────────────────────────
+        function renderPendPreviewBody(items) {
+            const body = document.getElementById('annexPreviewBody');
+            const projectName = document.getElementById('projectName') ? document.getElementById('projectName').value : '';
+            const institution1 = document.getElementById('coverInstitution1') ? document.getElementById('coverInstitution1').value : '';
+
+            if (items.length === 0) {
+                body.innerHTML = `<div class="flex flex-col items-center justify-center py-20 text-slate-400">
+                    <p class="text-sm font-medium">Sin pendientes registrados</p>
+                    <p class="text-xs mt-1">Agrega entradas desde la Lista de Pendientes</p>
+                </div>`;
+                return;
+            }
+
+            const header = `
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 mb-5 shadow-sm">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">${institution1}</p>
+                    <h1 class="text-xl font-black text-slate-800 mb-1">LISTA DE PENDIENTES</h1>
+                    ${projectName ? `<p class="text-sm text-violet-600 font-semibold">${projectName}</p>` : ''}
+                    <p class="text-[10px] text-slate-400 mt-2">${items.length} pendiente(s) · ${items.reduce((a, p) => a + (p.fotos || []).length, 0)} fotografía(s) · Generado ${new Date().toLocaleDateString('es-CR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                </div>`;
+
+            const filas = items.map((it, i) => {
+                const e = pendEstado(it.estado);
+                return `<tr class="border-b border-slate-100">
+                    <td class="px-2 py-2 text-[10px] font-black text-violet-700 align-top">P-${String(i + 1).padStart(3, '0')}</td>
+                    <td class="px-2 py-2 text-[11px] text-slate-700 align-top">${it.titulo || '<span class="text-slate-300 italic">Sin descripción</span>'}${it.obs ? `<br><span class="text-[10px] text-slate-400 italic">${it.obs}</span>` : ''}</td>
+                    <td class="px-2 py-2 text-[10px] text-slate-500 align-top">${it.disciplina || '—'}</td>
+                    <td class="px-2 py-2 text-[10px] text-slate-500 align-top">${it.responsable || '—'}</td>
+                    <td class="px-2 py-2 align-top"><span class="${e.bg} ${e.tx} text-[9px] font-bold px-1.5 py-0.5 rounded">${e.label}</span></td>
+                    <td class="px-2 py-2 text-[10px] text-slate-500 align-top">${it.fecha || '—'}</td>
+                    <td class="px-2 py-2 text-[10px] text-slate-400 align-top text-center">${(it.fotos || []).length || '—'}</td>
+                </tr>`;
+            }).join('');
+
+            const tabla = `
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-5">
+                    <table class="w-full">
+                        <thead><tr class="bg-violet-600 text-white">
+                            <th class="px-2 py-2 text-[9px] font-black uppercase text-left">N°</th>
+                            <th class="px-2 py-2 text-[9px] font-black uppercase text-left">Pendiente</th>
+                            <th class="px-2 py-2 text-[9px] font-black uppercase text-left">Disciplina</th>
+                            <th class="px-2 py-2 text-[9px] font-black uppercase text-left">Responsable</th>
+                            <th class="px-2 py-2 text-[9px] font-black uppercase text-left">Estado</th>
+                            <th class="px-2 py-2 text-[9px] font-black uppercase text-left">Fecha</th>
+                            <th class="px-2 py-2 text-[9px] font-black uppercase text-center">Fotos</th>
+                        </tr></thead>
+                        <tbody>${filas}</tbody>
+                    </table>
+                </div>`;
+
+            const conFotos = items.filter(it => (it.fotos || []).length > 0);
+            const anexo = conFotos.length === 0 ? '' : `
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 mt-6">Registro fotográfico</p>
+                ${conFotos.map(it => {
+                    const i = items.indexOf(it);
+                    return `<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-4">
+                        <div class="px-4 py-2.5 bg-violet-50 border-b border-violet-100 flex items-center gap-3">
+                            <span class="text-[10px] font-black text-violet-700 bg-violet-200 px-2 py-0.5 rounded">P-${String(i + 1).padStart(3, '0')}</span>
+                            <span class="text-[11px] font-semibold text-slate-600 truncate">${it.titulo || ''}</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 p-4">
+                            ${it.fotos.map(f => {
+                                const src = pendThumb(f, 400);
+                                return `<div>
+                                    <div class="w-full bg-slate-50 rounded-xl overflow-hidden border border-slate-100" style="aspect-ratio:4/3">${src ? `<img src="${src}" class="w-full h-full object-cover">` : ''}</div>
+                                    ${f.pie ? `<p class="text-[9px] text-slate-500 mt-1">${f.pie}</p>` : ''}
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>`;
+                }).join('')}`;
+
+            body.innerHTML = header + tabla + anexo;
+        }
+
+        // ── PDF de la lista de pendientes ────────────────────────────────────────
+        async function generatePendientesPdf() {
+            const items = annexPendientes;
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: pdfCfg('pdf_page_size', 'a4'), compress: true });
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = Math.min(parseFloat(pdfCfg('pdf_margin', '25')), 18);
+            const safeBottomLimit = pageHeight - 20;
+            const cHeading = hexToRgb(pdfCfg('color_heading_e', pdfCfg('color_heading', '#7c3aed')));
+            const cBody = hexToRgb(pdfCfg('color_body_e', pdfCfg('color_body', '#475569')));
+            const projectHeader = pdfCfg('pdf_footer', '') || (document.getElementById('projectName') ? document.getElementById('projectName').value : 'REPORTE TÉCNICO');
+            const institution1 = document.getElementById('coverInstitution1') ? document.getElementById('coverInstitution1').value : '';
+            const institution2 = document.getElementById('coverInstitution2') ? document.getElementById('coverInstitution2').value : '';
+            const projectName = document.getElementById('projectName') ? document.getElementById('projectName').value : '';
+            const showPageNum = pdfCfg('pdf_page_num', '1') === '1';
+
+            const addHead = (d) => {
+                d.setFont('helvetica', 'normal'); d.setFontSize(8); d.setTextColor(160, 160, 160);
+                d.text(String(projectHeader).toUpperCase(), margin, 12);
+                if (showPageNum) d.text(`PÁGINA ${d.internal.getNumberOfPages()}`, pageWidth - margin, 12, { align: 'right' });
+                d.setDrawColor(245, 245, 245); d.line(margin, 14, pageWidth - margin, 14);
+                d.setTextColor(...cBody);
+            };
+
+            // ── Portada ──────────────────────────────────────────────────────────
+            let y = margin + 6;
+            if (institution1) {
+                doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 100, 100);
+                doc.text(institution1.toUpperCase(), pageWidth / 2, y, { align: 'center' }); y += 6;
+            }
+            if (institution2) {
+                doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(130, 130, 130);
+                doc.text(institution2, pageWidth / 2, y, { align: 'center' }); y += 10;
+            }
+            doc.setDrawColor(...cHeading); doc.setLineWidth(0.8);
+            doc.line(margin, y, pageWidth - margin, y); y += 10;
+            doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(...cHeading);
+            doc.text('LISTA DE PENDIENTES', pageWidth / 2, y, { align: 'center' }); y += 8;
+            doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 120, 120);
+            doc.text('Punch list de supervisión para cierre de proyecto', pageWidth / 2, y, { align: 'center' }); y += 10;
+            if (projectName) {
+                doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(...cBody);
+                doc.text(projectName, pageWidth / 2, y, { align: 'center' }); y += 8;
+            }
+            const abiertos = items.filter(p => p.estado !== 'cerrado').length;
+            const nFotos = items.reduce((a, p) => a + (p.fotos || []).length, 0);
+            doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(160, 160, 160);
+            const hoy = new Date().toLocaleDateString('es-CR', { day: '2-digit', month: 'long', year: 'numeric' });
+            doc.text(`${items.length} pendiente(s) · ${abiertos} sin cerrar · ${nFotos} fotografía(s) · ${hoy}`, pageWidth / 2, y, { align: 'center' }); y += 6;
+            doc.setDrawColor(...cHeading); doc.setLineWidth(0.4);
+            doc.line(margin, y, pageWidth - margin, y); y += 14;
+
+            // Resumen por estado
+            doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...cBody);
+            doc.text('RESUMEN POR ESTADO', margin, y); y += 6;
+            PEND_ESTADOS.forEach(e => {
+                const n = items.filter(p => p.estado === e.k).length;
+                const rgb = hexToRgb(e.color);
+                doc.setFillColor(...rgb); doc.rect(margin, y - 3, 3, 3, 'F');
+                doc.setFont('helvetica', 'normal'); doc.setTextColor(90, 90, 90); doc.setFontSize(9);
+                doc.text(`${e.label}: ${n}`, margin + 6, y); y += 5.5;
+            });
+            y += 6;
+            doc.setFontSize(8); doc.setFont('helvetica', 'italic'); doc.setTextColor(150, 150, 150);
+            doc.text('El Equipo Ejecutor marca la casilla de la columna "Corregido" al atender cada punto.', margin, y); y += 4.5;
+            doc.text('La columna "Verificado" la completa únicamente la Supervisión tras la inspección.', margin, y);
+
+            // ── Tabla de trabajo en campo ────────────────────────────────────────
+            doc.addPage(); addHead(doc);
+            doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(...cHeading);
+            doc.text('CONTROL DE PENDIENTES', margin, 26);
+
+            const usable = pageWidth - margin * 2;
+            const w = {
+                n: usable * 0.062,
+                pend: usable * 0.350,
+                disc: usable * 0.130,
+                resp: usable * 0.130,
+                fecha: usable * 0.105,
+                est: usable * 0.098,
+                corr: usable * 0.062,
+                veri: usable * 0.063
+            };
+
+            const bodyRows = items.map((it, i) => {
+                const desc = (it.titulo || '—') + (it.obs ? '\n' + it.obs : '') + ((it.fotos || []).length ? `\n(ver fotografías: P-${String(i + 1).padStart(3, '0')})` : '');
+                return [
+                    'P-' + String(i + 1).padStart(3, '0'),
+                    desc,
+                    it.disciplina || '',
+                    it.responsable || '',
+                    it.fecha || '',
+                    pendEstado(it.estado).label,
+                    '',
+                    ''
+                ];
+            });
+
+            doc.autoTable({
+                startY: 32,
+                head: [['N°', 'Descripción del pendiente', 'Disciplina', 'Responsable', 'Fecha\ncomprom.', 'Estado', 'Corr.', 'Verif.']],
+                body: bodyRows,
+                theme: 'grid',
+                margin: { left: margin, right: margin, top: 22 },
+                styles: { font: 'helvetica', fontSize: 7.5, cellPadding: 1.8, lineColor: [225, 225, 235], lineWidth: 0.15, textColor: [55, 65, 81], valign: 'top' },
+                headStyles: { fillColor: cHeading, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5, halign: 'center', valign: 'middle' },
+                alternateRowStyles: { fillColor: [250, 250, 253] },
+                columnStyles: {
+                    0: { cellWidth: w.n, halign: 'center', fontStyle: 'bold', textColor: hexToRgb('#6d28d9') },
+                    1: { cellWidth: w.pend },
+                    2: { cellWidth: w.disc, fontSize: 7 },
+                    3: { cellWidth: w.resp, fontSize: 7 },
+                    4: { cellWidth: w.fecha, halign: 'center', fontSize: 7 },
+                    5: { cellWidth: w.est, halign: 'center', fontSize: 6.8, fontStyle: 'bold' },
+                    6: { cellWidth: w.corr },
+                    7: { cellWidth: w.veri }
+                },
+                didParseCell: (data) => {
+                    if (data.section === 'body' && data.column.index === 5) {
+                        const it = items[data.row.index];
+                        data.cell.styles.textColor = hexToRgb(pendEstado(it.estado).color);
+                    }
+                    if (data.section === 'body' && data.column.index === 1) {
+                        const it = items[data.row.index];
+                        if (it.estado === 'cerrado') data.cell.styles.textColor = [130, 140, 150];
+                    }
+                },
+                didDrawCell: (data) => {
+                    // Casillas de verificación en campo
+                    if (data.section === 'body' && (data.column.index === 6 || data.column.index === 7)) {
+                        const it = items[data.row.index];
+                        const size = 3.4;
+                        const cx = data.cell.x + data.cell.width / 2 - size / 2;
+                        const cy = data.cell.y + 2.2;
+                        doc.setDrawColor(150, 150, 160); doc.setLineWidth(0.25);
+                        doc.rect(cx, cy, size, size);
+                        const marcado = (data.column.index === 6 && (it.estado === 'corregido' || it.estado === 'cerrado')) ||
+                                        (data.column.index === 7 && it.estado === 'cerrado');
+                        if (marcado) {
+                            doc.setDrawColor(5, 150, 105); doc.setLineWidth(0.6);
+                            doc.line(cx + 0.6, cy + 1.8, cx + 1.4, cy + 2.7);
+                            doc.line(cx + 1.4, cy + 2.7, cx + 2.9, cy + 0.7);
+                        }
+                    }
+                },
+                didDrawPage: () => { addHead(doc); }
+            });
+
+            let fy = doc.lastAutoTable.finalY + 12;
+            if (fy > safeBottomLimit - 30) { doc.addPage(); addHead(doc); fy = 30; }
+
+            // Firmas
+            doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(140, 140, 140);
+            const colW = (pageWidth - margin * 2) / 3;
+            ['Elaboró — Supervisión', 'Recibió — Equipo Ejecutor', 'Vo.Bo. — Coordinación'].forEach((t, i) => {
+                const x = margin + i * colW;
+                doc.setDrawColor(190, 190, 190); doc.setLineWidth(0.3);
+                doc.line(x + 4, fy + 12, x + colW - 8, fy + 12);
+                doc.setFont('helvetica', 'bold'); doc.setTextColor(90, 90, 90);
+                doc.text(t, x + colW / 2 - 4, fy + 16, { align: 'center' });
+                doc.setFont('helvetica', 'normal'); doc.setTextColor(170, 170, 170);
+                doc.text('Nombre / Firma / Fecha', x + colW / 2 - 4, fy + 20, { align: 'center' });
+            });
+
+            // ── Anexo fotográfico por pendiente ──────────────────────────────────
+            const conFotos = items.map((it, i) => ({ it, i })).filter(o => (o.it.fotos || []).length > 0);
+            if (conFotos.length) {
+                doc.addPage(); addHead(doc);
+                let py = 28;
+                doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(...cHeading);
+                doc.text('ANEXO FOTOGRÁFICO DE PENDIENTES', margin, py); py += 4;
+                doc.setDrawColor(...cHeading); doc.setLineWidth(0.4);
+                doc.line(margin, py, pageWidth - margin, py); py += 10;
+
+                const totalW = pageWidth - margin * 2;
+                const imgW = (totalW - 6) / 2;
+
+                for (const { it, i } of conFotos) {
+                    // Encabezado del pendiente
+                    const tituloLines = doc.splitTextToSize(it.titulo || '', totalW - 24);
+                    const headH = 8 + tituloLines.length * 4.2;
+                    if (py + headH + 58 > safeBottomLimit) { doc.addPage(); addHead(doc); py = 28; }
+
+                    doc.setFillColor(245, 243, 255);
+                    doc.rect(margin, py - 4.5, totalW, headH, 'F');
+                    doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...hexToRgb('#6d28d9'));
+                    doc.text('P-' + String(i + 1).padStart(3, '0'), margin + 2, py);
+                    doc.setFont('helvetica', 'normal'); doc.setTextColor(70, 70, 80); doc.setFontSize(8.5);
+                    tituloLines.forEach((l, li) => doc.text(l, margin + 20, py + li * 4.2));
+                    py += headH + 2;
+
+                    let col = 0, rowMaxH = 0;
+                    for (const f of it.fotos) {
+                        let src = f.foto, ratio = f.ratio || 4 / 3;
+                        if (!src && f.driveId) {
+                            const cached = await resolveDriveImage(f.driveId);
+                            if (cached) { src = cached.src; ratio = cached.ratio || 4 / 3; }
+                        }
+                        const imgH = Math.min(imgW / ratio, 70);
+                        const capH = f.pie ? 8 : 3;
+                        const blockH = imgH + capH;
+                        if (py + blockH > safeBottomLimit) {
+                            doc.addPage(); addHead(doc); py = 28; col = 0; rowMaxH = 0;
+                        }
+                        const x = margin + col * (imgW + 6);
+                        try {
+                            if (src) {
+                                const fmt = src.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                                doc.addImage(src, fmt, x, py, imgW, imgH);
+                                doc.setDrawColor(225, 225, 235); doc.setLineWidth(0.2);
+                                doc.rect(x, py, imgW, imgH);
+                            } else {
+                                doc.setDrawColor(215, 215, 215); doc.setFillColor(247, 247, 250);
+                                doc.rect(x, py, imgW, imgH, 'FD');
+                                doc.setFontSize(7); doc.setTextColor(160, 160, 160);
+                                doc.text('Imagen no disponible', x + imgW / 2, py + imgH / 2, { align: 'center' });
+                            }
+                        } catch (e) { }
+                        if (f.pie) {
+                            doc.setFontSize(7); doc.setFont('helvetica', 'italic'); doc.setTextColor(120, 120, 130);
+                            const cl = doc.splitTextToSize(f.pie, imgW);
+                            cl.slice(0, 2).forEach((c, ci) => doc.text(c, x, py + imgH + 3.5 + ci * 3.2));
+                        }
+                        if (blockH > rowMaxH) rowMaxH = blockH;
+                        col++;
+                        if (col >= 2) { py += rowMaxH + 6; col = 0; rowMaxH = 0; }
+                    }
+                    if (col > 0) py += rowMaxH + 6;
+                    py += 4;
+                }
+            }
+
+            // Numeración
+            const totalPages = doc.internal.getNumberOfPages();
+            for (let p = 2; p <= totalPages; p++) {
+                doc.setPage(p);
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(200, 200, 200);
+                doc.text(`${p - 1} / ${totalPages - 1}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+            }
+
+            const t = new Date();
+            const stamp = `${t.getFullYear()}${String(t.getMonth() + 1).padStart(2, '0')}${String(t.getDate()).padStart(2, '0')}`;
+            doc.save(`${stamp}_Pendientes_${(projectName || 'proyecto').replace(/\s+/g, '_')}.pdf`);
         }
 
         async function generateDocument(mode = 'download') {
@@ -2990,6 +3726,7 @@ function out(obj) {
             collectDriveIds(sections);
             annexNoConformidades.forEach(item => { if (item.driveId) allDriveIds.add(item.driveId); });
             annexFotografico.forEach(item => { if (item.driveId) allDriveIds.add(item.driveId); });
+            annexPendientes.forEach(p => (p.fotos || []).forEach(f => { if (f.driveId) allDriveIds.add(f.driveId); }));
 
             if (allDriveIds.size > 0) {
                 await resolveImagesThrottled([...allDriveIds], 3);
@@ -3317,6 +4054,28 @@ function out(obj) {
                 lines.push('');
             }
 
+            // LISTA DE PENDIENTES
+            if (annexPendientes.length > 0) {
+                lines.push('//-------------------------------------------------');
+                lines.push('// Lista de Pendientes');
+                lines.push('//-------------------------------------------------');
+                annexPendientes.forEach(item => {
+                    lines.push(`<pendiente id="${item.id}">`);
+                    lines.push(`  titulo: "${(item.titulo || '').replace(/"/g, "'")}"`);
+                    lines.push(`  disciplina: "${(item.disciplina || '').replace(/"/g, "'")}"`);
+                    lines.push(`  responsable: "${(item.responsable || '').replace(/"/g, "'")}"`);
+                    lines.push(`  fecha: "${item.fecha || ''}"`);
+                    lines.push(`  estado: "${item.estado || 'pendiente'}"`);
+                    lines.push(`  obs: "${(item.obs || '').replace(/"/g, "'")}"`);
+                    if (item.ncRef) lines.push(`  ncRef: "${item.ncRef}"`);
+                    (item.fotos || []).forEach(f => {
+                        lines.push(`  foto: "${f.driveId ? 'drive:' + f.driveId : (f.foto || '')}" ||| "${(f.pie || '').replace(/"/g, "'")}"`);
+                    });
+                    lines.push('</pendiente>');
+                });
+                lines.push('');
+            }
+
             // ANEXO FOTOGRÁFICO
             if (annexFotografico.length > 0) {
                 lines.push('//-------------------------------------------------');
@@ -3617,6 +4376,33 @@ function out(obj) {
                     descripcion: getVal('descripcion'),
                     foto: getVal('foto') || null,
                     driveId: getVal('driveId') || null
+                });
+            });
+
+            // ── LISTA DE PENDIENTES ──
+            annexPendientes = [];
+            getBlock('pendiente', clean).forEach(pb => {
+                const id = attr(pb.attrs, 'id') || Math.random().toString(36).substr(2,9);
+                const gv = (key) => { const m = pb.inner.match(new RegExp(`^\\s*${key}:\\s*"([^"]*)"`, 'm')); return m ? m[1] : ''; };
+                const fotos = [];
+                const re = /^\s*foto:\s*"([^"]*)"\s*(?:\|\|\|\s*"([^"]*)")?/gm;
+                let m;
+                while ((m = re.exec(pb.inner)) !== null) {
+                    const val = m[1] || '';
+                    if (!val) continue;
+                    if (val.indexOf('drive:') === 0) fotos.push({ driveId: val.slice(6), pie: m[2] || '' });
+                    else fotos.push({ foto: val, pie: m[2] || '' });
+                }
+                annexPendientes.push({
+                    id,
+                    titulo: gv('titulo'),
+                    disciplina: gv('disciplina'),
+                    responsable: gv('responsable'),
+                    fecha: gv('fecha'),
+                    estado: gv('estado') || 'pendiente',
+                    obs: gv('obs'),
+                    ncRef: gv('ncRef'),
+                    fotos
                 });
             });
 
@@ -4015,6 +4801,26 @@ function out(obj) {
                     if (item.driveId) lines.push('  driveId: "' + item.driveId + '"');
                     else if (item.foto) lines.push('  foto: "' + item.foto + '"');
                     lines.push('</no-conformidad>');
+                });
+                lines.push('');
+            }
+            if (annexPendientes.length > 0) {
+                lines.push('//-------------------------------------------------');
+                lines.push('// Lista de Pendientes');
+                lines.push('//-------------------------------------------------');
+                annexPendientes.forEach(function(item) {
+                    lines.push('<pendiente id="' + item.id + '">');
+                    lines.push('  titulo: "' + (item.titulo||'').replace(/"/g,"'") + '"');
+                    lines.push('  disciplina: "' + (item.disciplina||'').replace(/"/g,"'") + '"');
+                    lines.push('  responsable: "' + (item.responsable||'').replace(/"/g,"'") + '"');
+                    lines.push('  fecha: "' + (item.fecha||'') + '"');
+                    lines.push('  estado: "' + (item.estado||'pendiente') + '"');
+                    lines.push('  obs: "' + (item.obs||'').replace(/"/g,"'") + '"');
+                    if (item.ncRef) lines.push('  ncRef: "' + item.ncRef + '"');
+                    (item.fotos||[]).forEach(function(f) {
+                        lines.push('  foto: "' + (f.driveId ? 'drive:' + f.driveId : (f.foto||'')) + '" ||| "' + (f.pie||'').replace(/"/g,"'") + '"');
+                    });
+                    lines.push('</pendiente>');
                 });
                 lines.push('');
             }
@@ -5057,6 +5863,25 @@ Por favor, reescribe y mejora el texto de esa sección.`;
                 return;
             }
 
+            // ── PENDIENTES MODE: varias fotos por pendiente ──────────────────────
+            if (drivePendMode) {
+                statusTx.textContent = 'Guardando referencias...';
+                const it = annexPendientes.find(x => x.id === drivePendItemId);
+                if (it) {
+                    for (const fid of [...driveSelected]) {
+                        if ((it.fotos || []).some(f => f.driveId === fid)) continue;
+                        const finfo = driveAllFiles.find(f => f.id === fid);
+                        it.fotos.push({ driveId: fid, pie: finfo?.temaSecundario || '' });
+                    }
+                }
+                drivePendMode = false;
+                drivePendItemId = null;
+                statusEl.classList.add('hidden');
+                closeModal('drivePickerModal');
+                renderPendList(); renderPendForm(it); updatePendCounts();
+                return;
+            }
+
             // ── ANNEX MODE: store driveId reference for annex item ───────────────
             if (driveAnnexMode) {
                 statusTx.textContent = 'Guardando referencia...';
@@ -5345,6 +6170,18 @@ Por favor, reescribe y mejora el texto de esa sección.`;
         // ── Annex standalone preview & PDF ───────────────────────────────────────
 
         function openAnnexPreview(type) {
+            if (type === 'pd') {
+                const modal = document.getElementById('annexPreviewModal');
+                document.getElementById('annexPreviewTitle').textContent = 'Lista de Pendientes';
+                document.getElementById('annexPreviewSubtitle').textContent = annexPendientes.length + ' pendiente(s)';
+                const ic = document.getElementById('annexPreviewIcon');
+                ic.className = 'w-9 h-9 rounded-xl flex items-center justify-center bg-violet-100';
+                ic.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>';
+                document.getElementById('annexPreviewDownloadBtn').onclick = () => downloadAnnexPdf('pd');
+                modal.style.display = 'flex';
+                renderPendPreviewBody(annexPendientes);
+                return;
+            }
             const items = type === 'nc' ? annexNoConformidades : annexFotografico;
             const isNC = type === 'nc';
             const modal = document.getElementById('annexPreviewModal');
@@ -5440,7 +6277,7 @@ Por favor, reescribe y mejora el texto de esa sección.`;
         }
 
         async function downloadAnnexPdf(type) {
-            const items = type === 'nc' ? annexNoConformidades : annexFotografico;
+            const items = type === 'pd' ? annexPendientes : (type === 'nc' ? annexNoConformidades : annexFotografico);
             const isNC = type === 'nc';
 
             if (items.length === 0) {
@@ -5457,7 +6294,8 @@ Por favor, reescribe y mejora el texto de esa sección.`;
             }
 
             try {
-                await generateAnnexOnlyPdf(type);
+                if (type === 'pd') await generatePendientesPdf();
+                else await generateAnnexOnlyPdf(type);
             } finally {
                 if (dlBtn) { dlBtn.disabled = false; dlBtn.innerHTML = origHTML; }
             }
